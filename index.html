@@ -842,10 +842,13 @@ function switchSession(sessionId) {
 }
 
 function createSession(name, thoughtIds) {
+  // Assign a hue based on session count (distributed evenly across color wheel)
+  const hue = (state.sessions.length * 137.5) % 360; // golden angle distribution
   const s = {
     id: uid(),
     name: name || `Session ${state.sessions.length + 1}`,
     thoughtIds: new Set(thoughtIds || []),
+    hue: hue, // base hue for this session
     created: Date.now(),
     touched: Date.now()
   };
@@ -1032,16 +1035,27 @@ function load() {
 
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
-function createThought(x, y, z, text, folder) {
+function createThought(x, y, z, text, color) {
+  // Default color: if in session, use session's hue; otherwise cycle through palette
+  let defaultColor;
+  if (!color && state.activeSession) {
+    const sess = getActiveSession();
+    if (sess && sess.hue !== undefined) {
+      // Convert session hue to color
+      defaultColor = `hsl(${sess.hue}, 70%, 60%)`;
+    }
+  }
+  if (!defaultColor) defaultColor = COLORS[colorIdx++ % COLORS.length];
+  
   const t = {
     id:uid(), text:text||'',
     position:[x,y,z],
-    color: COLORS[colorIdx++ % COLORS.length],
+    color: color || defaultColor,
     created:Date.now(), touched:Date.now(),
-    folder: folder!==undefined ? folder : (state.activeFolder||null)
+    folder: null // folders deprecated
   };
   state.thoughts.push(t);
-  // v5: auto-add to active session
+  // Auto-add to active session
   if (state.activeSession) {
     const sess = getActiveSession();
     if (sess) { sess.thoughtIds.add(t.id); sess.touched = Date.now(); }
@@ -1099,7 +1113,27 @@ const edText = document.getElementById('ed-text');
 
 function renderEditorColors() {
   const row = document.getElementById('ed-color-row');
-  row.innerHTML = COLORS.map(c =>
+  
+  // Generate color palette based on session or use defaults
+  let palette = COLORS;
+  if (state.activeSession) {
+    const sess = getActiveSession();
+    if (sess && sess.hue !== undefined) {
+      // Generate 8 variations of session hue
+      palette = [
+        `hsl(${sess.hue}, 70%, 60%)`,  // base
+        `hsl(${sess.hue}, 80%, 65%)`,  // lighter
+        `hsl(${sess.hue}, 60%, 55%)`,  // darker
+        `hsl(${(sess.hue + 30) % 360}, 70%, 60%)`, // +30°
+        `hsl(${(sess.hue - 30 + 360) % 360}, 70%, 60%)`, // -30°
+        `hsl(${sess.hue}, 50%, 50%)`,  // desaturated
+        `hsl(${sess.hue}, 90%, 70%)`,  // vibrant
+        `hsl(${sess.hue}, 40%, 45%)`   // muted
+      ];
+    }
+  }
+  
+  row.innerHTML = palette.map(c =>
     `<div class="color-swatch${editingColor===c?' active':''}" data-color="${c}" style="background:${c}"></div>`
   ).join('');
   row.querySelectorAll('.color-swatch').forEach(el => {
@@ -1696,7 +1730,7 @@ if (state.thoughts.length >= SESSION_THRESHOLD && state.sessions.length > 0 && !
 if(state.openToCapture) setTimeout(()=>openZeroCapture(),200);
 setInterval(save,10000);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v7.0 — folders removed, connections fixed');
+console.log('atem v7.1 — thought creation fixed, session colors added');
 </script>
 </body>
 </html>
