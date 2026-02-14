@@ -1002,10 +1002,6 @@ function deleteSession(sid) {
 document.getElementById('session-btn').addEventListener('click', (e) => {
   e.stopPropagation(); openSessionDrawer();
 });
-// Session indicator (top center) also opens drawer
-document.getElementById('session-indicator').addEventListener('click', (e) => {
-  e.stopPropagation(); openSessionDrawer();
-});
 // Scrim closes drawer
 document.getElementById('session-scrim').addEventListener('click', closeSessionDrawer);
 // New session from drawer
@@ -1918,7 +1914,7 @@ document.addEventListener('mousemove', (e) => {
 if(state.openToCapture) setTimeout(()=>openZeroCapture(),200);
 setInterval(save,10000);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v10.1 — tag system fixed');
+console.log('atem v10.2 — working build');
 </script>
 </body>
 </html>
