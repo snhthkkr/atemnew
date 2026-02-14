@@ -35,17 +35,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   -webkit-user-select:text;user-select:text;
 }
 #editor textarea::placeholder{color:rgba(255,255,255,0.25)}
-#ed-color-row{
-  display:flex;gap:8px;margin-top:10px;padding-top:10px;
-  border-top:1px solid rgba(255,255,255,0.06);
-  flex-wrap:wrap;align-items:center;
+#ed-color-btn{
+  width:20px;height:20px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.2);
+  cursor:pointer;position:absolute;top:16px;right:16px;
+  transition:transform 0.15s;z-index:5;
 }
-.color-swatch{
-  width:24px;height:24px;border-radius:50%;cursor:pointer;
-  border:2px solid transparent;transition:border-color 0.15s,transform 0.15s;flex-shrink:0;
+#ed-color-btn:active{transform:scale(0.9)}
+#ed-color-palette{
+  position:absolute;top:42px;right:16px;
+  background:rgba(15,15,20,0.98);border:1px solid rgba(255,255,255,0.1);
+  border-radius:12px;padding:8px;display:none;gap:6px;
+  backdrop-filter:blur(20px);z-index:10;
 }
-.color-swatch:active{transform:scale(0.9)}
-.color-swatch.active{border-color:rgba(255,255,255,0.7);transform:scale(1.15)}
+#ed-color-palette.open{display:flex}
+.ed-color-swatch{
+  width:28px;height:28px;border-radius:50%;cursor:pointer;
+  border:2px solid rgba(255,255,255,0.15);transition:transform 0.1s;
+}
+.ed-color-swatch:active{transform:scale(0.85)}
 #ed-folder-row{display:none !important}
 .folder-chip{
   padding:4px 10px;border-radius:20px;font-size:12px;
@@ -150,18 +158,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 #folder-bar .ftab.active{background:rgba(110,168,254,0.15);color:rgba(110,168,254,0.9);border-color:rgba(110,168,254,0.25)}
 
 /* ─── Session indicator (top center) ─── */
-#session-indicator{
-  position:fixed;
-  top:max(14px,env(safe-area-inset-top,0px));
-  left:50%;transform:translateX(-50%);
-  font-size:12px;color:rgba(255,255,255,0.2);
-  cursor:pointer;z-index:86;
-  padding:3px 10px;border-radius:12px;
-  transition:color 0.2s;white-space:nowrap;
-  display:none;
+/* ─── Tag bar (hover to reveal) ─── */
+#tag-bar{
+  position:fixed;top:0;left:0;right:0;
+  background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);
+  padding:10px 16px;display:flex;gap:8px;align-items:center;
+  z-index:100;transform:translateY(-100%);transition:transform 0.2s;
+  border-bottom:1px solid rgba(255,255,255,0.06);
 }
-#session-indicator:active{color:rgba(255,255,255,0.4)}
-#session-indicator.on{display:block}
+#tag-bar.show{transform:translateY(0)}
+.tag-chip{
+  padding:5px 11px;border-radius:16px;font-size:12px;
+  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);
+  border:1px solid rgba(255,255,255,0.08);cursor:pointer;
+  white-space:nowrap;transition:all 0.15s;
+}
+.tag-chip:hover{background:rgba(255,255,255,0.08)}
+.tag-chip.active{background:rgba(110,168,254,0.15);color:rgba(110,168,254,0.9);border-color:rgba(110,168,254,0.3)}
+.tag-chip.add-new{border-style:dashed;color:rgba(110,168,254,0.5)}
 
 /* ─── Session switcher button (top-left) ─── */
 #session-btn{
@@ -214,8 +228,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 .sd-item:active{background:rgba(255,255,255,0.05)}
 .sd-item.active{background:rgba(110,168,254,0.08)}
-.sd-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.25);flex-shrink:0}
-.sd-item.active .sd-dot{background:rgba(110,168,254,0.8);border-color:rgba(110,168,254,0.8)}
+.sd-thumb{
+  width:48px;height:48px;border-radius:8px;
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
+.sd-item.active .sd-thumb{border-color:rgba(110,168,254,0.3)}
 .sd-info{flex:1;min-width:0}
 .sd-name{font-size:14px;color:rgba(255,255,255,0.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sd-item.all-item .sd-name{color:rgba(255,255,255,0.45)}
@@ -224,6 +242,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   font-size:11px;color:rgba(255,255,255,0.2);flex-shrink:0;
   min-width:20px;text-align:right;
 }
+.sd-rename{
+  width:28px;height:28px;border-radius:6px;border:none;
+  background:rgba(110,168,254,0.08);color:rgba(110,168,254,0.5);
+  font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  margin-right:6px;
+}
+.sd-rename:active{background:rgba(110,168,254,0.2)}
 .sd-delete{
   width:28px;height:28px;border-radius:6px;border:none;
   background:rgba(255,100,100,0.08);color:rgba(255,100,100,0.5);
@@ -360,7 +385,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 <!-- Editor -->
 <div id="editor">
   <textarea id="ed-text" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
-  <div id="ed-color-row"></div>
+  <button id="ed-color-btn" title="change color"></button>
+  <div id="ed-color-palette"></div>
   <div id="ed-folder-row"></div>
   <div id="ed-session-row"></div>
   <div id="editor-actions">
@@ -385,7 +411,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 </div>
 
 <!-- Session indicator (top center) -->
-<div id="session-indicator"></div>
+<!-- Tag bar (hover top to reveal) -->
+<div id="tag-bar"></div>
 
 <!-- Session switcher button (top-left) -->
 <button id="session-btn">
@@ -402,16 +429,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <div id="session-drawer-title">sessions</div>
   <div id="sd-list"></div>
   <button id="sd-new-session">+ new session</button>
+  <div class="sd-util-sep">data</div>
+  <button id="sd-export">💾 export thoughts</button>
+  <button id="sd-import">📂 import thoughts</button>
   <div id="sd-utils">
-    <button id="sd-export">export thoughts</button>
-    <button id="sd-import">import thoughts</button>
     <button id="sd-open-capture">open to capture <span class="toggle-dot" id="sd-capture-dot"></span></button>
     <div class="sd-util-sep">dev</div>
     <button id="sd-reset-view">reset camera</button>
     <button id="sd-dump-state">dump state</button>
     <button id="sd-force-save">force save</button>
     <button id="sd-show-orphans">show orphans</button>
+    <button id="sd-test-thought">add test thought</button>
     <button id="sd-toggle-fps">fps counter <span class="toggle-dot" id="sd-fps-dot"></span></button>
+    <button id="sd-migrate">📦 move all to Session 1</button>
     <div class="sd-util-sep"></div>
     <button id="sd-clear" class="sd-util-danger">clear all</button>
   </div>
@@ -425,6 +455,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 <div id="lasso-rect"></div>
 <div id="lasso-bar">
   <button id="lasso-new-session-btn">new session</button>
+  <button id="lasso-recolor-btn">recolor</button>
   <button id="lasso-clear-btn">clear</button>
 </div>
 <!-- Stats -->
@@ -516,7 +547,7 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.enablePan = true; controls.panSpeed = 0.8;
 controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
-controls.minDistance = 4; controls.maxDistance = 60;
+controls.minDistance = 0.5; controls.maxDistance = 200;
 
 scene.add(new THREE.AmbientLight(0x404060, 0.6));
 const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5,8,10); scene.add(dl);
@@ -706,8 +737,7 @@ function renderFolderBar() {
 // ═══════════════════════════════════════════
 
 function updateSessionUI() {
-  // Session button is always visible (removed conditionals)
-  // Badge
+  renderTagBar();
   const badge = document.getElementById('session-badge');
   if (state.sessions.length > 1) {
     badge.textContent = state.sessions.length;
@@ -715,15 +745,41 @@ function updateSessionUI() {
   } else {
     badge.classList.remove('on');
   }
-  // Session indicator (top center)
-  const ind = document.getElementById('session-indicator');
-  const active = getActiveSession();
-  if (active) {
-    ind.textContent = active.name;
-    ind.classList.add('on');
-  } else {
-    ind.classList.remove('on');
+}
+
+function renderTagBar() {
+  const bar = document.getElementById('tag-bar');
+  let html = `<span class="tag-chip${!state.activeSession?' active':''}" data-tag="__all__">all</span>`;
+  
+  for (const s of state.sessions) {
+    const isActive = state.activeSession === s.id;
+    html += `<span class="tag-chip${isActive?' active':''}" data-tag="${s.id}">${s.name}</span>`;
   }
+  
+  html += `<span class="tag-chip add-new" data-tag="__new__">+ tag</span>`;
+  bar.innerHTML = html;
+  
+  // Single delegated click handler
+  bar.onclick = (e) => {
+    const chip = e.target.closest('.tag-chip');
+    if (!chip) return;
+    
+    const tag = chip.dataset.tag;
+    if (tag === '__new__') {
+      // Add tag instantly
+      const name = `Tag ${state.sessions.length + 1}`;
+      const s = createSession(name, []);
+      switchSession(s.id);
+      renderTagBar();
+      toast(`created "${name}" - rename in drawer`);
+    } else if (tag === '__all__') {
+      switchSession(null);
+      renderTagBar();
+    } else {
+      switchSession(tag);
+      renderTagBar();
+    }
+  };
 }
 
 function openSessionDrawer() {
@@ -744,7 +800,7 @@ function renderSessionList() {
   // "All thoughts" item
   const isAll = !state.activeSession;
   html += `<button class="sd-item all-item${isAll?' active':''}" data-sid="__all__">
-    <span class="sd-dot"></span>
+    <canvas class="sd-thumb" width="48" height="48"></canvas>
     <span class="sd-info"><span class="sd-name">all thoughts</span></span>
     <span class="sd-count">${state.thoughts.length}</span>
   </button>`;
@@ -753,24 +809,54 @@ function renderSessionList() {
   for (const s of sorted) {
     const isActive = state.activeSession === s.id;
     html += `<div class="sd-item${isActive?' active':''}" data-sid="${s.id}">
-      <span class="sd-dot"></span>
+      <canvas class="sd-thumb" width="48" height="48"></canvas>
       <span class="sd-info">
         <span class="sd-name">${s.name}</span>
         <span class="sd-meta">${relativeTime(s.touched)}</span>
       </span>
       <span class="sd-count">${s.thoughtIds.size}</span>
+      <button class="sd-rename" data-rename="${s.id}" title="rename">✎</button>
       <button class="sd-delete" data-del="${s.id}" title="delete">×</button>
     </div>`;
   }
   list.innerHTML = html;
 
+  // Render thumbnails
+  renderSessionThumbnails();
+
   // Events
   list.querySelectorAll('.sd-item[data-sid]').forEach(el => {
     el.addEventListener('click', (e) => {
-      if (e.target.closest('.sd-delete')) return;
+      if (e.target.closest('.sd-delete') || e.target.closest('.sd-rename')) return;
       const sid = el.dataset.sid;
       switchSession(sid === '__all__' ? null : sid);
       closeSessionDrawer();
+    });
+  });
+  // Rename buttons
+  list.querySelectorAll('.sd-rename').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const sid = btn.dataset.rename;
+      const s = getSession(sid);
+      if (!s) return;
+      
+      const item = btn.closest('.sd-item');
+      const nameEl = item.querySelector('.sd-name');
+      nameEl.innerHTML = `<input class="sd-rename-input" value="${s.name}" maxlength="30">`;
+      const inp = nameEl.querySelector('input');
+      inp.focus(); inp.select();
+      
+      const commit = () => {
+        const v = inp.value.trim();
+        if (v) { s.name = v; s.touched = Date.now(); save(); }
+        renderSessionList();
+      };
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', (ke) => {
+        if (ke.key === 'Enter') { ke.preventDefault(); commit(); }
+        if (ke.key === 'Escape') renderSessionList();
+      });
     });
   });
   // Delete buttons
@@ -786,33 +872,77 @@ function renderSessionList() {
       renderSessionList();
     });
   });
-  // Long press to rename
-  list.querySelectorAll('.sd-item[data-sid]:not(.all-item)').forEach(el => {
-    let lt;
-    el.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.sd-delete')) return;
-      lt = setTimeout(() => {
-        const sid = el.dataset.sid;
-        const s = getSession(sid);
-        if (!s) return;
-        const nameEl = el.querySelector('.sd-name');
-        nameEl.innerHTML = `<input class="sd-rename-input" value="${s.name}" maxlength="30">`;
-        const inp = nameEl.querySelector('input');
-        inp.focus(); inp.select();
-        const commit = () => {
-          const v = inp.value.trim();
-          if (v) { s.name = v; s.touched = Date.now(); save(); }
-          renderSessionList();
-        };
-        inp.addEventListener('blur', commit);
-        inp.addEventListener('keydown', (ke) => {
-          if (ke.key === 'Enter') { ke.preventDefault(); commit(); }
-          if (ke.key === 'Escape') renderSessionList();
-        });
-      }, 600);
+}
+
+function renderSessionThumbnails() {
+  const list = document.getElementById('sd-list');
+  const items = list.querySelectorAll('.sd-item');
+  
+  items.forEach(item => {
+    const canvas = item.querySelector('.sd-thumb');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const sid = item.dataset.sid;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, 48, 48);
+    
+    // Get thoughts for this session
+    let thoughts = [];
+    if (sid === '__all__') {
+      thoughts = state.thoughts;
+    } else {
+      const session = getSession(sid);
+      if (session) {
+        thoughts = state.thoughts.filter(t => session.thoughtIds.has(t.id));
+      }
+    }
+    
+    if (thoughts.length === 0) return;
+    
+    // Find bounds
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    thoughts.forEach(t => {
+      minX = Math.min(minX, t.position[0]);
+      maxX = Math.max(maxX, t.position[0]);
+      minY = Math.min(minY, t.position[1]);
+      maxY = Math.max(maxY, t.position[1]);
     });
-    el.addEventListener('pointerup', () => clearTimeout(lt));
-    el.addEventListener('pointermove', () => clearTimeout(lt));
+    
+    const rangeX = maxX - minX || 1;
+    const rangeY = maxY - minY || 1;
+    const padding = 6;
+    
+    // Draw thoughts as dots
+    thoughts.forEach(t => {
+      const x = padding + ((t.position[0] - minX) / rangeX) * (48 - padding * 2);
+      const y = padding + ((t.position[1] - minY) / rangeY) * (48 - padding * 2);
+      
+      ctx.fillStyle = t.color || '#6ea8fe';
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    // Draw connections
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 0.5;
+    state.connections.forEach(conn => {
+      const tA = thoughts.find(t => t.id === conn.from);
+      const tB = thoughts.find(t => t.id === conn.to);
+      if (!tA || !tB) return;
+      
+      const x1 = padding + ((tA.position[0] - minX) / rangeX) * (48 - padding * 2);
+      const y1 = padding + ((tA.position[1] - minY) / rangeY) * (48 - padding * 2);
+      const x2 = padding + ((tB.position[0] - minX) / rangeX) * (48 - padding * 2);
+      const y2 = padding + ((tB.position[1] - minY) / rangeY) * (48 - padding * 2);
+      
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    });
   });
 }
 
@@ -825,14 +955,35 @@ function switchSession(sessionId) {
   applyFilter(); save();
 }
 
+// Camera flight disabled - was causing zoom issues
+function frameSessionThoughts(sessionId) {
+  // Disabled for stability
+}
+
+function flyToPosition(x, y, z) {
+  // Disabled for stability
+}
+
 function createSession(name, thoughtIds) {
-  // Assign a hue based on session count (distributed evenly across color wheel)
-  const hue = (state.sessions.length * 137.5) % 360; // golden angle distribution
+  // Assign a hue and position based on session count
+  const hue = (state.sessions.length * 137.5) % 360; // golden angle
+  
+  // Fibonacci sphere for even 3D distribution
+  const i = state.sessions.length;
+  const phi = Math.acos(1 - 2 * (i + 0.5) / Math.max(1, state.sessions.length + 1));
+  const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+  const radius = 25; // distance from origin
+  
   const s = {
     id: uid(),
     name: name || `Session ${state.sessions.length + 1}`,
     thoughtIds: new Set(thoughtIds || []),
-    hue: hue, // base hue for this session
+    hue: hue,
+    position: [
+      radius * Math.sin(phi) * Math.cos(theta),
+      radius * Math.sin(phi) * Math.sin(theta),
+      radius * Math.cos(phi)
+    ],
     created: Date.now(),
     touched: Date.now()
   };
@@ -923,6 +1074,35 @@ document.getElementById('sd-open-capture').addEventListener('click', () => {
   closeSessionDrawer();
 });
 
+document.getElementById('sd-migrate').addEventListener('click', () => {
+  if (!confirm('move all thoughts to Session 1?')) return;
+  
+  // Find or create Session 1
+  let s1 = state.sessions.find(s => s.name === 'Session 1');
+  if (!s1) {
+    s1 = createSession('Session 1', []);
+  }
+  
+  // Add all thoughts to Session 1
+  state.thoughts.forEach(t => s1.thoughtIds.add(t.id));
+  
+  // Recolor all to Session 1 color
+  const color = s1.hue !== undefined ? `hsl(${s1.hue}, 70%, 60%)` : COLORS[0];
+  state.thoughts.forEach(t => {
+    t.color = color;
+    const mesh = getMesh(t.id);
+    if (mesh) {
+      mesh.material.color.set(color);
+      mesh.material.emissive.set(color);
+    }
+  });
+  
+  save();
+  renderSessionList();
+  toast(`${state.thoughts.length} thoughts → Session 1`);
+  closeSessionDrawer();
+});
+
 document.getElementById('sd-clear').addEventListener('click', () => {
   if(!confirm('clear all thoughts?')) return;
   state.thoughts=[]; state.connections=[]; state.folders=[]; state.activeFolder=null;
@@ -940,6 +1120,15 @@ document.getElementById('sd-dump-state').addEventListener('click', () => {
   closeSessionDrawer(); toast('state → console');
 });
 document.getElementById('sd-force-save').addEventListener('click', () => { save(); closeSessionDrawer(); toast('saved'); });
+document.getElementById('sd-test-thought').addEventListener('click', () => {
+  const x = (Math.random() - 0.5) * 10;
+  const y = (Math.random() - 0.5) * 10;
+  const z = (Math.random() - 0.5) * 5;
+  const text = `test ${Date.now().toString(36)}`;
+  createThought(x, y, z, text);
+  closeSessionDrawer();
+  toast('test thought added');
+});
 document.getElementById('sd-show-orphans').addEventListener('click', () => {
   const connected = new Set();
   for(const c of state.connections){connected.add(c.from);connected.add(c.to);}
@@ -984,7 +1173,15 @@ function save() {
 function load() {
   try {
     const raw = localStorage.getItem('atem-state');
-    if (!raw) return;
+    if (!raw) {
+      // No data - show import hint
+      setTimeout(() => {
+        if (state.thoughts.length === 0) {
+          toast('no data found - import your thoughts or start fresh', 5000);
+        }
+      }, 1000);
+      return;
+    }
     const s = JSON.parse(raw);
     state.thoughts = s.thoughts||[]; state.connections = s.connections||[];
     state.folders = s.folders||[]; state.activeFolder = s.activeFolder||null;
@@ -1007,6 +1204,15 @@ function load() {
     }
     if (s.camera) { camera.position.set(s.camera.px,s.camera.py,s.camera.pz); controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz); }
     for (const t of state.thoughts) { if (t.folder===undefined) t.folder=null; }
+    
+    // Auto-migrate: move all orphaned thoughts to "Session 1"
+    if (state.thoughts.length > 0 && state.sessions.length === 0) {
+      const allIds = state.thoughts.map(t => t.id);
+      const s1 = createSession('Session 1', allIds);
+      state.activeSession = s1.id;
+      toast('all thoughts moved to Session 1');
+    }
+    
     for (const t of state.thoughts) addThoughtMesh(t);
     rebuildConnections(); applyFilter(); updateCaptureToggle();
     if (state.thoughts.length > 0) hideHint();
@@ -1096,41 +1302,62 @@ const editorEl = document.getElementById('editor');
 const edText = document.getElementById('ed-text');
 
 function renderEditorColors() {
-  const row = document.getElementById('ed-color-row');
+  const btn = document.getElementById('ed-color-btn');
+  const palette = document.getElementById('ed-color-palette');
+  if (!btn || !palette) return;
   
-  // Generate color palette based on session or use defaults
-  let palette = COLORS;
+  // Set button color to current editing color
+  btn.style.background = editingColor;
+  
+  // Generate palette based on session
+  let colors = COLORS;
   if (state.activeSession) {
     const sess = getActiveSession();
     if (sess && sess.hue !== undefined) {
-      // Generate 8 variations of session hue
-      palette = [
-        `hsl(${sess.hue}, 70%, 60%)`,  // base
-        `hsl(${sess.hue}, 80%, 65%)`,  // lighter
-        `hsl(${sess.hue}, 60%, 55%)`,  // darker
-        `hsl(${(sess.hue + 30) % 360}, 70%, 60%)`, // +30°
-        `hsl(${(sess.hue - 30 + 360) % 360}, 70%, 60%)`, // -30°
-        `hsl(${sess.hue}, 50%, 50%)`,  // desaturated
-        `hsl(${sess.hue}, 90%, 70%)`,  // vibrant
-        `hsl(${sess.hue}, 40%, 45%)`   // muted
+      colors = [
+        `hsl(${sess.hue}, 70%, 60%)`,
+        `hsl(${sess.hue}, 80%, 65%)`,
+        `hsl(${sess.hue}, 60%, 55%)`,
+        `hsl(${(sess.hue + 30) % 360}, 70%, 60%)`,
+        `hsl(${(sess.hue - 30 + 360) % 360}, 70%, 60%)`,
+        `hsl(${sess.hue}, 50%, 50%)`,
+        `hsl(${sess.hue}, 90%, 70%)`,
+        `hsl(${sess.hue}, 40%, 45%)`
       ];
     }
   }
   
-  row.innerHTML = palette.map(c =>
-    `<div class="color-swatch${editingColor===c?' active':''}" data-color="${c}" style="background:${c}"></div>`
+  // Render palette
+  palette.innerHTML = colors.map(c => 
+    `<div class="ed-color-swatch" data-color="${c}" style="background:${c}"></div>`
   ).join('');
-  row.querySelectorAll('.color-swatch').forEach(el => {
-    el.addEventListener('pointerdown', (e) => {
+  
+  // Toggle palette on button click
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    palette.classList.toggle('open');
+  };
+  
+  // Select color from palette
+  palette.querySelectorAll('.ed-color-swatch').forEach(swatch => {
+    swatch.onclick = (e) => {
       e.stopPropagation();
-      editingColor = el.dataset.color;
-      renderEditorColors();
+      editingColor = swatch.dataset.color;
+      btn.style.background = editingColor;
+      palette.classList.remove('open');
+      
       if (editingId) {
         const mesh = getMesh(editingId);
-        if (mesh) { mesh.material.color.set(editingColor); mesh.material.emissive.set(editingColor); }
+        if (mesh) {
+          mesh.material.color.set(editingColor);
+          mesh.material.emissive.set(editingColor);
+        }
       }
-    });
+    };
   });
+  
+  // Close palette when clicking outside
+  document.addEventListener('click', () => palette.classList.remove('open'));
 }
 
 function renderEditorFolders() {
@@ -1293,6 +1520,35 @@ function finishLasso() {
 }
 
 document.getElementById('lasso-clear-btn').addEventListener('pointerdown',(e)=>{ e.stopPropagation(); e.preventDefault(); clearSelection(); });
+
+// Lasso → recolor selected
+document.getElementById('lasso-recolor-btn').addEventListener('pointerdown',(e)=>{
+  e.stopPropagation(); e.preventDefault();
+  if (selectedIds.size === 0) return;
+  
+  // Use active session's base color, or first color in palette
+  let color = COLORS[0];
+  if (state.activeSession) {
+    const sess = getActiveSession();
+    if (sess && sess.hue !== undefined) {
+      color = `hsl(${sess.hue}, 70%, 60%)`;
+    }
+  }
+  
+  // Recolor all selected thoughts
+  for (const id of selectedIds) {
+    updateThought(id, state.thoughts.find(t=>t.id===id)?.text, null, color);
+    const mesh = getMesh(id);
+    if (mesh) {
+      mesh.material.color.set(color);
+      mesh.material.emissive.set(color);
+    }
+  }
+  
+  save();
+  toast(`${selectedIds.size} recolored`);
+  clearSelection();
+});
 
 // Lasso → new session
 document.getElementById('lasso-new-session-btn').addEventListener('pointerdown',(e)=>{
@@ -1644,16 +1900,25 @@ window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.in
 load();
 animate();
 
-// v5: opening behaviour — last active session
-if (state.thoughts.length >= SESSION_THRESHOLD && state.sessions.length > 0 && !state.activeSession) {
-  const sorted = [...state.sessions].sort((a,b) => b.touched - a.touched);
-  switchSession(sorted[0].id);
-}
+// ALWAYS open to "all thoughts" view
+state.activeSession = null;
+applyFilter();
+
+// Hover near top to show tag bar
+let tagBarTimeout;
+document.addEventListener('mousemove', (e) => {
+  const tagBar = document.getElementById('tag-bar');
+  if (e.clientY < 60) {
+    tagBar.classList.add('show');
+    clearTimeout(tagBarTimeout);
+    tagBarTimeout = setTimeout(() => tagBar.classList.remove('show'), 2000);
+  }
+});
 
 if(state.openToCapture) setTimeout(()=>openZeroCapture(),200);
 setInterval(save,10000);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v7.2 — folder bloat purged');
+console.log('atem v10.1 — tag system fixed');
 </script>
 </body>
 </html>
