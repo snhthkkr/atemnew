@@ -46,11 +46,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 .color-swatch:active{transform:scale(0.9)}
 .color-swatch.active{border-color:rgba(255,255,255,0.7);transform:scale(1.15)}
-#ed-folder-row{
-  display:flex;align-items:center;gap:6px;
-  margin-top:8px;padding-top:8px;
-  border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;
-}
+#ed-folder-row{display:none !important}
 .folder-chip{
   padding:4px 10px;border-radius:20px;font-size:12px;
   background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);
@@ -698,23 +694,11 @@ function applyFilter() {
     line.visible = bothVisible;
     line.material.opacity = bothVisible ? 0.25 : 0;
   }
-  renderFolderBar();
   updateSessionUI();
 }
 
 function renderFolderBar() {
-  const bar = document.getElementById('folder-bar');
-  if (state.folders.length === 0) { bar.innerHTML = ''; return; }
-  let html = `<div class="ftab${!state.activeFolder?' active':''}" data-folder="__all__">all</div>`;
-  for (const f of state.folders) html += `<div class="ftab${state.activeFolder===f?' active':''}" data-folder="${f}">${f}</div>`;
-  bar.innerHTML = html;
-  bar.querySelectorAll('.ftab').forEach(el => {
-    el.addEventListener('pointerdown', (e) => {
-      e.stopPropagation(); e.preventDefault();
-      state.activeFolder = el.dataset.folder === '__all__' ? null : el.dataset.folder;
-      applyFilter(); save();
-    });
-  });
+  // Deprecated - folders removed
 }
 
 // ═══════════════════════════════════════════
@@ -1150,38 +1134,7 @@ function renderEditorColors() {
 }
 
 function renderEditorFolders() {
-  const row = document.getElementById('ed-folder-row');
-  let html = `<div class="folder-chip${!editingFolder?' active':''}" data-ef="__none__">none</div>`;
-  for (const f of state.folders) html += `<div class="folder-chip${editingFolder===f?' active':''}" data-ef="${f}">${f}</div>`;
-  html += `<div class="folder-chip add-new" id="add-folder-chip">+ new</div>`;
-  html += `<input id="ed-folder-input" type="text" placeholder="name" maxlength="20">`;
-  row.innerHTML = html;
-  row.querySelectorAll('.folder-chip[data-ef]').forEach(el => {
-    el.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      editingFolder = el.dataset.ef==='__none__' ? null : el.dataset.ef;
-      renderEditorFolders();
-    });
-  });
-  const addChip = document.getElementById('add-folder-chip');
-  const fi = document.getElementById('ed-folder-input');
-  if (addChip && fi) {
-    addChip.addEventListener('pointerdown', (e) => {
-      e.stopPropagation(); fi.style.display='inline-block';
-      setTimeout(()=>fi.focus(),50);
-    });
-    const commitFolder = () => {
-      const name = fi.value.trim().toLowerCase();
-      if (name && !state.folders.includes(name)) { state.folders.push(name); save(); }
-      if (name) editingFolder = name;
-      fi.style.display='none'; renderEditorFolders();
-    };
-    fi.addEventListener('keydown', (e) => {
-      if (e.key==='Enter') { e.preventDefault(); commitFolder(); }
-      if (e.key==='Escape') fi.style.display='none';
-    });
-    fi.addEventListener('blur', commitFolder);
-  }
+  // Deprecated - folders removed
 }
 
 function renderEditorSessions() {
@@ -1302,12 +1255,10 @@ connPill.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.prevent
 
 const lassoRect = document.getElementById('lasso-rect');
 const lassoBar = document.getElementById('lasso-bar');
-const lassoFolderPicker = document.getElementById('lasso-folder-picker');
 
 function clearSelection() {
   selectedIds.clear();
   lassoBar.classList.remove('open');
-  lassoFolderPicker.classList.remove('open');
   lassoRect.style.display = 'none';
   for (const mesh of thoughtGroup.children) {
     const t = state.thoughts.find(x=>x.id===mesh.userData.id);
@@ -1343,35 +1294,7 @@ function finishLasso() {
 
 document.getElementById('lasso-clear-btn').addEventListener('pointerdown',(e)=>{ e.stopPropagation(); e.preventDefault(); clearSelection(); });
 
-document.getElementById('lasso-assign-btn').addEventListener('pointerdown',(e)=>{
-  e.stopPropagation(); e.preventDefault();
-  let html = '';
-  for (const f of state.folders) html += `<div class="folder-chip" data-lf="${f}">${f}</div>`;
-  html += `<div class="folder-chip add-new" id="lasso-add-folder">+ new</div>`;
-  lassoFolderPicker.innerHTML = html;
-  lassoFolderPicker.classList.add('open');
-  lassoFolderPicker.querySelectorAll('.folder-chip[data-lf]').forEach(el=>{
-    el.addEventListener('pointerdown',(ev)=>{
-      ev.stopPropagation(); ev.preventDefault();
-      const fname = el.dataset.lf;
-      for (const id of selectedIds) updateThought(id, state.thoughts.find(t=>t.id===id)?.text, fname);
-      toast(selectedIds.size + ' → ' + fname); clearSelection();
-    });
-  });
-  const addBtn = document.getElementById('lasso-add-folder');
-  if (addBtn) {
-    addBtn.addEventListener('pointerdown',(ev)=>{
-      ev.stopPropagation(); ev.preventDefault();
-      const name = prompt('folder name')?.trim().toLowerCase();
-      if (!name) return;
-      if (!state.folders.includes(name)) { state.folders.push(name); save(); }
-      for (const id of selectedIds) updateThought(id, state.thoughts.find(t=>t.id===id)?.text, name);
-      toast(selectedIds.size + ' → ' + name); clearSelection();
-    });
-  }
-});
-
-// v5: lasso → new session
+// Lasso → new session
 document.getElementById('lasso-new-session-btn').addEventListener('pointerdown',(e)=>{
   e.stopPropagation(); e.preventDefault();
   if (selectedIds.size === 0) return;
@@ -1730,7 +1653,7 @@ if (state.thoughts.length >= SESSION_THRESHOLD && state.sessions.length > 0 && !
 if(state.openToCapture) setTimeout(()=>openZeroCapture(),200);
 setInterval(save,10000);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v7.1 — thought creation fixed, session colors added');
+console.log('atem v7.2 — folder bloat purged');
 </script>
 </body>
 </html>
