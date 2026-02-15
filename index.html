@@ -251,7 +251,65 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   -webkit-user-select:text;user-select:text;
 }
 
-/* ─── Connection delete pill ─── */
+/* ─── Connection editor overlay ─── */
+#conn-editor{
+  position:fixed;display:none;z-index:120;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(320px,88vw);
+  background:rgba(10,10,15,0.96);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:16px;padding:14px;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+#conn-editor.open{display:block}
+#conn-editor-title{font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:10px;letter-spacing:0.05em}
+#conn-preset-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.conn-preset{
+  padding:5px 10px;border-radius:14px;font-size:11px;
+  border:1px solid rgba(255,255,255,0.1);cursor:pointer;
+  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);
+  transition:all 0.12s;white-space:nowrap;font-family:inherit;
+}
+.conn-preset:active{transform:scale(0.95)}
+.conn-preset.active{border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.08)}
+#conn-custom-input{
+  width:100%;background:transparent;border:none;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  color:#fff;font-size:13px;padding:6px 0;outline:none;
+  font-family:inherit;margin-bottom:10px;
+  -webkit-user-select:text;user-select:text;
+}
+#conn-custom-input::placeholder{color:rgba(255,255,255,0.2)}
+#conn-color-row{display:flex;gap:6px;margin-bottom:12px;align-items:center}
+#conn-color-row .conn-cswatch{
+  width:22px;height:22px;border-radius:50%;cursor:pointer;
+  border:2px solid rgba(255,255,255,0.1);transition:transform 0.1s;
+}
+#conn-color-row .conn-cswatch:active{transform:scale(0.85)}
+#conn-color-row .conn-cswatch.active{border-color:rgba(255,255,255,0.5)}
+#conn-editor-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)}
+#conn-editor-actions button{
+  background:rgba(255,255,255,0.08);border:none;
+  color:rgba(255,255,255,0.7);font-size:13px;
+  padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit;
+}
+#conn-editor-actions button:active{background:rgba(255,255,255,0.15)}
+#conn-editor-actions .conn-del-btn{color:rgba(255,100,100,0.8)}
+#conn-editor-actions .conn-done-btn{color:#fff;background:rgba(255,255,255,0.15)}
+
+/* ─── Thought size buttons in editor ─── */
+#ed-size-row{display:flex;gap:6px;margin-top:8px;align-items:center}
+#ed-size-row .size-label{font-size:11px;color:rgba(255,255,255,0.2);margin-right:4px}
+.size-btn{
+  width:32px;height:26px;border-radius:6px;font-size:11px;font-weight:600;
+  border:1px solid rgba(255,255,255,0.08);cursor:pointer;
+  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.35);
+  font-family:inherit;transition:all 0.12s;
+}
+.size-btn:active{transform:scale(0.92)}
+.size-btn.active{border-color:rgba(110,168,254,0.4);color:rgba(110,168,254,0.9);background:rgba(110,168,254,0.1)}
+
+/* ─── Connection delete pill (legacy, kept as fallback) ─── */
 #conn-delete-pill{
   position:fixed;display:none;z-index:110;
   background:rgba(10,10,15,0.95);border:1px solid rgba(255,100,100,0.2);
@@ -349,12 +407,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <textarea id="ed-text" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
   <button id="ed-color-btn" title="change color"></button>
   <div id="ed-color-palette"></div>
-  <div id="ed-folder-row"></div>
+  <div id="ed-size-row">
+    <span class="size-label">size</span>
+    <button class="size-btn" data-size="0.6">S</button>
+    <button class="size-btn" data-size="1.0">M</button>
+    <button class="size-btn" data-size="1.5">L</button>
+  </div>
   <div id="ed-session-row"></div>
   <div id="editor-actions">
     <button id="del-btn">delete</button>
     <button id="cancel-btn">cancel</button>
     <button class="save" id="save-btn">done</button>
+  </div>
+</div>
+
+<!-- Connection editor -->
+<div id="conn-editor">
+  <div id="conn-editor-title">connection</div>
+  <div id="conn-preset-row"></div>
+  <input id="conn-custom-input" type="text" placeholder="or type your own..." autocomplete="off">
+  <div id="conn-color-row"></div>
+  <div id="conn-editor-actions">
+    <button class="conn-del-btn" id="conn-del-btn">remove</button>
+    <button class="conn-done-btn" id="conn-done-btn">done</button>
   </div>
 </div>
 
@@ -387,6 +462,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <div id="sd-utils">
     <div class="sd-util-sep">dev tools</div>
     <button id="sd-test-thought">+ test thought</button>
+    <button id="sd-bulk-test">+ bulk test (100/500/1k)</button>
+    <button id="sd-clean-connections">🔧 clean orphaned connections</button>
     <button id="sd-reset-view">reset camera</button>
     <button id="sd-show-orphans">highlight orphans</button>
     <button id="sd-toggle-fps">fps <span class="toggle-dot" id="sd-fps-dot"></span></button>
@@ -448,7 +525,7 @@ import { get, set, del } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 13,         // v13: IndexedDB migration
+  version: 13,         // v13: IndexedDB + performance fixes
   thoughts: [], connections: [], folders: [],
   activeFolder: null, camera: null, openToCapture: false,
   sessions: [],        // v5: array of session objects
@@ -457,7 +534,7 @@ let state = {
 
 const SESSION_THRESHOLD = 15;
 
-let editingId = null, editingFolder = null, editingColor = null;
+let editingId = null, editingFolder = null, editingColor = null, editingSize = 1.0;
 let connectSource = null, holdTimer = null;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
@@ -500,6 +577,7 @@ controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.enablePan = true; controls.panSpeed = 0.8;
 controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
 controls.minDistance = 0.5; controls.maxDistance = 200;
+controls.addEventListener('change', () => { needsRender = true; });
 
 scene.add(new THREE.AmbientLight(0x404060, 0.6));
 const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5,8,10); scene.add(dl);
@@ -512,6 +590,30 @@ scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xffffff,size:0.0
 
 const thoughtGroup = new THREE.Group(); scene.add(thoughtGroup);
 const lineGroup = new THREE.Group(); scene.add(lineGroup);
+
+// Lookup maps for O(1) access
+const thoughtMap = new Map();
+const meshMap = new Map();
+function rebuildMaps() {
+  thoughtMap.clear(); meshMap.clear();
+  for (const t of state.thoughts) thoughtMap.set(t.id, t);
+  for (const m of thoughtGroup.children) meshMap.set(m.userData.id, m);
+}
+
+// Connection presets
+const CONN_PRESETS = [
+  { label:'causes', color:'#fb923c' },
+  { label:'contradicts', color:'#f87171' },
+  { label:'supports', color:'#34d399' },
+  { label:'depends on', color:'#fbbf24' },
+  { label:'relates to', color:'#6ea8fe' },
+  { label:'reminds me of', color:'#a78bfa' },
+  { label:'same as', color:'#67e8f9' },
+  { label:'part of', color:'#f472b6' },
+  { label:'leads to', color:'#fb923c' },
+  { label:'follows from', color:'#fbbf24' },
+];
+const CONN_COLORS = ['#6ea8fe','#fb923c','#f87171','#34d399','#fbbf24','#a78bfa','#f472b6','#67e8f9'];
 
 // ═══════════════════════════════════════════
 // Thought mesh
@@ -564,8 +666,11 @@ function addThoughtMesh(t) {
   const mesh = new THREE.Mesh(sphereGeo, mat);
   mesh.position.set(t.position[0], t.position[1], t.position[2]);
   mesh.userData = { id:t.id, baseEmissive:0.15, targetEmissive:0.15, targetOpacity:0.9, breath:Math.random()*Math.PI*2 };
+  const size = t.size || 1.0;
+  mesh.scale.setScalar(size);
   if (t.text) { const l = createLabel(t.text); l.name='label'; mesh.add(l); }
   thoughtGroup.add(mesh);
+  meshMap.set(t.id, mesh);
   return mesh;
 }
 
@@ -575,11 +680,30 @@ function updateLabel(mesh, text) {
   if (text) { const l = createLabel(text); l.name='label'; mesh.add(l); }
 }
 
-function getMesh(id) { return thoughtGroup.children.find(m => m.userData.id === id); }
+function getMesh(id) { return meshMap.get(id) || thoughtGroup.children.find(m => m.userData.id === id); }
 
 // ═══════════════════════════════════════════
 // Connections
 // ═══════════════════════════════════════════
+
+function createSmallLabel(text, color) {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.scale(2, 2);
+  ctx.clearRect(0, 0, 256, 64);
+  ctx.fillStyle = color || 'rgba(255,255,255,0.55)';
+  ctx.font = '500 16px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  let display = text || '';
+  if (display.length > 24) display = display.slice(0, 22) + '…';
+  ctx.fillText(display, 128, 32);
+  const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0.7, depthTest:false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(2.0, 0.5, 1);
+  return sprite;
+}
 
 function rebuildConnections() {
   while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
@@ -592,21 +716,49 @@ function rebuildConnections() {
     const mA = getMesh(c.from), mB = getMesh(c.to);
     if (!mA || !mB) continue;
     const density = pairs[key]||1;
-    const opacity = Math.min(0.2 + density*0.1, 0.7);
+    const connColor = c.color || '#6ea8fe';
+    const baseOpacity = Math.min(0.35 + density*0.1, 0.75);
     const geo = new THREE.BufferGeometry().setFromPoints([mA.position.clone(), mB.position.clone()]);
-    const mat = new THREE.LineBasicMaterial({ color:0x6ea8fe, transparent:true, opacity, linewidth:1 });
+    const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(connColor), transparent:true, opacity:baseOpacity, linewidth:1 });
     const line = new THREE.Line(geo, mat);
     const firstConn = state.connections.find(x => [x.from, x.to].sort().join('|') === key);
-    line.userData = { from:c.from, to:c.to, density, connKey:key, connId:firstConn?.id };
+    line.userData = { from:c.from, to:c.to, density, connKey:key, connId:firstConn?.id, baseOpacity };
     lineGroup.add(line);
+    
+    // Add midpoint label if connection has a label
+    const label = c.label || (density > 1 ? `×${density}` : null);
+    if (label) {
+      const mid = new THREE.Vector3().addVectors(mA.position, mB.position).multiplyScalar(0.5);
+      const sprite = createSmallLabel(label, connColor);
+      sprite.position.copy(mid);
+      sprite.position.y += 0.25;
+      sprite.name = 'conn-label-' + key;
+      sprite.userData = { isConnLabel: true, connKey: key };
+      lineGroup.add(sprite);
+    }
   }
+  needsRender = true;
 }
 
 function updateConnectionPositions() {
-  for (const line of lineGroup.children) {
-    const mA = getMesh(line.userData.from), mB = getMesh(line.userData.to);
+  for (const child of lineGroup.children) {
+    if (child.userData.isConnLabel) {
+      // Update label midpoint
+      const mA = getMesh(child.userData.connKey.split('|')[0]);
+      const mB = getMesh(child.userData.connKey.split('|')[1]);
+      if (mA && mB) {
+        child.position.set(
+          (mA.position.x + mB.position.x) / 2,
+          (mA.position.y + mB.position.y) / 2 + 0.25,
+          (mA.position.z + mB.position.z) / 2
+        );
+      }
+      continue;
+    }
+    if (!child.userData.from) continue;
+    const mA = getMesh(child.userData.from), mB = getMesh(child.userData.to);
     if (!mA || !mB) continue;
-    const pos = line.geometry.attributes.position;
+    const pos = child.geometry.attributes.position;
     pos.setXYZ(0, mA.position.x, mA.position.y, mA.position.z);
     pos.setXYZ(1, mB.position.x, mB.position.y, mB.position.z);
     pos.needsUpdate = true;
@@ -661,7 +813,7 @@ function isThoughtVisible(t) {
 
 function applyFilter() {
   for (const mesh of thoughtGroup.children) {
-    const t = state.thoughts.find(x => x.id === mesh.userData.id);
+    const t = thoughtMap.get(mesh.userData.id) || state.thoughts.find(x => x.id === mesh.userData.id);
     if (!t) continue;
     const vis = isThoughtVisible(t);
     mesh.userData.targetOpacity = vis ? 0.9 : 0.04;
@@ -669,13 +821,23 @@ function applyFilter() {
     const label = mesh.getObjectByName('label');
     if (label) label.material.opacity = vis ? 0.85 : 0.03;
   }
-  for (const line of lineGroup.children) {
-    const tA = state.thoughts.find(x => x.id === line.userData.from);
-    const tB = state.thoughts.find(x => x.id === line.userData.to);
-    if (!tA || !tB) { line.visible = false; continue; }
+  for (const child of lineGroup.children) {
+    if (child.userData.isConnLabel) {
+      // Label sprite — match visibility of its connection
+      const parts = child.userData.connKey.split('|');
+      const tA = thoughtMap.get(parts[0]) || state.thoughts.find(x => x.id === parts[0]);
+      const tB = thoughtMap.get(parts[1]) || state.thoughts.find(x => x.id === parts[1]);
+      if (!tA || !tB) { child.visible = false; continue; }
+      child.visible = isThoughtVisible(tA) && isThoughtVisible(tB);
+      continue;
+    }
+    if (!child.userData.from) continue;
+    const tA = thoughtMap.get(child.userData.from) || state.thoughts.find(x => x.id === child.userData.from);
+    const tB = thoughtMap.get(child.userData.to) || state.thoughts.find(x => x.id === child.userData.to);
+    if (!tA || !tB) { child.visible = false; continue; }
     const bothVisible = isThoughtVisible(tA) && isThoughtVisible(tB);
-    line.visible = bothVisible;
-    line.material.opacity = bothVisible ? 0.25 : 0;
+    child.visible = bothVisible;
+    child.material.opacity = bothVisible ? (child.userData.baseOpacity || 0.35) : 0;
   }
   updateSessionUI();
 }
@@ -818,11 +980,64 @@ function renderSessionList() {
       e.stopPropagation();
       const sid = btn.dataset.del;
       const s = getSession(sid);
-      if (s && s.thoughtIds.size > 0) {
-        if (!confirm(`delete "${s.name}"? (${s.thoughtIds.size} thoughts will remain in all thoughts)`)) return;
+      if (!s) return;
+      
+      // Show delete menu if session has thoughts
+      if (s.thoughtIds.size > 0) {
+        const menu = document.createElement('div');
+        menu.style.cssText = `
+          position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+          background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
+          border-radius:16px;padding:16px;z-index:200;
+          backdrop-filter:blur(20px);min-width:280px;
+        `;
+        menu.innerHTML = `
+          <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Delete "${s.name}"?</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px">${s.thoughtIds.size} thoughts</div>
+          <button id="del-session-only" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">Delete session only (keep thoughts)</button>
+          <button id="del-all" style="width:100%;padding:12px;background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.2);border-radius:10px;color:rgba(255,100,100,0.9);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">Delete session + all thoughts</button>
+          <button id="del-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+        `;
+        document.body.appendChild(menu);
+        
+        menu.querySelector('#del-session-only').addEventListener('click', () => {
+          deleteSession(sid);
+          renderSessionList();
+          menu.remove();
+          toast('session deleted');
+        });
+        
+        menu.querySelector('#del-all').addEventListener('click', () => {
+          // Delete all thoughts in session
+          const toDelete = Array.from(s.thoughtIds);
+          for (const tid of toDelete) {
+            const mesh = getMesh(tid);
+            if (mesh) thoughtGroup.remove(mesh);
+          }
+          // Remove thoughts from state
+          state.thoughts = state.thoughts.filter(t => !toDelete.includes(t.id));
+          // Clean orphaned connections
+          state.connections = state.connections.filter(c => {
+            const fromExists = state.thoughts.find(t => t.id === c.from);
+            const toExists = state.thoughts.find(t => t.id === c.to);
+            return fromExists && toExists;
+          });
+          deleteSession(sid);
+          rebuildConnections();
+          applyFilter();
+          save();
+          renderSessionList();
+          menu.remove();
+          toast(`deleted session + ${toDelete.length} thoughts`);
+        });
+        
+        menu.querySelector('#del-cancel').addEventListener('click', () => menu.remove());
+      } else {
+        // Empty session - just delete
+        deleteSession(sid);
+        renderSessionList();
+        toast('session deleted');
       }
-      deleteSession(sid);
-      renderSessionList();
     });
   });
 }
@@ -972,44 +1187,171 @@ document.getElementById('sd-new-session').addEventListener('click', () => {
 // ═══════════════════════════════════════════
 
 document.getElementById('sd-export').addEventListener('click', () => {
+  // Show export options
+  const menu = document.createElement('div');
+  menu.style.cssText = `
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
+    border-radius:16px;padding:16px;z-index:200;
+    backdrop-filter:blur(20px);min-width:280px;
+  `;
+  menu.innerHTML = `
+    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Export Options</div>
+    <button id="export-json" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">💾 Download JSON</button>
+    <button id="export-copy" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">📋 Copy to Clipboard</button>
+    <button id="export-qr" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">📱 Show QR Code</button>
+    <button id="export-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+  `;
+  document.body.appendChild(menu);
+  
   const data = JSON.stringify({
     thoughts:state.thoughts, connections:state.connections, folders:state.folders,
     sessions: state.sessions.map(s => ({ ...s, thoughtIds: Array.from(s.thoughtIds) }))
   }, null, 2);
-  const blob = new Blob([data],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download=`atem-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  closeSessionDrawer(); toast('exported');
+  
+  // Download JSON
+  menu.querySelector('#export-json').addEventListener('click', () => {
+    const blob = new Blob([data],{type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`atem-${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    menu.remove();
+    closeSessionDrawer(); toast('downloaded');
+  });
+  
+  // Copy to clipboard
+  menu.querySelector('#export-copy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(data);
+      menu.remove();
+      closeSessionDrawer(); toast('copied to clipboard');
+    } catch(e) {
+      toast('copy failed');
+    }
+  });
+  
+  // Show QR code
+  menu.querySelector('#export-qr').addEventListener('click', () => {
+    menu.remove();
+    const qrContainer = document.createElement('div');
+    qrContainer.style.cssText = `
+      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+      background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
+      border-radius:16px;padding:20px;z-index:200;
+      backdrop-filter:blur(20px);text-align:center;
+    `;
+    
+    // Compress data for QR
+    const compressed = JSON.stringify({
+      t:state.thoughts, c:state.connections, f:state.folders,
+      s: state.sessions.map(s => ({ ...s, thoughtIds: Array.from(s.thoughtIds) }))
+    });
+    
+    qrContainer.innerHTML = `
+      <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:16px">Scan to import</div>
+      <div id="qr-canvas" style="background:white;padding:16px;border-radius:12px;display:inline-block"></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:12px">${state.thoughts.length} thoughts, ${state.connections.length} connections</div>
+      <button id="qr-close" style="margin-top:16px;width:100%;padding:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;font-family:inherit">Close</button>
+    `;
+    document.body.appendChild(qrContainer);
+    
+    // Generate QR using a simple canvas-based approach
+    const qrDiv = qrContainer.querySelector('#qr-canvas');
+    qrDiv.innerHTML = `<div style="padding:40px;font-size:12px;color:#333">QR: ${compressed.length} chars<br><small>Too large for QR - use Copy instead</small></div>`;
+    
+    qrContainer.querySelector('#qr-close').addEventListener('click', () => {
+      qrContainer.remove();
+      closeSessionDrawer();
+    });
+  });
+  
+  // Cancel
+  menu.querySelector('#export-cancel').addEventListener('click', () => {
+    menu.remove();
+  });
 });
 
 document.getElementById('sd-import').addEventListener('click', () => {
-  const input = document.createElement('input');
-  input.type='file'; input.accept='.json';
-  input.onchange = (ev) => {
-    const file = ev.target.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (r) => {
-      try {
-        const data = JSON.parse(r.target.result);
-        if (data.thoughts) {
-          while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
-          while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
-          state.thoughts=data.thoughts; state.connections=data.connections||[];
-          state.folders=data.folders||[];
-          state.sessions = (data.sessions||[]).map(s => ({ ...s, thoughtIds: new Set(s.thoughtIds||[]) }));
-          for(const t of state.thoughts){if(t.folder===undefined)t.folder=null;}
-          for(const t of state.thoughts) addThoughtMesh(t);
-          rebuildConnections(); applyFilter(); save();
-          toast('imported '+state.thoughts.length+' thoughts');
-          if(state.thoughts.length>0) hideHint();
-        }
-      } catch(err){toast('import failed');}
+  // Show import options
+  const menu = document.createElement('div');
+  menu.style.cssText = `
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
+    border-radius:16px;padding:16px;z-index:200;
+    backdrop-filter:blur(20px);min-width:280px;
+  `;
+  menu.innerHTML = `
+    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Import Options</div>
+    <button id="import-file" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">📂 Choose JSON File</button>
+    <button id="import-paste" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">📋 Paste from Clipboard</button>
+    <button id="import-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+  `;
+  document.body.appendChild(menu);
+  
+  // File import
+  menu.querySelector('#import-file').addEventListener('click', () => {
+    menu.remove();
+    const input = document.createElement('input');
+    input.type='file'; input.accept='.json';
+    input.onchange = (ev) => {
+      const file = ev.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (r) => {
+        try {
+          const data = JSON.parse(r.target.result);
+          importData(data);
+        } catch(err){toast('import failed');}
+      };
+      reader.readAsText(file);
     };
-    reader.readAsText(file);
-  };
-  input.click(); closeSessionDrawer();
+    input.click();
+    closeSessionDrawer();
+  });
+  
+  // Paste import
+  menu.querySelector('#import-paste').addEventListener('click', async () => {
+    menu.remove();
+    try {
+      const text = await navigator.clipboard.readText();
+      const data = JSON.parse(text);
+      importData(data);
+      closeSessionDrawer();
+    } catch(e) {
+      toast('paste failed - check clipboard');
+    }
+  });
+  
+  // Cancel
+  menu.querySelector('#import-cancel').addEventListener('click', () => {
+    menu.remove();
+  });
+  
+  function importData(data) {
+    if (data.thoughts || data.t) {
+      while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
+      while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+      
+      // Support both full and compressed format
+      state.thoughts = data.thoughts || data.t || [];
+      state.connections = data.connections || data.c || [];
+      state.folders = data.folders || data.f || [];
+      state.sessions = (data.sessions || data.s || []).map(s => ({ 
+        ...s, 
+        thoughtIds: new Set(s.thoughtIds||[]) 
+      }));
+      
+      // Migrate: ensure new fields have defaults
+      for(const t of state.thoughts){ if(!t.size) t.size=1.0; }
+      for(const c of state.connections){ if(!c.color) c.color='#6ea8fe'; }
+      
+      for(const t of state.thoughts) addThoughtMesh(t);
+      rebuildMaps();
+      rebuildConnections(); applyFilter(); save();
+      toast('imported '+state.thoughts.length+' thoughts');
+      if(state.thoughts.length>0) hideHint();
+    }
+  }
 });
 
 function updateDrawerCaptureToggle() {
@@ -1078,6 +1420,65 @@ document.getElementById('sd-test-thought').addEventListener('click', () => {
   closeSessionDrawer();
   toast('test thought added');
 });
+
+document.getElementById('sd-bulk-test').addEventListener('click', () => {
+  closeSessionDrawer();
+  
+  // Show menu
+  const menu = document.createElement('div');
+  menu.style.cssText = `
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
+    border-radius:16px;padding:16px;z-index:200;
+    backdrop-filter:blur(20px);min-width:280px;
+  `;
+  menu.innerHTML = `
+    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Generate Test Thoughts</div>
+    <button id="gen-100" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">100 thoughts</button>
+    <button id="gen-500" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">500 thoughts</button>
+    <button id="gen-1000" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">1000 thoughts</button>
+    <button id="gen-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+  `;
+  document.body.appendChild(menu);
+  
+  function generateBulk(count) {
+    const start = performance.now();
+    const spread = Math.sqrt(count) * 2; // Scale spread with count
+    
+    for(let i = 0; i < count; i++) {
+      const x = (Math.random() - 0.5) * spread;
+      const y = (Math.random() - 0.5) * spread;
+      const z = (Math.random() - 0.5) * spread * 0.5;
+      const text = `test-${i}-${Date.now().toString(36)}`;
+      createThought(x, y, z, text);
+    }
+    
+    const elapsed = performance.now() - start;
+    menu.remove();
+    toast(`generated ${count} thoughts in ${Math.round(elapsed)}ms`);
+  }
+  
+  menu.querySelector('#gen-100').addEventListener('click', () => generateBulk(100));
+  menu.querySelector('#gen-500').addEventListener('click', () => generateBulk(500));
+  menu.querySelector('#gen-1000').addEventListener('click', () => generateBulk(1000));
+  menu.querySelector('#gen-cancel').addEventListener('click', () => menu.remove());
+});
+
+document.getElementById('sd-clean-connections').addEventListener('click', () => {
+  const before = state.connections.length;
+  // Clean orphaned connections
+  state.connections = state.connections.filter(c => {
+    const fromExists = state.thoughts.find(t => t.id === c.from);
+    const toExists = state.thoughts.find(t => t.id === c.to);
+    return fromExists && toExists;
+  });
+  const removed = before - state.connections.length;
+  rebuildConnections();
+  save();
+  closeSessionDrawer();
+  toast(`cleaned ${removed} orphaned connection${removed !== 1 ? 's' : ''}`);
+});
+
 document.getElementById('sd-show-orphans').addEventListener('click', () => {
   const connected = new Set();
   for(const c of state.connections){connected.add(c.from);connected.add(c.to);}
@@ -1214,6 +1615,7 @@ async function load() {
     }
     
     for (const t of state.thoughts) addThoughtMesh(t);
+    rebuildMaps();
     rebuildConnections(); applyFilter(); updateCaptureToggle();
     if (state.thoughts.length > 0) hideHint();
   } catch(e) { 
@@ -1244,9 +1646,10 @@ function createThought(x, y, z, text, color) {
     position:[x,y,z],
     color: color || defaultColor,
     created:Date.now(), touched:Date.now(),
-    folder: null // folders deprecated
+    size: 1.0
   };
   state.thoughts.push(t);
+  thoughtMap.set(t.id, t);
   // Auto-add to active session
   if (state.activeSession) {
     const sess = getActiveSession();
@@ -1256,45 +1659,144 @@ function createThought(x, y, z, text, color) {
   return t;
 }
 
-function updateThought(id, text, folder, color) {
+function updateThought(id, text, folder, color, size) {
   const t = state.thoughts.find(t => t.id===id);
   if (!t) return;
   t.text = text; t.touched = Date.now();
   if (folder !== undefined) t.folder = folder;
   if (color !== undefined) t.color = color;
+  if (size !== undefined) t.size = size;
   const mesh = getMesh(id);
   if (mesh) {
     updateLabel(mesh, text);
     if (color) { mesh.material.color.set(color); mesh.material.emissive.set(color); }
+    if (size !== undefined) mesh.scale.setScalar(size);
   }
+  thoughtMap.set(id, t);
   applyFilter(); save();
 }
 
 function deleteThought(id) {
   state.thoughts = state.thoughts.filter(t=>t.id!==id);
   state.connections = state.connections.filter(c=>c.from!==id&&c.to!==id);
-  // v5: remove from all sessions
   for (const s of state.sessions) s.thoughtIds.delete(id);
   const mesh = getMesh(id);
   if (mesh) thoughtGroup.remove(mesh);
+  thoughtMap.delete(id);
+  meshMap.delete(id);
   rebuildConnections(); save();
 }
 
 function moveThought(id, x, y, z) {
-  const t = state.thoughts.find(t=>t.id===id);
+  const t = thoughtMap.get(id) || state.thoughts.find(t=>t.id===id);
   if (t) { t.position=[x,y,z]; t.touched=Date.now(); }
 }
 
-function addConnection(fromId, toId) {
+function addConnection(fromId, toId, label, color) {
   if (fromId===toId) return;
-  state.connections.push({ id:uid(), from:fromId, to:toId, created:Date.now() });
-  rebuildConnections(); applyFilter(); save(); toast('connected');
+  const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||'#6ea8fe' };
+  state.connections.push(conn);
+  rebuildConnections(); applyFilter(); save();
+  needsRender = true;
+  // Open connection editor for the new connection
+  if (!label) openConnEditor(conn.id);
+  else toast('connected');
 }
 
 function deleteConnection(connKey) {
   state.connections = state.connections.filter(c => [c.from,c.to].sort().join('|') !== connKey);
   rebuildConnections(); applyFilter(); save(); toast('disconnected');
+  needsRender = true;
 }
+
+// ═══════════════════════════════════════════
+// Connection Editor
+// ═══════════════════════════════════════════
+
+let editingConnId = null;
+const connEditorEl = document.getElementById('conn-editor');
+const connCustomInput = document.getElementById('conn-custom-input');
+
+function openConnEditor(connId) {
+  const conn = state.connections.find(c => c.id === connId);
+  if (!conn) return;
+  editingConnId = connId;
+  controls.enabled = false;
+  
+  // Render presets
+  const presetRow = document.getElementById('conn-preset-row');
+  presetRow.innerHTML = CONN_PRESETS.map(p => 
+    `<button class="conn-preset${conn.label===p.label?' active':''}" data-label="${p.label}" data-color="${p.color}">${p.label}</button>`
+  ).join('');
+  
+  // Preset click handlers  
+  presetRow.querySelectorAll('.conn-preset').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      presetRow.querySelectorAll('.conn-preset').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      connCustomInput.value = '';
+      conn.label = btn.dataset.label;
+      conn.color = btn.dataset.color;
+      // Update color swatch selection
+      document.querySelectorAll('#conn-color-row .conn-cswatch').forEach(s => {
+        s.classList.toggle('active', s.dataset.color === conn.color);
+      });
+      rebuildConnections(); applyFilter(); save();
+    });
+  });
+  
+  // Custom input
+  connCustomInput.value = (conn.label && !CONN_PRESETS.find(p=>p.label===conn.label)) ? conn.label : '';
+  connCustomInput.oninput = () => {
+    const v = connCustomInput.value.trim();
+    if (v) {
+      presetRow.querySelectorAll('.conn-preset').forEach(b => b.classList.remove('active'));
+      conn.label = v;
+      rebuildConnections(); save();
+    }
+  };
+  
+  // Color swatches
+  const colorRow = document.getElementById('conn-color-row');
+  colorRow.innerHTML = CONN_COLORS.map(c =>
+    `<div class="conn-cswatch${conn.color===c?' active':''}" data-color="${c}" style="background:${c}"></div>`
+  ).join('');
+  colorRow.querySelectorAll('.conn-cswatch').forEach(swatch => {
+    swatch.addEventListener('click', (e) => {
+      e.stopPropagation();
+      colorRow.querySelectorAll('.conn-cswatch').forEach(s => s.classList.remove('active'));
+      swatch.classList.add('active');
+      conn.color = swatch.dataset.color;
+      rebuildConnections(); save();
+    });
+  });
+  
+  connEditorEl.classList.add('open');
+}
+
+function closeConnEditor() {
+  editingConnId = null;
+  connEditorEl.classList.remove('open');
+  controls.enabled = true;
+  needsRender = true;
+}
+
+document.getElementById('conn-done-btn').addEventListener('click', () => closeConnEditor());
+document.getElementById('conn-del-btn').addEventListener('click', () => {
+  if (editingConnId) {
+    const conn = state.connections.find(c => c.id === editingConnId);
+    if (conn) {
+      const key = [conn.from, conn.to].sort().join('|');
+      deleteConnection(key);
+    }
+  }
+  closeConnEditor();
+});
+connCustomInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); closeConnEditor(); }
+  if (e.key === 'Escape') { e.preventDefault(); closeConnEditor(); }
+});
 
 // ═══════════════════════════════════════════
 // Editor
@@ -1400,15 +1902,33 @@ function renderEditorSessions() {
 }
 
 function openEditor(id) {
-  clearSelection(); closeConnDeletePill();
+  clearSelection(); closeConnDeletePill(); closeConnEditor();
   editingId = id;
   const t = state.thoughts.find(t=>t.id===id);
   edText.value = t ? t.text : '';
   editingFolder = t ? (t.folder||null) : (state.activeFolder||null);
   editingColor = t ? t.color : COLORS[0];
+  editingSize = t ? (t.size || 1.0) : 1.0;
   renderEditorColors(); renderEditorFolders(); renderEditorSessions();
+  // Size buttons
+  document.querySelectorAll('.size-btn').forEach(btn => {
+    btn.classList.toggle('active', parseFloat(btn.dataset.size) === editingSize);
+  });
   editorEl.classList.add('open'); controls.enabled=false;
   edText.style.height='auto';
+  
+  // Glow connections from this thought
+  for (const child of lineGroup.children) {
+    if (child.userData.isConnLabel) continue;
+    if (child.userData.from === id || child.userData.to === id) {
+      child.material.opacity = Math.min((child.userData.baseOpacity || 0.35) + 0.3, 1.0);
+      // Fade back after a moment
+      const base = child.userData.baseOpacity || 0.35;
+      setTimeout(() => { if (child.material) child.material.opacity = base; needsRender = true; }, 800);
+    }
+  }
+  needsRender = true;
+  
   setTimeout(()=>{ edText.focus(); edText.selectionStart=edText.value.length; }, 50);
 }
 
@@ -1416,9 +1936,9 @@ function closeEditor(doSave) {
   if (doSave && editingId) {
     const text = edText.value.trim();
     if (!text) deleteThought(editingId);
-    else updateThought(editingId, text, editingFolder, editingColor);
+    else updateThought(editingId, text, editingFolder, editingColor, editingSize);
   }
-  editingId=null; editingFolder=null; editingColor=null;
+  editingId=null; editingFolder=null; editingColor=null; editingSize=1.0;
   editorEl.classList.remove('open'); controls.enabled=true;
   renderFolderBar();
 }
@@ -1434,6 +1954,22 @@ edText.addEventListener('keydown',(e)=>{
   if(e.key==='Enter'&&!e.shiftKey){closeEditor(true);e.preventDefault();}
 });
 edText.addEventListener('input',()=>{ edText.style.height='auto'; edText.style.height=Math.min(edText.scrollHeight,200)+'px'; });
+
+// Size buttons
+document.querySelectorAll('.size-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    editingSize = parseFloat(btn.dataset.size);
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Live preview
+    if (editingId) {
+      const mesh = getMesh(editingId);
+      if (mesh) mesh.scale.setScalar(editingSize);
+      needsRender = true;
+    }
+  });
+});
 
 // ═══════════════════════════════════════════
 // Connection delete pill
@@ -1575,7 +2111,7 @@ function worldPosFromScreen(e) {
 function pxFromEvent(e) { return { x: e.clientX??e.touches?.[0]?.clientX??0, y: e.clientY??e.touches?.[0]?.clientY??0 }; }
 
 function isOverlayOpen() {
-  return editorEl.classList.contains('open');
+  return editorEl.classList.contains('open') || connEditorEl.classList.contains('open');
 }
 
 function onPointerDown(e) {
@@ -1670,8 +2206,12 @@ function onPointerUp(e) {
     else {
       const lineHit = hitLine(e);
       if (lineHit && lineHit.userData.connKey) {
-        const px = pxFromEvent(e);
-        showConnDeletePill(px.x, px.y, lineHit.userData.connKey);
+        // Find the connection and open editor
+        const connKey = lineHit.userData.connKey;
+        const conn = state.connections.find(c => [c.from,c.to].sort().join('|') === connKey);
+        if (conn) {
+          openConnEditor(conn.id);
+        }
       } else {
         const wp = worldPosFromScreen(e);
         const t = createThought(wp.x, wp.y, wp.z);
@@ -1838,21 +2378,54 @@ function updateStats() {
 
 let lastTime = performance.now();
 
+let needsRender = true;
+function requestRender() { needsRender = true; }
+
+// Frustum for culling
+const frustum = new THREE.Frustum();
+const cameraViewProjectionMatrix = new THREE.Matrix4();
+
 function animate() {
   requestAnimationFrame(animate);
   const now=performance.now(); const dt=(now-lastTime)/1000; lastTime=now;
   fpsFrames++;
   if(now-fpsLast>=500){ fpsValue=Math.round(fpsFrames/((now-fpsLast)/1000)); fpsFrames=0; fpsLast=now; if(showFps) document.getElementById('fps').textContent=fpsValue+' fps'; }
+  
   controls.update();
+  
+  // Update frustum for label culling
+  camera.updateMatrixWorld();
+  cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
+  
+  // Animate thoughts (breathing, emissive) + frustum cull labels
+  let hasAnimation = false;
   for(const mesh of thoughtGroup.children){
     const ud=mesh.userData; ud.breath+=dt*0.8;
     if(!isDragging||mesh!==draggedMesh){ mesh.position.y+=Math.sin(ud.breath)*0.0003; mesh.position.x+=Math.cos(ud.breath*0.7)*0.0002; }
-    const ce=mesh.material.emissiveIntensity; const te=ud.targetEmissive+Math.sin(ud.breath)*0.03; mesh.material.emissiveIntensity+=(te-ce)*0.1;
+    const ce=mesh.material.emissiveIntensity; const te=ud.targetEmissive+Math.sin(ud.breath)*0.03; 
+    mesh.material.emissiveIntensity+=(te-ce)*0.1;
     const co=mesh.material.opacity; mesh.material.opacity+=(ud.targetOpacity-co)*0.08;
+    
+    // Frustum culling for labels (hide if off-screen)
+    const label = mesh.getObjectByName('label');
+    if (label) {
+      const inView = frustum.containsPoint(mesh.position);
+      label.visible = inView && ud.targetOpacity > 0.5;
+    }
+    
+    // Check if animation is still converging
+    if(Math.abs(ce-te) > 0.01 || Math.abs(co-ud.targetOpacity) > 0.01) hasAnimation = true;
   }
+  
   if(lineGroup.children.length>0) updateConnectionPositions();
   updateStats();
-  renderer.render(scene, camera);
+  
+  // Only render if needed: dragging, animating, camera moving, or explicit request
+  if(needsRender || isDragging || hasAnimation || controls.autoRotate) {
+    renderer.render(scene, camera);
+    needsRender = false;
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1876,11 +2449,14 @@ window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.in
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  // ESC closes drawer/editor
+  // ESC closes drawer/editor/conn-editor
   if (e.key === 'Escape') {
     const drawer = document.getElementById('session-drawer');
     const editor = document.getElementById('editor');
-    if (drawer.classList.contains('open')) {
+    if (connEditorEl.classList.contains('open')) {
+      closeConnEditor();
+      e.preventDefault();
+    } else if (drawer.classList.contains('open')) {
       closeSessionDrawer();
       e.preventDefault();
     } else if (editor.classList.contains('open')) {
@@ -1926,10 +2502,10 @@ document.body.addEventListener('drop', (e) => {
             ...s,
             thoughtIds: new Set(s.thoughtIds || [])
           }));
-          for (const t of state.thoughts) {
-            if (t.folder === undefined) t.folder = null;
-            addThoughtMesh(t);
-          }
+          for(const t of state.thoughts){ if(!t.size) t.size=1.0; }
+          for(const c of state.connections){ if(!c.color) c.color='#6ea8fe'; }
+          for (const t of state.thoughts) addThoughtMesh(t);
+          rebuildMaps();
           rebuildConnections();
           applyFilter();
           save();
@@ -1946,7 +2522,7 @@ document.body.addEventListener('drop', (e) => {
 
 setInterval(save,10000);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v13 — IndexedDB migration (Phase 1 POC)');
+console.log('atem v14.0 — Layer 1: Expression (connections + sizes + presets)');
 </script>
 </body>
 </html>
