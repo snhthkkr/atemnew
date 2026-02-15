@@ -121,29 +121,32 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 /* ─── Session indicator (top center) ─── */
 /* ─── Tag bar (hover to reveal) ─── */
 #tag-bar{
-  position:fixed;top:12px;left:50%;transform:translateX(-50%);
-  display:flex;gap:16px;align-items:center;
-  z-index:100;opacity:0;transition:opacity 0.2s;pointer-events:none;
+  position:fixed;top:0;left:0;right:0;
+  background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);
+  padding:10px 16px;display:flex;gap:8px;align-items:center;
+  z-index:100;transform:translateY(-100%);transition:transform 0.2s;
+  border-bottom:1px solid rgba(255,255,255,0.06);
 }
-#tag-bar.show{opacity:1;pointer-events:auto}
+#tag-bar.show{transform:translateY(0)}
 .tag-chip{
-  font-size:13px;color:rgba(255,255,255,0.25);
-  cursor:pointer;transition:color 0.15s;
-  white-space:nowrap;
+  padding:5px 11px;border-radius:16px;font-size:12px;
+  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);
+  border:1px solid rgba(255,255,255,0.08);cursor:pointer;
+  white-space:nowrap;transition:all 0.15s;
 }
-.tag-chip:hover{color:rgba(255,255,255,0.5)}
-.tag-chip.active{color:rgba(110,168,254,0.9)}
-.tag-chip.add-new{color:rgba(110,168,254,0.4)}
+.tag-chip:hover{background:rgba(255,255,255,0.08)}
+.tag-chip.active{background:rgba(110,168,254,0.15);color:rgba(110,168,254,0.9);border-color:rgba(110,168,254,0.3)}
+.tag-chip.add-new{border-style:dashed;color:rgba(110,168,254,0.5)}
 
 /* ─── Session switcher button (top-left) ─── */
 #session-btn{
   position:fixed;
-  top:max(16px,env(safe-area-inset-top,0px));
-  left:16px;
-  width:40px;height:40px;border-radius:10px;
+  bottom:max(28px,calc(env(safe-area-inset-bottom,0px)+16px));
+  right:20px;
+  width:48px;height:48px;border-radius:50%;
   background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
   display:flex !important;align-items:center;justify-content:center;
-  cursor:pointer;z-index:90;
+  cursor:pointer;z-index:105;
 }
 #session-btn:active{background:rgba(255,255,255,0.12)}
 #session-btn svg{width:20px;height:20px;opacity:0.4}
@@ -432,18 +435,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 <div id="toast"></div>
 
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","idb-keyval":"https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm"}}
 </script>
 
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { get, set, del } from 'idb-keyval';
 
 // ═══════════════════════════════════════════
 // State
 // ═══════════════════════════════════════════
 
 let state = {
+  version: 13,         // v13: IndexedDB migration
   thoughts: [], connections: [], folders: [],
   activeFolder: null, camera: null, openToCapture: false,
   sessions: [],        // v5: array of session objects
@@ -1101,7 +1106,7 @@ document.getElementById('sd-toggle-fps').addEventListener('click', () => {
 // Persistence
 // ═══════════════════════════════════════════
 
-function save() {
+async function save() {
   state.camera = {
     px:camera.position.x,py:camera.position.y,pz:camera.position.z,
     tx:controls.target.x,ty:controls.target.y,tz:controls.target.z
@@ -1111,31 +1116,73 @@ function save() {
     ...state,
     sessions: state.sessions.map(s => ({ ...s, thoughtIds: Array.from(s.thoughtIds) }))
   };
-  try { localStorage.setItem('atem-state', JSON.stringify(serializable)); } catch(e){}
+  
+  // Primary: IndexedDB
+  try {
+    await set('atem-state', serializable);
+  } catch(e) {
+    console.warn('IndexedDB save failed', e);
+  }
+  
+  // Fallback: localStorage (for export compatibility)
+  try { 
+    localStorage.setItem('atem-state-backup', JSON.stringify(serializable)); 
+  } catch(e){}
 }
 
-function load() {
+async function load() {
+  let s = null;
+  
+  // Try IndexedDB first
   try {
-    const raw = localStorage.getItem('atem-state');
-    if (!raw) {
-      // No data - show import hint
-      setTimeout(() => {
-        if (state.thoughts.length === 0) {
-          toast('no data found - import your thoughts or start fresh', 5000);
+    s = await get('atem-state');
+  } catch(e) {
+    console.warn('IndexedDB load failed', e);
+  }
+  
+  // Fallback to localStorage if IndexedDB empty
+  if (!s) {
+    try {
+      const raw = localStorage.getItem('atem-state') || localStorage.getItem('atem-state-backup');
+      if (raw) {
+        s = JSON.parse(raw);
+        // Migrate to IndexedDB
+        if (s) {
+          await set('atem-state', s);
+          console.log('Migrated from localStorage to IndexedDB');
         }
-      }, 1000);
-      return;
+      }
+    } catch(e) {
+      console.warn('localStorage load failed', e);
     }
-    const s = JSON.parse(raw);
-    state.thoughts = s.thoughts||[]; state.connections = s.connections||[];
-    state.folders = s.folders||[]; state.activeFolder = s.activeFolder||null;
+  }
+  
+  if (!s) {
+    // No data - show import hint
+    setTimeout(() => {
+      if (state.thoughts.length === 0) {
+        toast('no data found - import your thoughts or start fresh', 5000);
+      }
+    }, 1000);
+    return;
+  }
+  
+  // Hydrate state
+  try {
+    state.version = s.version || state.version;
+    state.thoughts = s.thoughts||[]; 
+    state.connections = s.connections||[];
+    state.folders = s.folders||[]; 
+    state.activeFolder = s.activeFolder||null;
     state.openToCapture = s.openToCapture||false;
+    
     // v5 migration
     state.sessions = (s.sessions||[]).map(sess => ({
       ...sess,
       thoughtIds: new Set(sess.thoughtIds || [])
     }));
     state.activeSession = s.activeSession || null;
+    
     // Validate activeSession still exists
     if (state.activeSession && !getSession(state.activeSession)) {
       // Fall back to most recently touched
@@ -1146,7 +1193,12 @@ function load() {
         state.activeSession = null;
       }
     }
-    if (s.camera) { camera.position.set(s.camera.px,s.camera.py,s.camera.pz); controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz); }
+    
+    if (s.camera) { 
+      camera.position.set(s.camera.px,s.camera.py,s.camera.pz); 
+      controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz); 
+    }
+    
     for (const t of state.thoughts) { if (t.folder===undefined) t.folder=null; }
     
     // Clean orphaned connections
@@ -1164,7 +1216,9 @@ function load() {
     for (const t of state.thoughts) addThoughtMesh(t);
     rebuildConnections(); applyFilter(); updateCaptureToggle();
     if (state.thoughts.length > 0) hideHint();
-  } catch(e) { console.warn('load failed', e); }
+  } catch(e) { 
+    console.warn('state hydration failed', e); 
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1811,12 +1865,14 @@ window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.in
 // Init
 // ═══════════════════════════════════════════
 
-load();
-animate();
-
-// ALWAYS open to "all thoughts" view
-state.activeSession = null;
-applyFilter();
+(async () => {
+  await load();
+  animate();
+  
+  // ALWAYS open to "all thoughts" view
+  state.activeSession = null;
+  applyFilter();
+})();
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
@@ -1845,10 +1901,52 @@ document.addEventListener('mousemove', (e) => {
   }
 });
 
-if(state.openToCapture) setTimeout(()=>openZeroCapture(),200);
+// Drag-drop import
+document.body.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+document.body.addEventListener('drop', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.json')) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.thoughts) {
+          while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
+          while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+          state.thoughts = data.thoughts || [];
+          state.connections = data.connections || [];
+          state.folders = data.folders || [];
+          state.sessions = (data.sessions || []).map(s => ({
+            ...s,
+            thoughtIds: new Set(s.thoughtIds || [])
+          }));
+          for (const t of state.thoughts) {
+            if (t.folder === undefined) t.folder = null;
+            addThoughtMesh(t);
+          }
+          rebuildConnections();
+          applyFilter();
+          save();
+          toast(`imported ${state.thoughts.length} thoughts`);
+          if (state.thoughts.length > 0) hideHint();
+        }
+      } catch (err) {
+        toast('import failed');
+      }
+    };
+    reader.readAsText(file);
+  }
+});
+
 setInterval(save,10000);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v12.2 — note creation fixed');
+console.log('atem v13 — IndexedDB migration (Phase 1 POC)');
 </script>
 </body>
 </html>
