@@ -146,7 +146,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   width:48px;height:48px;border-radius:50%;
   background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.22);
   display:flex !important;align-items:center;justify-content:center;
-  cursor:pointer;z-index:105;
+  cursor:pointer;z-index:105;touch-action:manipulation;
 }
 #session-btn:active{background:rgba(255,255,255,0.2)}
 #session-btn svg{width:18px;height:18px;opacity:0.7;pointer-events:none}
@@ -1164,8 +1164,13 @@ function deleteSession(sid) {
   applyFilter(); save();
 }
 
-// Session button
-document.getElementById('session-btn').addEventListener('click', (e) => {
+// Session button — touchend for iOS PWA (click not reliably synthesised over
+// a full-screen canvas with touch-action:none); click retained for mouse/desktop.
+const sessionBtnEl = document.getElementById('session-btn');
+sessionBtnEl.addEventListener('touchend', (e) => {
+  e.preventDefault(); e.stopPropagation(); openSessionDrawer();
+}, { passive: false });
+sessionBtnEl.addEventListener('click', (e) => {
   e.stopPropagation(); openSessionDrawer();
 });
 // Scrim closes drawer
