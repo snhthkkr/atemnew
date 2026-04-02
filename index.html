@@ -443,7 +443,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
     <line x1="4" y1="12" x2="20" y2="12"/>
     <line x1="4" y1="16" x2="20" y2="16"/>
   </svg>
-  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.4</span>
+  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.5</span>
 </button>
 
 <!-- Session drawer -->
@@ -1648,7 +1648,15 @@ function createThought(x, y, z, text, color) {
       defaultColor = `hsl(${sess.hue}, 70%, 60%)`;
     }
   }
-  if (!defaultColor) defaultColor = COLORS[colorIdx++ % COLORS.length];
+  if (!defaultColor) {
+    // If in a session but session has no hue, use first color consistently
+    // If not in any session, also use first color (no random cycling)
+    if (state.activeSession) {
+      defaultColor = COLORS[0]; // fallback for sessions without hue
+    } else {
+      defaultColor = COLORS[0]; // all-thoughts board: consistent color
+    }
+  }
   
   const t = {
     id:uid(), text:text||'',
@@ -2254,10 +2262,25 @@ function clearHold() {
   if (connectSource) { const src = getMesh(connectSource); if (src) src.userData.targetEmissive = 0.15; connectSource = null; pendingLineMesh.visible = false; }
 }
 
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onPointerDown(e); }, { passive:false });
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (e.touches.length > 1) {
+    // Multitouch detected — cancel any pending single-touch action
+    multiTouchActive = true;
+    clearHold();
+    clearTimeout(lassoHoldTimer);
+    draggedMesh = null;
+    holdTriggered = false;
+    controls.enabled = true;
+    return;
+  }
+  // Single touch — but delay slightly so we can catch a second finger
+  multiTouchActive = false;
+  onPointerDown(e);
+}, { passive:false });
 canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); onPointerMove(e); }, { passive:false });
 canvas.addEventListener('touchend', onPointerUp);
-canvas.addEventListener('touchcancel', ()=>{ clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; draggedMesh=null; isDragging=false; controls.enabled=true; });
+canvas.addEventListener('touchcancel', ()=>{ clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; draggedMesh=null; isDragging=false; holdTriggered=false; multiTouchActive=false; controls.enabled=true; });
 canvas.addEventListener('mousedown', onPointerDown);
 window.addEventListener('mousemove', onPointerMove);
 window.addEventListener('mouseup', onPointerUp);
