@@ -9,6 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
 <title>atem</title>
+<meta name="atem-version" content="0.3.0">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
@@ -444,7 +445,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
     <line x1="4" y1="12" x2="20" y2="12"/>
     <line x1="4" y1="16" x2="20" y2="16"/>
   </svg>
-  <span id="session-badge"></span>
+  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.3</span>
 </button>
 
 <!-- Session drawer -->
@@ -537,6 +538,7 @@ const SESSION_THRESHOLD = 15;
 
 let editingId = null, editingFolder = null, editingColor = null, editingSize = 1.0;
 let connectSource = null, holdTimer = null;
+let multiTouchActive = false, touchCount = 0;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
 let pointerStart = { x:0, y:0 }, pointerMoved = false, holdTriggered = false;
@@ -548,7 +550,7 @@ let selectedIds = new Set();
 let pendingDeleteConnId = null;
 let sessionTipShown = false;
 
-const HOLD_MS = 350, DRAG_THRESH = 8, SPHERE_RADIUS = 0.35;
+const HOLD_MS = 400, DRAG_THRESH = 12, SPHERE_RADIUS = 0.35;
 const raycaster = new THREE.Raycaster();
 raycaster.params.Line = { threshold: 0.4 };
 const pointer = new THREE.Vector2();
@@ -1938,13 +1940,11 @@ function openEditor(id) {
   }
   needsRender = true;
   
-  // iOS needs a longer delay and a user-gesture-friendly focus
-  setTimeout(()=>{
-    edText.focus();
-    edText.selectionStart = edText.value.length;
-    // iOS Safari workaround: trigger keyboard
-    edText.click();
-  }, 100);
+  // iOS Safari: focus must happen in same tick as user gesture
+  edText.focus();
+  edText.selectionStart = edText.value.length;
+  // Fallback for iOS
+  setTimeout(()=>{ edText.focus(); if(edText.value) edText.selectionStart=edText.value.length; }, 100);
 }
 
 function closeEditor(doSave) {
@@ -2132,7 +2132,8 @@ function isOverlayOpen() {
 function onPointerDown(e) {
   if (isOverlayOpen()) return;
   if (e.target !== canvas) return;
-  if (e.touches && e.touches.length > 1) { clearHold(); return; }
+  if (e.touches) { touchCount = e.touches.length; }
+  if (e.touches && e.touches.length > 1) { clearHold(); multiTouchActive = true; return; }
   closeConnDeletePill();
   const px = pxFromEvent(e);
   pointerStart = px; pointerMoved = false; holdTriggered = false;
@@ -2167,7 +2168,7 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   if (isOverlayOpen()) return;
-  if (e.touches && e.touches.length > 1) { clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; return; }
+  if (e.touches && e.touches.length > 1) { clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; multiTouchActive = true; return; }
   const px = pxFromEvent(e);
   const dx = px.x-pointerStart.x, dy = px.y-pointerStart.y;
   if (Math.sqrt(dx*dx+dy*dy) > DRAG_THRESH) pointerMoved = true;
@@ -2198,6 +2199,10 @@ function onPointerMove(e) {
 
 function onPointerUp(e) {
   if (isOverlayOpen()) return;
+  if (multiTouchActive || (e.touches && e.touches.length > 0)) {
+    if (!e.touches || e.touches.length === 0) multiTouchActive = false;
+    draggedMesh = null; isDragging = false; holdTriggered = false; controls.enabled = true; return;
+  }
   clearTimeout(holdTimer); clearTimeout(lassoHoldTimer);
   if (lassoActive && lassoHoldTriggered && lassoEnd) {
     finishLasso(); lassoActive=false; lassoHoldTriggered=false; lassoStart=null; lassoEnd=null;
@@ -2230,15 +2235,15 @@ function onPointerUp(e) {
       } else {
         const wp = worldPosFromScreen(e);
         const t = createThought(wp.x, wp.y, wp.z);
-        // Fly camera to the new thought so it's always in view
+        // Snap camera target to new thought so it stays in view
         controls.target.set(wp.x, wp.y, wp.z);
-        camera.position.set(wp.x, wp.y, wp.z + 18);
+        camera.position.set(wp.x, wp.y, wp.z + 14);
         controls.update();
         openEditor(t.id);
       }
     }
   }
-  draggedMesh = null; isDragging = false; holdTriggered = false; controls.enabled = true;
+  draggedMesh = null; isDragging = false; holdTriggered = false; multiTouchActive = false; controls.enabled = true;
 }
 
 function clearHold() {
@@ -2246,7 +2251,7 @@ function clearHold() {
   if (connectSource) { const src = getMesh(connectSource); if (src) src.userData.targetEmissive = 0.15; connectSource = null; pendingLineMesh.visible = false; }
 }
 
-canvas.addEventListener('touchstart', onPointerDown, { passive:false });
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onPointerDown(e); }, { passive:false });
 canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); onPointerMove(e); }, { passive:false });
 canvas.addEventListener('touchend', onPointerUp);
 canvas.addEventListener('touchcancel', ()=>{ clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; draggedMesh=null; isDragging=false; controls.enabled=true; });
@@ -2461,12 +2466,11 @@ window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.in
   await load();
   animate();
   
-  // Default to first session if one exists, otherwise create Session 1
+  // Default to first session, create one if none exists
   if (state.sessions.length === 0) {
-    const s = createSession('My Space', []);
+    const s = createSession('my space', []);
     state.activeSession = s.id;
   } else if (!state.activeSession) {
-    // Pick most recently touched session
     const sorted = [...state.sessions].sort((a,b) => b.touched - a.touched);
     state.activeSession = sorted[0].id;
   }
