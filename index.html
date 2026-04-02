@@ -536,6 +536,7 @@ const SESSION_THRESHOLD = 15;
 
 let editingId = null, editingFolder = null, editingColor = null, editingSize = 1.0;
 let connectSource = null, holdTimer = null;
+let multiTouchActive = false;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
 let pointerStart = { x:0, y:0 }, pointerMoved = false, holdTriggered = false;
@@ -1647,7 +1648,7 @@ function createThought(x, y, z, text, color) {
       defaultColor = `hsl(${sess.hue}, 70%, 60%)`;
     }
   }
-  if (!defaultColor) defaultColor = COLORS[colorIdx++ % COLORS.length];
+  if (!defaultColor) defaultColor = state.activeSession ? COLORS[colorIdx++ % COLORS.length] : COLORS[0];
   
   const t = {
     id:uid(), text:text||'',
@@ -2125,7 +2126,7 @@ function isOverlayOpen() {
 function onPointerDown(e) {
   if (isOverlayOpen()) return;
   if (e.target !== canvas) return;
-  if (e.touches && e.touches.length > 1) { clearHold(); return; }
+  if (e.touches && e.touches.length > 1) { clearHold(); multiTouchActive = true; return; }
   closeConnDeletePill();
   const px = pxFromEvent(e);
   pointerStart = px; pointerMoved = false; holdTriggered = false;
@@ -2160,7 +2161,7 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   if (isOverlayOpen()) return;
-  if (e.touches && e.touches.length > 1) { clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; return; }
+  if (e.touches && e.touches.length > 1) { clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display="none"; multiTouchActive = true; return; }
   const px = pxFromEvent(e);
   const dx = px.x-pointerStart.x, dy = px.y-pointerStart.y;
   if (Math.sqrt(dx*dx+dy*dy) > DRAG_THRESH) pointerMoved = true;
@@ -2191,6 +2192,7 @@ function onPointerMove(e) {
 
 function onPointerUp(e) {
   if (isOverlayOpen()) return;
+  if (multiTouchActive) { multiTouchActive = false; draggedMesh = null; isDragging = false; holdTriggered = false; controls.enabled = true; return; }
   clearTimeout(holdTimer); clearTimeout(lassoHoldTimer);
   if (lassoActive && lassoHoldTriggered && lassoEnd) {
     finishLasso(); lassoActive=false; lassoHoldTriggered=false; lassoStart=null; lassoEnd=null;
