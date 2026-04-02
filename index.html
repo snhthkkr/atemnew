@@ -9,7 +9,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
 <title>atem</title>
-<meta name="atem-version" content="0.3.0">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
@@ -29,7 +28,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 #editor.open{display:block}
 #editor textarea{
-  -webkit-user-select:text;user-select:text;
   width:100%;min-height:80px;max-height:200px;
   background:transparent;border:none;outline:none;
   color:#fff;font-size:16px;line-height:1.5;
@@ -445,7 +443,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
     <line x1="4" y1="12" x2="20" y2="12"/>
     <line x1="4" y1="16" x2="20" y2="16"/>
   </svg>
-  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.3</span>
+  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.4</span>
 </button>
 
 <!-- Session drawer -->
@@ -538,7 +536,7 @@ const SESSION_THRESHOLD = 15;
 
 let editingId = null, editingFolder = null, editingColor = null, editingSize = 1.0;
 let connectSource = null, holdTimer = null;
-let multiTouchActive = false, touchCount = 0;
+let multiTouchActive = false;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
 let pointerStart = { x:0, y:0 }, pointerMoved = false, holdTriggered = false;
@@ -550,7 +548,7 @@ let selectedIds = new Set();
 let pendingDeleteConnId = null;
 let sessionTipShown = false;
 
-const HOLD_MS = 400, DRAG_THRESH = 12, SPHERE_RADIUS = 0.35;
+const HOLD_MS = 400, DRAG_THRESH = 10, SPHERE_RADIUS = 0.35;
 const raycaster = new THREE.Raycaster();
 raycaster.params.Line = { threshold: 0.4 };
 const pointer = new THREE.Vector2();
@@ -1940,11 +1938,9 @@ function openEditor(id) {
   }
   needsRender = true;
   
-  // iOS Safari: focus must happen in same tick as user gesture
   edText.focus();
   edText.selectionStart = edText.value.length;
-  // Fallback for iOS
-  setTimeout(()=>{ edText.focus(); if(edText.value) edText.selectionStart=edText.value.length; }, 100);
+  setTimeout(()=>{ edText.focus(); }, 80);
 }
 
 function closeEditor(doSave) {
@@ -2086,8 +2082,18 @@ document.getElementById('lasso-new-session-btn').addEventListener('pointerdown',
 // ═══════════════════════════════════════════
 
 function ndcFromEvent(e) {
-  const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-  const y = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
+  let x, y;
+  if (e.touches && e.touches.length > 0) {
+    x = e.touches[0].clientX;
+    y = e.touches[0].clientY;
+  } else if (e.changedTouches && e.changedTouches.length > 0) {
+    // touchend has no e.touches, use changedTouches
+    x = e.changedTouches[0].clientX;
+    y = e.changedTouches[0].clientY;
+  } else {
+    x = e.clientX ?? 0;
+    y = e.clientY ?? 0;
+  }
   pointer.set((x/window.innerWidth)*2-1, -(y/window.innerHeight)*2+1);
 }
 
@@ -2123,7 +2129,11 @@ function worldPosFromScreen(e) {
 // Pointer interaction
 // ═══════════════════════════════════════════
 
-function pxFromEvent(e) { return { x: e.clientX??e.touches?.[0]?.clientX??0, y: e.clientY??e.touches?.[0]?.clientY??0 }; }
+function pxFromEvent(e) {
+  if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+  return { x: e.clientX ?? 0, y: e.clientY ?? 0 };
+}
 
 function isOverlayOpen() {
   return editorEl.classList.contains('open') || connEditorEl.classList.contains('open');
@@ -2132,7 +2142,6 @@ function isOverlayOpen() {
 function onPointerDown(e) {
   if (isOverlayOpen()) return;
   if (e.target !== canvas) return;
-  if (e.touches) { touchCount = e.touches.length; }
   if (e.touches && e.touches.length > 1) { clearHold(); multiTouchActive = true; return; }
   closeConnDeletePill();
   const px = pxFromEvent(e);
@@ -2187,22 +2196,20 @@ function onPointerMove(e) {
       pos.setXYZ(0, srcMesh.position.x, srcMesh.position.y, srcMesh.position.z);
       pos.setXYZ(1, wp.x, wp.y, wp.z);
       pos.needsUpdate = true;
+      needsRender = true;
     }
     const hit = hitThought(e);
     for (const child of thoughtGroup.children) {
       const t = state.thoughts.find(x=>x.id===child.userData.id);
       if (t && isThoughtVisible(t)) child.userData.targetEmissive = (hit===child && child.userData.id!==connectSource) ? 0.5 : 0.15;
     }
+    needsRender = true;
   }
   if (lassoActive && lassoHoldTriggered) { controls.enabled = false; lassoEnd = px; updateLassoRect(); }
 }
 
 function onPointerUp(e) {
   if (isOverlayOpen()) return;
-  if (multiTouchActive || (e.touches && e.touches.length > 0)) {
-    if (!e.touches || e.touches.length === 0) multiTouchActive = false;
-    draggedMesh = null; isDragging = false; holdTriggered = false; controls.enabled = true; return;
-  }
   clearTimeout(holdTimer); clearTimeout(lassoHoldTimer);
   if (lassoActive && lassoHoldTriggered && lassoEnd) {
     finishLasso(); lassoActive=false; lassoHoldTriggered=false; lassoStart=null; lassoEnd=null;
@@ -2235,15 +2242,11 @@ function onPointerUp(e) {
       } else {
         const wp = worldPosFromScreen(e);
         const t = createThought(wp.x, wp.y, wp.z);
-        // Snap camera target to new thought so it stays in view
-        controls.target.set(wp.x, wp.y, wp.z);
-        camera.position.set(wp.x, wp.y, wp.z + 14);
-        controls.update();
         openEditor(t.id);
       }
     }
   }
-  draggedMesh = null; isDragging = false; holdTriggered = false; multiTouchActive = false; controls.enabled = true;
+  draggedMesh = null; isDragging = false; holdTriggered = false; controls.enabled = true;
 }
 
 function clearHold() {
@@ -2466,14 +2469,8 @@ window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.in
   await load();
   animate();
   
-  // Default to first session, create one if none exists
-  if (state.sessions.length === 0) {
-    const s = createSession('my space', []);
-    state.activeSession = s.id;
-  } else if (!state.activeSession) {
-    const sorted = [...state.sessions].sort((a,b) => b.touched - a.touched);
-    state.activeSession = sorted[0].id;
-  }
+  // ALWAYS open to "all thoughts" view
+  state.activeSession = null;
   applyFilter();
 })();
 
