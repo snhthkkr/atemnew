@@ -28,6 +28,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 #editor.open{display:block}
 #editor textarea{
+  -webkit-user-select:text;user-select:text;
   width:100%;min-height:80px;max-height:200px;
   background:transparent;border:none;outline:none;
   color:#fff;font-size:16px;line-height:1.5;
@@ -443,7 +444,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
     <line x1="4" y1="12" x2="20" y2="12"/>
     <line x1="4" y1="16" x2="20" y2="16"/>
   </svg>
-  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.5</span>
+  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.9</span>
 </button>
 
 <!-- Session drawer -->
@@ -548,7 +549,7 @@ let selectedIds = new Set();
 let pendingDeleteConnId = null;
 let sessionTipShown = false;
 
-const HOLD_MS = 400, DRAG_THRESH = 10, SPHERE_RADIUS = 0.35;
+const HOLD_MS = 350, DRAG_THRESH = 8, SPHERE_RADIUS = 0.35;
 const raycaster = new THREE.Raycaster();
 raycaster.params.Line = { threshold: 0.4 };
 const pointer = new THREE.Vector2();
@@ -1648,15 +1649,7 @@ function createThought(x, y, z, text, color) {
       defaultColor = `hsl(${sess.hue}, 70%, 60%)`;
     }
   }
-  if (!defaultColor) {
-    // If in a session but session has no hue, use first color consistently
-    // If not in any session, also use first color (no random cycling)
-    if (state.activeSession) {
-      defaultColor = COLORS[0]; // fallback for sessions without hue
-    } else {
-      defaultColor = COLORS[0]; // all-thoughts board: consistent color
-    }
-  }
+  if (!defaultColor) defaultColor = state.activeSession ? COLORS[colorIdx++ % COLORS.length] : COLORS[0];
   
   const t = {
     id:uid(), text:text||'',
@@ -1701,7 +1694,7 @@ function deleteThought(id) {
   if (mesh) thoughtGroup.remove(mesh);
   thoughtMap.delete(id);
   meshMap.delete(id);
-  rebuildConnections(); save();
+  rebuildConnections(); applyFilter(); save();
 }
 
 function moveThought(id, x, y, z) {
@@ -1715,8 +1708,9 @@ function addConnection(fromId, toId, label, color) {
   state.connections.push(conn);
   rebuildConnections(); applyFilter(); save();
   needsRender = true;
-  // Open connection editor for the new connection
-  if (!label) openConnEditor(conn.id);
+  // Open connection editor for the new connection (skip if label===null = auto-created)
+  if (label === null) { needsRender = true; }
+  else if (!label) openConnEditor(conn.id);
   else toast('connected');
 }
 
@@ -1969,7 +1963,7 @@ document.getElementById('cancel-btn').addEventListener('click',()=>{
 });
 document.getElementById('del-btn').addEventListener('click',()=>{ if(editingId) deleteThought(editingId); closeEditor(false); });
 edText.addEventListener('keydown',(e)=>{
-  if(e.key==='Escape'){closeEditor(false);e.preventDefault();}
+  if(e.key==='Escape'){ if(editingId){ const _t=state.thoughts.find(t=>t.id===editingId); if(_t&&!_t.text) deleteThought(editingId); } closeEditor(false); e.preventDefault(); }
   if(e.key==='Enter'&&!e.shiftKey){closeEditor(true);e.preventDefault();}
 });
 edText.addEventListener('input',()=>{ edText.style.height='auto'; edText.style.height=Math.min(edText.scrollHeight,200)+'px'; });
@@ -2090,18 +2084,10 @@ document.getElementById('lasso-new-session-btn').addEventListener('pointerdown',
 // ═══════════════════════════════════════════
 
 function ndcFromEvent(e) {
-  let x, y;
-  if (e.touches && e.touches.length > 0) {
-    x = e.touches[0].clientX;
-    y = e.touches[0].clientY;
-  } else if (e.changedTouches && e.changedTouches.length > 0) {
-    // touchend has no e.touches, use changedTouches
-    x = e.changedTouches[0].clientX;
-    y = e.changedTouches[0].clientY;
-  } else {
-    x = e.clientX ?? 0;
-    y = e.clientY ?? 0;
-  }
+  let x,y;
+  if(e.touches&&e.touches.length>0){x=e.touches[0].clientX;y=e.touches[0].clientY;}
+  else if(e.changedTouches&&e.changedTouches.length>0){x=e.changedTouches[0].clientX;y=e.changedTouches[0].clientY;}
+  else{x=e.clientX??0;y=e.clientY??0;}
   pointer.set((x/window.innerWidth)*2-1, -(y/window.innerHeight)*2+1);
 }
 
@@ -2137,11 +2123,7 @@ function worldPosFromScreen(e) {
 // Pointer interaction
 // ═══════════════════════════════════════════
 
-function pxFromEvent(e) {
-  if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-  return { x: e.clientX ?? 0, y: e.clientY ?? 0 };
-}
+function pxFromEvent(e) { if(e.touches&&e.touches.length>0)return{x:e.touches[0].clientX,y:e.touches[0].clientY}; if(e.changedTouches&&e.changedTouches.length>0)return{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY}; return{x:e.clientX??0,y:e.clientY??0}; }
 
 function isOverlayOpen() {
   return editorEl.classList.contains('open') || connEditorEl.classList.contains('open');
@@ -2204,20 +2186,20 @@ function onPointerMove(e) {
       pos.setXYZ(0, srcMesh.position.x, srcMesh.position.y, srcMesh.position.z);
       pos.setXYZ(1, wp.x, wp.y, wp.z);
       pos.needsUpdate = true;
-      needsRender = true;
     }
     const hit = hitThought(e);
     for (const child of thoughtGroup.children) {
       const t = state.thoughts.find(x=>x.id===child.userData.id);
       if (t && isThoughtVisible(t)) child.userData.targetEmissive = (hit===child && child.userData.id!==connectSource) ? 0.5 : 0.15;
     }
-    needsRender = true;
   }
   if (lassoActive && lassoHoldTriggered) { controls.enabled = false; lassoEnd = px; updateLassoRect(); }
+
 }
 
 function onPointerUp(e) {
   if (isOverlayOpen()) return;
+  if (multiTouchActive) { multiTouchActive = false; draggedMesh=null; isDragging=false; holdTriggered=false; controls.enabled=true; return; }
   clearTimeout(holdTimer); clearTimeout(lassoHoldTimer);
   if (lassoActive && lassoHoldTriggered && lassoEnd) {
     finishLasso(); lassoActive=false; lassoHoldTriggered=false; lassoStart=null; lassoEnd=null;
@@ -2227,7 +2209,17 @@ function onPointerUp(e) {
   if (holdTriggered && connectSource) {
     pendingLineMesh.visible = false;
     const hit = hitThought(e);
-    if (hit && hit.userData.id !== connectSource) addConnection(connectSource, hit.userData.id);
+    if (hit && hit.userData.id !== connectSource) {
+      addConnection(connectSource, hit.userData.id);
+    } else if (!hit && pointerMoved) {
+      const wp = worldPosFromScreen(e);
+      const newT = createThought(wp.x, wp.y, wp.z);
+      // add connection silently without opening conn editor
+      const conn = { id:uid(), from:connectSource, to:newT.id, created:Date.now(), label:null, color:'#6ea8fe' };
+      state.connections.push(conn);
+      rebuildConnections(); applyFilter(); save(); needsRender = true;
+      setTimeout(() => openEditor(newT.id), 80);
+    }
     const src = getMesh(connectSource);
     if (src) src.userData.targetEmissive = 0.15;
     for (const child of thoughtGroup.children) child.userData.targetEmissive = 0.15;
@@ -2254,7 +2246,7 @@ function onPointerUp(e) {
       }
     }
   }
-  draggedMesh = null; isDragging = false; holdTriggered = false; controls.enabled = true;
+  draggedMesh = null; isDragging = false; holdTriggered = false; multiTouchActive = false; controls.enabled = true;
 }
 
 function clearHold() {
@@ -2262,27 +2254,52 @@ function clearHold() {
   if (connectSource) { const src = getMesh(connectSource); if (src) src.userData.targetEmissive = 0.15; connectSource = null; pendingLineMesh.visible = false; }
 }
 
-canvas.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  if (e.touches.length > 1) {
-    // Multitouch detected — cancel any pending single-touch action
-    multiTouchActive = true;
-    clearHold();
-    clearTimeout(lassoHoldTimer);
-    draggedMesh = null;
-    holdTriggered = false;
-    controls.enabled = true;
-    return;
-  }
-  // Single touch — but delay slightly so we can catch a second finger
-  multiTouchActive = false;
-  onPointerDown(e);
-}, { passive:false });
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(e.touches.length>1){multiTouchActive=true;clearHold();draggedMesh=null;holdTriggered=true;controls.enabled=true;return;} multiTouchActive=false; onPointerDown(e); }, { passive:false });
 canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); onPointerMove(e); }, { passive:false });
 canvas.addEventListener('touchend', onPointerUp);
 canvas.addEventListener('touchcancel', ()=>{ clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; draggedMesh=null; isDragging=false; holdTriggered=false; multiTouchActive=false; controls.enabled=true; });
 canvas.addEventListener('mousedown', onPointerDown);
 window.addEventListener('mousemove', onPointerMove);
+
+// Dedicated hover highlight on mousemove (desktop only)
+window.addEventListener('mousemove', (e) => {
+  if (isDragging || holdTriggered || connectSource || isOverlayOpen()) {
+    // During drag/connect, reset all to normal when not in connect mode
+    if (!connectSource) {
+      for (const child of thoughtGroup.children) child.userData.targetEmissive = 0.15;
+      for (const child of lineGroup.children) {
+        if (!child.userData.isConnLabel) child.material.opacity = child.userData.baseOpacity || 0.35;
+      }
+    }
+    return;
+  }
+  const hit = hitThought(e);
+  for (const child of thoughtGroup.children) {
+    const tId = child.userData.id;
+    if (!hit) {
+      child.userData.targetEmissive = 0.15;
+    } else if (tId === hit.userData.id) {
+      child.userData.targetEmissive = 0.75;
+    } else {
+      const isConnected = state.connections.some(c =>
+        (c.from === hit.userData.id && c.to === tId) ||
+        (c.to === hit.userData.id && c.from === tId)
+      );
+      child.userData.targetEmissive = isConnected ? 0.5 : 0.05;
+    }
+  }
+  for (const child of lineGroup.children) {
+    if (child.userData.isConnLabel) continue;
+    const base = child.userData.baseOpacity || 0.35;
+    if (!hit) {
+      child.material.opacity = base;
+    } else {
+      const isRelated = child.userData.from === hit.userData.id || child.userData.to === hit.userData.id;
+      child.material.opacity = isRelated ? 0.9 : 0.04;
+    }
+  }
+  needsRender = true;
+});
 window.addEventListener('mouseup', onPointerUp);
 
 // ═══════════════════════════════════════════
@@ -2491,10 +2508,97 @@ window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.in
 (async () => {
   await load();
   animate();
-  
-  // ALWAYS open to "all thoughts" view
-  state.activeSession = null;
-  applyFilter();
+
+  // If no data, load bible demo
+  if (state.thoughts.length === 0) {
+    const BIBLE = [
+      {id:'claim',text:'The claim',position:[0,0,0],color:'#b8a9f5',size:1.4},
+      {id:'soul',text:'The soul',position:[-2,1.5,0],color:'#b8a9f5',size:1.1},
+      {id:'medium',text:'Medium, not tool',position:[-4,0.5,0],color:'#b8a9f5',size:1.0},
+      {id:'joy',text:'Joyful',position:[4,0.5,0],color:'#b8a9f5',size:0.9},
+      {id:'cheap',text:'Cheap',position:[4,-1,0],color:'#b8a9f5',size:0.8},
+      {id:'fundamental',text:'Fundamental',position:[-4,-1,0],color:'#b8a9f5',size:0.9},
+      {id:'sensitive',text:'Sensitive',position:[0,-2.5,0],color:'#b8a9f5',size:0.8},
+      {id:'space',text:'1. Space',position:[-8,-4,0],color:'#7ed4a4',size:1.3},
+      {id:'thought2',text:'2. Thought',position:[-8,-1,0],color:'#7ed4a4',size:1.3},
+      {id:'conn3',text:'3. Connection',position:[-8,2.5,0],color:'#7ed4a4',size:1.3},
+      {id:'density',text:'Density',position:[-10,4,0],color:'#7ed4a4',size:1.0},
+      {id:'empty',text:'Empty screen',position:[-11,-5.5,0],color:'#7ed4a4',size:0.9},
+      {id:'complete',text:'Three is complete',position:[-5,-2.5,0],color:'#7ed4a4',size:0.85},
+      {id:'spatial',text:'Spatial cognition',position:[8,-5.5,0],color:'#7ab8f5',size:1.0},
+      {id:'external',text:'Extended cognition',position:[11,-4,0],color:'#7ab8f5',size:0.9},
+      {id:'bisociation',text:'Bisociation',position:[11,-2,0],color:'#7ab8f5',size:0.85},
+      {id:'flow',text:'Flow conditions',position:[8,-2.5,0],color:'#7ab8f5',size:1.0},
+      {id:'attention',text:'Attention scarcity',position:[8,-0.5,0],color:'#7ab8f5',size:0.85},
+      {id:'signatures',text:'Cognitive signatures',position:[11,0.2,0],color:'#7ab8f5',size:0.85},
+      {id:'s1',text:'Stage 1: Presets',position:[-2.5,7,0],color:'#f5c97a',size:1.2},
+      {id:'s2',text:'Stage 2: Prompting',position:[1.5,8,0],color:'#f5c97a',size:1.05},
+      {id:'s3',text:'Stage 3: Code',position:[5.5,7,0],color:'#f5c97a',size:1.05},
+      {id:'graceful',text:'Graceful degradation',position:[1.5,5.5,0],color:'#f5c97a',size:0.75},
+      {id:'gesture',text:'Gestures',position:[4.5,4,0],color:'#f5a07a',size:0.85},
+      {id:'visual',text:'Visual language',position:[7.5,3,0],color:'#f5a07a',size:0.85},
+      {id:'colorm',text:'Color = meaning',position:[10,4,0],color:'#f5a07a',size:0.7},
+      {id:'motion',text:'Motion = alive',position:[10,2.5,0],color:'#f5a07a',size:0.7},
+      {id:'notdoc',text:'Not a document',position:[-11,7,0],color:'#a0a09a',size:0.7},
+      {id:'notboard',text:'Not a whiteboard',position:[-11,8.5,0],color:'#a0a09a',size:0.7},
+      {id:'notmind',text:'Not a mind map',position:[-9,9,0],color:'#a0a09a',size:0.7},
+      {id:'notchat',text:'Not a chat',position:[-9,7,0],color:'#a0a09a',size:0.7},
+      {id:'never',text:'Never',position:[-10,7.8,0],color:'#a0a09a',size:0.55},
+      {id:'h1',text:'H1: Spatial',position:[-4.5,10.5,0],color:'#f5a0c0',size:0.7},
+      {id:'h4',text:'H4: Empty wins',position:[-1.5,11.5,0],color:'#f5a0c0',size:0.7},
+      {id:'h5',text:'H5: Flow states',position:[1.5,10.5,0],color:'#f5a0c0',size:0.75},
+      {id:'h7',text:'H7: Each unique',position:[4.5,11.5,0],color:'#f5a0c0',size:0.7},
+      {id:'h8',text:'H8: Stage 1=flow',position:[7.5,10.5,0],color:'#f5a0c0',size:0.7},
+      {id:'stack',text:'The stack',position:[12,7,0],color:'#a0d47a',size:0.9},
+      {id:'layers',text:'Layered separation',position:[14,5.5,0],color:'#a0d47a',size:0.75},
+      {id:'order',text:'Build order: sacred',position:[14,8,0],color:'#a0d47a',size:0.75},
+      {id:'creep',text:'No feature creep',position:[12,9.5,0],color:'#a0d47a',size:0.7},
+    ];
+    const BCONNS = [
+      ['claim','soul','why it matters'],['claim','medium','what it is'],['claim','fundamental','how'],
+      ['claim','cheap','constraint'],['claim','joy','feeling'],['claim','sensitive','nature'],
+      ['soul','joy','produces'],['medium','fundamental','requires'],
+      ['claim','space','primitive 1'],['claim','thought2','primitive 2'],['claim','conn3','primitive 3'],
+      ['space','thought2','contains'],['thought2','conn3','enables'],['conn3','density','core insight'],
+      ['space','empty','opens as'],['space','complete','proof'],['thought2','complete','proof'],
+      ['conn3','complete','proof'],['space','spatial','cognitive basis'],['thought2','external','cognitive basis'],
+      ['conn3','bisociation','cognitive basis'],['empty','flow','enables'],['flow','attention','requires'],
+      ['signatures','medium','validates'],['flow','joy','produces'],['soul','s1','stage 1'],
+      ['s1','s2','adds prompting'],['s2','s3','adds code'],['graceful','s1','principle'],
+      ['graceful','s2','principle'],['graceful','s3','principle'],['s1','gesture','interaction'],
+      ['gesture','visual','expressed as'],['visual','colorm','includes'],['visual','motion','includes'],
+      ['claim','notdoc','not this'],['claim','notboard','not this'],
+      ['h1','spatial','tests'],['h4','empty','tests'],['h5','flow','tests'],['h8','s1','validates'],
+      ['stack','layers','enables'],['layers','order','guides'],['order','creep','prevents'],['stack','cheap','satisfies'],
+    ];
+
+    for (const t of BIBLE) {
+      const now = Date.now();
+      const thought = { id:t.id, text:t.text, position:t.position, color:t.color, size:t.size, created:now, touched:now, folder:null };
+      state.thoughts.push(thought);
+      thoughtMap.set(thought.id, thought);
+      addThoughtMesh(thought);
+    }
+    for (const [from, to, label] of BCONNS) {
+      state.connections.push({ from, to, label: label||'', type:'relates' });
+    }
+    const bs = createSession('atem bible', state.thoughts.map(t=>t.id));
+    state.activeSession = bs.id;
+    rebuildMaps();
+    rebuildConnections();
+    applyFilter();
+    await save();
+    hideHint();
+    camera.position.set(0, 0, 28);
+    controls.target.set(0, 0, 0);
+    toast('welcome to atem — tap anywhere to add a thought');
+  } else if (!state.activeSession) {
+    const sorted = [...state.sessions].sort((a,b) => b.touched - a.touched);
+    state.activeSession = sorted.length ? sorted[0].id : null;
+    applyFilter();
+  } else {
+    applyFilter();
+  }
 })();
 
 // Keyboard shortcuts
