@@ -16,7 +16,7 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:#fff}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 
-/* ─── Editor overlay ─── */
+/* ─── Editor ─── */
 #editor{
   position:fixed;display:none;z-index:100;
   left:50%;top:50%;transform:translate(-50%,-50%);
@@ -33,7 +33,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   background:transparent;border:none;outline:none;
   color:#fff;font-size:16px;line-height:1.5;
   font-family:inherit;resize:none;
-  -webkit-user-select:text;user-select:text;
 }
 #editor textarea::placeholder{color:rgba(255,255,255,0.25)}
 #ed-color-btn{
@@ -55,34 +54,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   border:2px solid rgba(255,255,255,0.15);transition:transform 0.1s;
 }
 .ed-color-swatch:active{transform:scale(0.85)}
-#ed-folder-row{display:none !important}
-.folder-chip{
-  padding:4px 10px;border-radius:20px;font-size:12px;
-  background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);
-  border:1px solid rgba(255,255,255,0.08);cursor:pointer;white-space:nowrap;
-}
-.folder-chip.active{background:rgba(110,168,254,0.2);color:rgba(110,168,254,0.9);border-color:rgba(110,168,254,0.3)}
-.folder-chip.add-new{color:rgba(255,255,255,0.3);border-style:dashed}
-#ed-folder-input{
-  background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.2);
-  color:#fff;font-size:12px;padding:4px 2px;outline:none;width:80px;
-  font-family:inherit;display:none;-webkit-user-select:text;user-select:text;
-}
-/* session row in editor */
-#ed-session-row{
-  display:flex;align-items:center;gap:6px;margin-top:6px;padding-top:6px;
-  border-top:1px solid rgba(255,255,255,0.04);flex-wrap:wrap;
-}
-#ed-session-row .s-badge{
-  padding:3px 8px;border-radius:12px;font-size:11px;
-  background:rgba(110,168,254,0.1);color:rgba(110,168,254,0.7);
-  border:1px solid rgba(110,168,254,0.15);
-}
-#ed-remove-session{
-  padding:3px 8px;border-radius:12px;font-size:11px;
-  background:rgba(255,100,100,0.08);color:rgba(255,100,100,0.6);
-  border:1px solid rgba(255,100,100,0.12);cursor:pointer;
-}
 #editor-actions{
   display:flex;justify-content:flex-end;gap:8px;
   margin-top:12px;padding-top:12px;
@@ -97,162 +68,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 #editor-actions .save{color:#fff;background:rgba(255,255,255,0.15)}
 #del-btn{color:rgba(255,100,100,0.8)}
 
-/* ─── Zero button ─── */
-
-/* ─── Folder bar (hidden – sessions replaced folders) ─── */
-#folder-bar{
-  position:fixed;
-  top:max(38px,calc(env(safe-area-inset-top,0px)+24px));
-  left:50%;transform:translateX(-50%);
-  display:none !important;gap:6px;z-index:85;
-  max-width:calc(100vw - 48px);
-  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 4px;
-}
-#folder-bar::-webkit-scrollbar{display:none}
-#folder-bar .ftab{
-  padding:5px 12px;border-radius:20px;font-size:12px;
-  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.3);
-  border:1px solid rgba(255,255,255,0.06);cursor:pointer;
-  white-space:nowrap;flex-shrink:0;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:all 0.2s;
-}
-#folder-bar .ftab:active{background:rgba(255,255,255,0.08)}
-#folder-bar .ftab.active{background:rgba(110,168,254,0.15);color:rgba(110,168,254,0.9);border-color:rgba(110,168,254,0.25)}
-
-/* ─── Session indicator (top center) ─── */
-/* ─── Tag bar (hover to reveal) ─── */
-#tag-bar{
-  position:fixed;top:0;left:0;right:0;
-  background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);
-  padding:10px 16px;display:flex;gap:8px;align-items:center;
-  z-index:100;transform:translateY(-100%);transition:transform 0.2s;
-  border-bottom:1px solid rgba(255,255,255,0.06);
-}
-#tag-bar.show{transform:translateY(0)}
-.tag-chip{
-  padding:5px 11px;border-radius:16px;font-size:12px;
-  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);
-  border:1px solid rgba(255,255,255,0.08);cursor:pointer;
-  white-space:nowrap;transition:all 0.15s;
-}
-.tag-chip:hover{background:rgba(255,255,255,0.08)}
-.tag-chip.active{background:rgba(110,168,254,0.15);color:rgba(110,168,254,0.9);border-color:rgba(110,168,254,0.3)}
-.tag-chip.add-new{border-style:dashed;color:rgba(110,168,254,0.5)}
-
-/* ─── Session drawer button (bottom-right) ─── */
-#session-btn{
-  position:fixed;
-  bottom:40px;
-  left:50%;
-  transform:translateX(-50%);
-  width:56px;height:56px;border-radius:50%;
-  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
-  display:flex !important;align-items:center;justify-content:center;
-  cursor:pointer;z-index:9999;touch-action:manipulation;
-  -webkit-tap-highlight-color:transparent;
-}
-#session-btn:active{background:rgba(255,255,255,0.2)}
-#session-btn svg{width:18px;height:18px;opacity:0.7;pointer-events:none}
-#session-badge{
-  position:absolute;top:-3px;right:-3px;
-  min-width:14px;height:14px;border-radius:7px;
-  background:rgba(110,168,254,0.8);color:#000;
-  font-size:9px;font-weight:600;
-  display:none;align-items:center;justify-content:center;padding:0 3px;
-}
-#session-badge.on{display:flex}
-
-/* ─── Session drawer (slide from left) ─── */
-#session-scrim{
-  position:fixed;inset:0;z-index:9989;display:none;background:rgba(0,0,0,0.4);
-}
-#session-scrim.open{display:block}
-#session-drawer{
-  position:fixed;top:0;left:0;bottom:0;
-  width:min(280px,80vw);
-  background:rgba(10,10,15,0.97);
-  border-right:1px solid rgba(255,255,255,0.08);
-  z-index:9990;
-  transform:translateX(-100%);
-  transition:transform 0.25s cubic-bezier(0.32,0.72,0,1);
-  display:flex;flex-direction:column;
-  padding:max(16px,env(safe-area-inset-top,0px)) 0 max(16px,env(safe-area-inset-bottom,0px));
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
-}
-#session-drawer.open{transform:translateX(0)}
-#session-drawer-title{
-  font-size:13px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;
-  padding:8px 16px 12px;text-transform:uppercase;
-}
-.sd-item{
-  display:flex;align-items:center;gap:10px;
-  padding:12px 16px;cursor:pointer;transition:background 0.15s;
-  border:none;background:none;width:100%;text-align:left;font-family:inherit;
-}
-.sd-item:active{background:rgba(255,255,255,0.05)}
-.sd-item.active{background:rgba(110,168,254,0.08)}
-.sd-thumb{
-  width:48px;height:48px;border-radius:8px;
-  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);
-  flex-shrink:0;
-}
-.sd-item.active .sd-thumb{border-color:rgba(110,168,254,0.3)}
-.sd-info{flex:1;min-width:0}
-.sd-name{font-size:14px;color:rgba(255,255,255,0.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sd-item.all-item .sd-name{color:rgba(255,255,255,0.45)}
-.sd-meta{font-size:11px;color:rgba(255,255,255,0.2);margin-top:2px}
-.sd-count{
-  font-size:11px;color:rgba(255,255,255,0.2);flex-shrink:0;
-  min-width:20px;text-align:right;
-}
-.sd-rename{
-  width:28px;height:28px;border-radius:6px;border:none;
-  background:rgba(110,168,254,0.08);color:rgba(110,168,254,0.5);
-  font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  margin-right:6px;
-}
-.sd-rename:active{background:rgba(110,168,254,0.2)}
-.sd-delete{
-  width:28px;height:28px;border-radius:6px;border:none;
-  background:rgba(255,100,100,0.08);color:rgba(255,100,100,0.5);
-  font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-}
-.sd-delete:active{background:rgba(255,100,100,0.2)}
-#sd-new-session{
-  display:flex;align-items:center;gap:8px;
-  padding:14px 16px;cursor:pointer;border:none;background:none;
-  color:rgba(110,168,254,0.6);font-size:14px;font-family:inherit;
-  width:100%;text-align:left;margin-top:auto;
-  border-top:1px solid rgba(255,255,255,0.05);
-}
-#sd-new-session:active{background:rgba(255,255,255,0.03)}
-/* ─── Drawer utility section ─── */
-#sd-utils{
-  border-top:1px solid rgba(255,255,255,0.06);
-  padding:8px 0 0;margin-top:8px;
-}
-#sd-utils button{
-  display:flex;align-items:center;
-  width:100%;text-align:left;background:none;border:none;
-  color:rgba(255,255,255,0.4);font-size:13px;
-  padding:11px 16px;cursor:pointer;font-family:inherit;
-}
-#sd-utils button:active{background:rgba(255,255,255,0.05)}
-#sd-utils .sd-util-danger{color:rgba(255,100,100,0.5)}
-#sd-utils .sd-util-sep{
-  margin:4px 16px;font-size:10px;color:rgba(255,255,255,0.12);
-  letter-spacing:0.1em;text-transform:uppercase;
-}
-#sd-utils .toggle-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);margin-left:auto;flex-shrink:0}
-#sd-utils .toggle-dot.on{background:rgba(110,168,254,0.8)}
-/* inline rename input */
-.sd-rename-input{
-  background:transparent;border:none;border-bottom:1px solid rgba(110,168,254,0.3);
-  color:#fff;font-size:14px;padding:0 0 2px;outline:none;width:100%;font-family:inherit;
-  -webkit-user-select:text;user-select:text;
-}
-
-/* ─── Connection editor overlay ─── */
+/* ─── Connection editor ─── */
 #conn-editor{
   position:fixed;display:none;z-index:120;
   left:50%;top:50%;transform:translate(-50%,-50%);
@@ -298,39 +114,60 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 #conn-editor-actions .conn-del-btn{color:rgba(255,100,100,0.8)}
 #conn-editor-actions .conn-done-btn{color:#fff;background:rgba(255,255,255,0.15)}
 
-/* ─── Thought size buttons in editor ─── */
-#ed-size-row{display:flex;gap:6px;margin-top:8px;align-items:center}
-#ed-size-row .size-label{font-size:11px;color:rgba(255,255,255,0.2);margin-right:4px}
-.size-btn{
-  width:32px;height:26px;border-radius:6px;font-size:11px;font-weight:600;
-  border:1px solid rgba(255,255,255,0.08);cursor:pointer;
-  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.35);
-  font-family:inherit;transition:all 0.12s;
+/* ─── Menu button (bottom-center) ─── */
+#menu-btn{
+  position:fixed;
+  bottom:max(24px,env(safe-area-inset-bottom,0px));
+  left:50%;transform:translateX(-50%);
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:90;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
-.size-btn:active{transform:scale(0.92)}
-.size-btn.active{border-color:rgba(110,168,254,0.4);color:rgba(110,168,254,0.9);background:rgba(110,168,254,0.1)}
+#menu-btn:active{background:rgba(255,255,255,0.15)}
+#menu-btn svg{width:16px;height:16px;opacity:0.6;pointer-events:none}
 
-/* ─── Connection delete pill (legacy, kept as fallback) ─── */
-#conn-delete-pill{
-  position:fixed;display:none;z-index:110;
-  background:rgba(10,10,15,0.95);border:1px solid rgba(255,100,100,0.2);
-  border-radius:10px;padding:6px 14px;cursor:pointer;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  color:rgba(255,100,100,0.8);font-size:13px;font-family:inherit;
-  transform:translate(-50%,-100%) translateY(-8px);
+/* ─── Menu drawer ─── */
+#menu-scrim{position:fixed;inset:0;z-index:9989;display:none;background:rgba(0,0,0,0.4)}
+#menu-scrim.open{display:block}
+#menu-drawer{
+  position:fixed;top:0;left:0;bottom:0;
+  width:min(260px,80vw);
+  background:rgba(10,10,15,0.97);
+  border-right:1px solid rgba(255,255,255,0.08);
+  z-index:9990;
+  transform:translateX(-100%);
+  transition:transform 0.25s cubic-bezier(0.32,0.72,0,1);
+  display:flex;flex-direction:column;
+  padding:max(16px,env(safe-area-inset-top,0px)) 0 max(16px,env(safe-area-inset-bottom,0px));
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
-#conn-delete-pill.open{display:block}
-#conn-delete-pill:active{background:rgba(255,50,50,0.15)}
+#menu-drawer.open{transform:translateX(0)}
+#menu-drawer .sep{
+  margin:6px 16px;font-size:10px;color:rgba(255,255,255,0.15);
+  letter-spacing:0.12em;text-transform:uppercase;padding-top:8px;
+}
+#menu-drawer button{
+  display:flex;align-items:center;
+  width:100%;text-align:left;background:none;border:none;
+  color:rgba(255,255,255,0.55);font-size:13px;
+  padding:11px 16px;cursor:pointer;font-family:inherit;
+}
+#menu-drawer button:active{background:rgba(255,255,255,0.05)}
+#menu-drawer .danger{color:rgba(255,100,100,0.55)}
+#menu-drawer .toggle{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);margin-left:auto;flex-shrink:0}
+#menu-drawer .toggle.on{background:rgba(110,168,254,0.8)}
 
 /* ─── Lasso ─── */
 #lasso-rect{position:fixed;display:none;z-index:70;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.03);pointer-events:none;border-radius:2px}
 #lasso-bar{
   position:fixed;display:none;z-index:110;
-  bottom:max(80px,calc(env(safe-area-inset-bottom,0px)+70px));
+  bottom:max(84px,calc(env(safe-area-inset-bottom,0px)+76px));
   left:50%;transform:translateX(-50%);
   background:rgba(10,10,15,0.95);border:1px solid rgba(255,255,255,0.1);
   border-radius:12px;padding:6px;
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:none;gap:4px;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);gap:4px;
 }
 #lasso-bar.open{display:flex}
 #lasso-bar button{
@@ -338,21 +175,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;
 }
 #lasso-bar button:active{background:rgba(255,255,255,0.12)}
-#lasso-folder-picker{
-  position:fixed;display:none;z-index:115;
-  bottom:max(130px,calc(env(safe-area-inset-bottom,0px)+120px));
-  left:50%;transform:translateX(-50%);
-  background:rgba(10,10,15,0.95);border:1px solid rgba(255,255,255,0.1);
-  border-radius:12px;padding:8px;
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  gap:6px;flex-wrap:wrap;max-width:80vw;justify-content:center;
-}
-#lasso-folder-picker.open{display:flex}
 
-/* ─── Stats (hidden – vanity metric) ─── */
-#stats{
-  display:none;
-}
 /* ─── FPS ─── */
 #fps{
   position:fixed;top:max(16px,env(safe-area-inset-top,0px));right:16px;
@@ -361,32 +184,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 #fps.on{display:block}
 
-/* ─── Tray button (hidden – merged into session drawer) ─── */
-#tray-btn{
-  display:none !important;
-}
-#tray-btn svg{width:16px;height:16px;opacity:0.5;pointer-events:none}
-/* ─── Tray sheet (hidden – merged into session drawer) ─── */
-#tray{
-  display:none !important;
-}
-#tray.open{transform:translateY(0)}
-#tray-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.15);margin:0 auto 16px}
-#tray button{
-  display:flex;align-items:center;justify-content:space-between;
-  width:100%;text-align:left;background:none;border:none;
-  color:rgba(255,255,255,0.75);font-size:15px;
-  padding:13px 12px;border-radius:10px;cursor:pointer;font-family:inherit;
-}
-#tray button:active{background:rgba(255,255,255,0.07)}
-.toggle-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0}
-.toggle-dot.on{background:rgba(110,168,254,0.8)}
-.tray-sep{margin:4px 12px;font-size:10px;color:rgba(255,255,255,0.15);letter-spacing:0.1em;text-transform:uppercase}
-#tray-scrim{position:fixed;inset:0;z-index:9998;display:none;background:transparent}
-#tray-scrim.open{display:block}
-
 /* ─── Hint ─── */
 #hint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,0.08);font-size:14px;pointer-events:none;transition:opacity 0.8s ease}
+
 /* ─── Toast ─── */
 #toast{
   position:fixed;top:max(16px,env(safe-area-inset-top,0px));
@@ -408,13 +208,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <textarea id="ed-text" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
   <button id="ed-color-btn" title="change color"></button>
   <div id="ed-color-palette"></div>
-  <div id="ed-size-row">
-    <span class="size-label">size</span>
-    <button class="size-btn" data-size="0.6">S</button>
-    <button class="size-btn" data-size="1.0">M</button>
-    <button class="size-btn" data-size="1.5">L</button>
-  </div>
-  <div id="ed-session-row"></div>
   <div id="editor-actions">
     <button id="del-btn">delete</button>
     <button id="cancel-btn">cancel</button>
@@ -434,82 +227,41 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   </div>
 </div>
 
-<!-- Tag bar (hover top to reveal) -->
-<div id="tag-bar"></div>
-
-<!-- Drawer button (bottom-right, permanent) -->
-<button id="session-btn">
+<!-- Menu -->
+<button id="menu-btn" aria-label="menu">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
     <line x1="4" y1="8" x2="20" y2="8"/>
     <line x1="4" y1="12" x2="20" y2="12"/>
     <line x1="4" y1="16" x2="20" y2="16"/>
   </svg>
-  <span id="session-badge"></span><span style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:0.2;color:#fff;pointer-events:none">v0.9</span>
 </button>
-
-<!-- Session drawer -->
-<div id="session-scrim"></div>
-<div id="session-drawer">
-  <div id="session-drawer-title">tags</div>
-  <div id="sd-list"></div>
-  <button id="sd-new-session">+ new tag</button>
-  
-  <div class="sd-util-sep">utilities</div>
-  <button id="sd-export">💾 export</button>
-  <button id="sd-import">📂 import</button>
-  <button id="sd-migrate">📦 move all to Session 1</button>
-  <button id="sd-open-capture">open to capture <span class="toggle-dot" id="sd-capture-dot"></span></button>
-  
-  <div id="sd-utils">
-    <div class="sd-util-sep">dev tools</div>
-    <button id="sd-test-thought">+ test thought</button>
-    <button id="sd-bulk-test">+ bulk test (100/500/1k)</button>
-    <button id="sd-clean-connections">🔧 clean orphaned connections</button>
-    <button id="sd-reset-view">reset camera</button>
-    <button id="sd-show-orphans">highlight orphans</button>
-    <button id="sd-toggle-fps">fps <span class="toggle-dot" id="sd-fps-dot"></span></button>
-    <button id="sd-dump-state">dump state</button>
-    <button id="sd-force-save">force save</button>
-    <div class="sd-util-sep"></div>
-    <button id="sd-clear" class="sd-util-danger">⚠ clear all</button>
-  </div>
+<div id="menu-scrim"></div>
+<div id="menu-drawer">
+  <div class="sep">data</div>
+  <button id="m-export">export</button>
+  <button id="m-import">import</button>
+  <div class="sep">view</div>
+  <button id="m-reset-view">reset camera</button>
+  <button id="m-toggle-fps">fps <span class="toggle" id="m-fps-dot"></span></button>
+  <button id="m-open-capture">open to capture <span class="toggle" id="m-capture-dot"></span></button>
+  <div class="sep">dev</div>
+  <button id="m-dump">dump state</button>
+  <button id="m-orphans">highlight orphans</button>
+  <button id="m-bulk">+ 100 test</button>
+  <div class="sep"></div>
+  <button id="m-clear" class="danger">clear all</button>
+  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v15</div>
 </div>
 
-<!-- Folder bar -->
-<div id="folder-bar"></div>
-<!-- Connection delete pill -->
-<div id="conn-delete-pill">remove</div>
 <!-- Lasso -->
 <div id="lasso-rect"></div>
 <div id="lasso-bar">
-  <button id="lasso-new-session-btn">new session</button>
-  <button id="lasso-recolor-btn">recolor</button>
-  <button id="lasso-clear-btn">clear</button>
+  <button id="lasso-recolor">recolor</button>
+  <button id="lasso-clear">clear</button>
 </div>
-<!-- Stats -->
-<div id="stats"></div>
+
 <!-- FPS -->
 <div id="fps"></div>
-<!-- Tray -->
-<button id="tray-btn" aria-label="menu">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
-  </svg>
-</button>
-<div id="tray-scrim"></div>
-<div id="tray" role="menu">
-  <div id="tray-handle"></div>
-  <button id="btn-export">export thoughts</button>
-  <button id="btn-import">import thoughts</button>
-  <button id="btn-open-capture">open to capture <span class="toggle-dot" id="capture-toggle-dot"></span></button>
-  <button id="btn-clear">clear all</button>
-  <div class="tray-sep">dev</div>
-  <button id="btn-reset-view">reset camera</button>
-  <button id="btn-dump-state">dump state</button>
-  <button id="btn-force-save">force save</button>
-  <button id="btn-show-orphans">show orphans</button>
-  <button id="btn-toggle-fps">fps counter <span class="toggle-dot" id="fps-dot"></span></button>
-</div>
 <div id="toast"></div>
 
 <script type="importmap">
@@ -519,23 +271,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { get, set, del } from 'idb-keyval';
+import { get, set } from 'idb-keyval';
 
 // ═══════════════════════════════════════════
-// State
+// STATE
+// Three primitives only: thoughts, connections, space (= camera).
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 13,         // v13: IndexedDB + performance fixes
-  thoughts: [], connections: [], folders: [],
-  activeFolder: null, camera: null, openToCapture: false,
-  sessions: [],        // v5: array of session objects
-  activeSession: null  // v5: session ID or null
+  version: 15,
+  thoughts: [],
+  connections: [],
+  camera: null,
+  openToCapture: false,
 };
 
-const SESSION_THRESHOLD = 15;
-
-let editingId = null, editingFolder = null, editingColor = null, editingSize = 1.0;
+let editingId = null, editingColor = null;
+let editingConnId = null;
 let connectSource = null, holdTimer = null;
 let multiTouchActive = false;
 let isDragging = false, draggedMesh = null;
@@ -546,8 +298,6 @@ let showFps = false;
 let lassoActive = false, lassoStart = null, lassoEnd = null;
 let lassoHoldTimer = null, lassoHoldTriggered = false;
 let selectedIds = new Set();
-let pendingDeleteConnId = null;
-let sessionTipShown = false;
 
 const HOLD_MS = 350, DRAG_THRESH = 8, SPHERE_RADIUS = 0.35;
 const raycaster = new THREE.Raycaster();
@@ -556,10 +306,23 @@ const pointer = new THREE.Vector2();
 const plane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
 const intersectPt = new THREE.Vector3();
 const COLORS = ['#6ea8fe','#a78bfa','#f472b6','#34d399','#fbbf24','#fb923c','#f87171','#67e8f9'];
-let colorIdx = 0;
+
+const CONN_PRESETS = [
+  { label:'causes', color:'#fb923c' },
+  { label:'contradicts', color:'#f87171' },
+  { label:'supports', color:'#34d399' },
+  { label:'depends on', color:'#fbbf24' },
+  { label:'relates to', color:'#6ea8fe' },
+  { label:'reminds me of', color:'#a78bfa' },
+  { label:'same as', color:'#67e8f9' },
+  { label:'part of', color:'#f472b6' },
+  { label:'leads to', color:'#fb923c' },
+  { label:'follows from', color:'#fbbf24' },
+];
+const CONN_COLORS = ['#6ea8fe','#fb923c','#f87171','#34d399','#fbbf24','#a78bfa','#f472b6','#67e8f9'];
 
 // ═══════════════════════════════════════════
-// Scene
+// SCENE
 // ═══════════════════════════════════════════
 
 const canvas = document.getElementById('c');
@@ -585,15 +348,16 @@ scene.add(new THREE.AmbientLight(0x404060, 0.6));
 const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5,8,10); scene.add(dl);
 const bl = new THREE.DirectionalLight(0x4466aa, 0.3); bl.position.set(-5,-3,-8); scene.add(bl);
 
+// Starfield (decorative, not a primitive)
 const sg = new THREE.BufferGeometry(); const sv = [];
-for(let i=0;i<400;i++) sv.push((Math.random()-.5)*100,(Math.random()-.5)*100,(Math.random()-.5)*100);
+for (let i=0;i<400;i++) sv.push((Math.random()-.5)*100,(Math.random()-.5)*100,(Math.random()-.5)*100);
 sg.setAttribute('position', new THREE.Float32BufferAttribute(sv,3));
 scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xffffff,size:0.08,transparent:true,opacity:0.3})));
 
 const thoughtGroup = new THREE.Group(); scene.add(thoughtGroup);
 const lineGroup = new THREE.Group(); scene.add(lineGroup);
 
-// Lookup maps for O(1) access
+// O(1) lookup
 const thoughtMap = new Map();
 const meshMap = new Map();
 function rebuildMaps() {
@@ -602,23 +366,8 @@ function rebuildMaps() {
   for (const m of thoughtGroup.children) meshMap.set(m.userData.id, m);
 }
 
-// Connection presets
-const CONN_PRESETS = [
-  { label:'causes', color:'#fb923c' },
-  { label:'contradicts', color:'#f87171' },
-  { label:'supports', color:'#34d399' },
-  { label:'depends on', color:'#fbbf24' },
-  { label:'relates to', color:'#6ea8fe' },
-  { label:'reminds me of', color:'#a78bfa' },
-  { label:'same as', color:'#67e8f9' },
-  { label:'part of', color:'#f472b6' },
-  { label:'leads to', color:'#fb923c' },
-  { label:'follows from', color:'#fbbf24' },
-];
-const CONN_COLORS = ['#6ea8fe','#fb923c','#f87171','#34d399','#fbbf24','#a78bfa','#f472b6','#67e8f9'];
-
 // ═══════════════════════════════════════════
-// Thought mesh
+// THOUGHT MESH
 // ═══════════════════════════════════════════
 
 const sphereGeo = new THREE.SphereGeometry(SPHERE_RADIUS, 24, 18);
@@ -642,7 +391,7 @@ function createLabel(text) {
   ctx.font = '300 24px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   let display = text || '';
-  if (display.length > 50) display = display.slice(0, 48) + '…';
+  if (display.length > 60) display = display.slice(0, 58) + '…';
   const words = display.split(' ');
   let lines = [], line = '';
   for (const w of words) {
@@ -667,7 +416,7 @@ function addThoughtMesh(t) {
   const mat = makeThoughtMaterial(t.color);
   const mesh = new THREE.Mesh(sphereGeo, mat);
   mesh.position.set(t.position[0], t.position[1], t.position[2]);
-  mesh.userData = { id:t.id, baseEmissive:0.15, targetEmissive:0.15, targetOpacity:0.9, breath:Math.random()*Math.PI*2 };
+  mesh.userData = { id:t.id, targetEmissive:0.15, targetOpacity:0.9, breath:Math.random()*Math.PI*2 };
   const size = t.size || 1.0;
   mesh.scale.setScalar(size);
   if (t.text) { const l = createLabel(t.text); l.name='label'; mesh.add(l); }
@@ -682,13 +431,13 @@ function updateLabel(mesh, text) {
   if (text) { const l = createLabel(text); l.name='label'; mesh.add(l); }
 }
 
-function getMesh(id) { return meshMap.get(id) || thoughtGroup.children.find(m => m.userData.id === id); }
+function getMesh(id) { return meshMap.get(id); }
 
 // ═══════════════════════════════════════════
-// Connections
+// CONNECTIONS
 // ═══════════════════════════════════════════
 
-function createSmallLabel(text, color) {
+function createConnLabel(text, color) {
   const c = document.createElement('canvas');
   c.width = 512; c.height = 128;
   const ctx = c.getContext('2d');
@@ -721,20 +470,18 @@ function rebuildConnections() {
     const connColor = c.color || '#6ea8fe';
     const baseOpacity = Math.min(0.35 + density*0.1, 0.75);
     const geo = new THREE.BufferGeometry().setFromPoints([mA.position.clone(), mB.position.clone()]);
-    const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(connColor), transparent:true, opacity:baseOpacity, linewidth:1 });
+    const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(connColor), transparent:true, opacity:baseOpacity });
     const line = new THREE.Line(geo, mat);
     const firstConn = state.connections.find(x => [x.from, x.to].sort().join('|') === key);
     line.userData = { from:c.from, to:c.to, density, connKey:key, connId:firstConn?.id, baseOpacity };
     lineGroup.add(line);
-    
-    // Add midpoint label if connection has a label
+
     const label = c.label || (density > 1 ? `×${density}` : null);
     if (label) {
       const mid = new THREE.Vector3().addVectors(mA.position, mB.position).multiplyScalar(0.5);
-      const sprite = createSmallLabel(label, connColor);
+      const sprite = createConnLabel(label, connColor);
       sprite.position.copy(mid);
       sprite.position.y += 0.25;
-      sprite.name = 'conn-label-' + key;
       sprite.userData = { isConnLabel: true, connKey: key };
       lineGroup.add(sprite);
     }
@@ -745,9 +492,8 @@ function rebuildConnections() {
 function updateConnectionPositions() {
   for (const child of lineGroup.children) {
     if (child.userData.isConnLabel) {
-      // Update label midpoint
-      const mA = getMesh(child.userData.connKey.split('|')[0]);
-      const mB = getMesh(child.userData.connKey.split('|')[1]);
+      const parts = child.userData.connKey.split('|');
+      const mA = getMesh(parts[0]), mB = getMesh(parts[1]);
       if (mA && mB) {
         child.position.set(
           (mA.position.x + mB.position.x) / 2,
@@ -774,747 +520,7 @@ pendingLineMesh = (() => {
 })();
 
 // ═══════════════════════════════════════════
-// Session helpers (v5)
-// ═══════════════════════════════════════════
-
-function getSession(id) { return state.sessions.find(s => s.id === id); }
-
-function getActiveSession() { return state.activeSession ? getSession(state.activeSession) : null; }
-
-function sessionsForThought(tId) {
-  return state.sessions.filter(s => s.thoughtIds.has(tId));
-}
-
-function isSessionsVisible() { return state.thoughts.length >= SESSION_THRESHOLD; }
-
-function relativeTime(ts) {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return mins + 'm ago';
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return hrs + 'h ago';
-  const days = Math.floor(hrs / 24);
-  if (days === 1) return 'yesterday';
-  if (days < 30) return days + 'd ago';
-  return Math.floor(days / 30) + 'mo ago';
-}
-
-// ═══════════════════════════════════════════
-// Filtering (session + folder)
-// ═══════════════════════════════════════════
-
-function isThoughtVisible(t) {
-  // Session filter only (folders deprecated)
-  if (state.activeSession) {
-    const session = getActiveSession();
-    if (session && !session.thoughtIds.has(t.id)) return false;
-  }
-  return true;
-}
-
-function applyFilter() {
-  for (const mesh of thoughtGroup.children) {
-    const t = thoughtMap.get(mesh.userData.id) || state.thoughts.find(x => x.id === mesh.userData.id);
-    if (!t) continue;
-    const vis = isThoughtVisible(t);
-    mesh.userData.targetOpacity = vis ? 0.9 : 0.04;
-    mesh.userData.targetEmissive = vis ? 0.15 : 0.02;
-    const label = mesh.getObjectByName('label');
-    if (label) label.material.opacity = vis ? 0.85 : 0.03;
-  }
-  for (const child of lineGroup.children) {
-    if (child.userData.isConnLabel) {
-      // Label sprite — match visibility of its connection
-      const parts = child.userData.connKey.split('|');
-      const tA = thoughtMap.get(parts[0]) || state.thoughts.find(x => x.id === parts[0]);
-      const tB = thoughtMap.get(parts[1]) || state.thoughts.find(x => x.id === parts[1]);
-      if (!tA || !tB) { child.visible = false; continue; }
-      child.visible = isThoughtVisible(tA) && isThoughtVisible(tB);
-      continue;
-    }
-    if (!child.userData.from) continue;
-    const tA = thoughtMap.get(child.userData.from) || state.thoughts.find(x => x.id === child.userData.from);
-    const tB = thoughtMap.get(child.userData.to) || state.thoughts.find(x => x.id === child.userData.to);
-    if (!tA || !tB) { child.visible = false; continue; }
-    const bothVisible = isThoughtVisible(tA) && isThoughtVisible(tB);
-    child.visible = bothVisible;
-    child.material.opacity = bothVisible ? (child.userData.baseOpacity || 0.35) : 0;
-  }
-  updateSessionUI();
-}
-
-function renderFolderBar() {
-  // Deprecated - folders removed
-}
-
-// ═══════════════════════════════════════════
-// Session UI (v5)
-// ═══════════════════════════════════════════
-
-function updateSessionUI() {
-  renderTagBar();
-  const badge = document.getElementById('session-badge');
-  if (state.sessions.length > 1) {
-    badge.textContent = state.sessions.length;
-    badge.classList.add('on');
-  } else {
-    badge.classList.remove('on');
-  }
-}
-
-function renderTagBar() {
-  const bar = document.getElementById('tag-bar');
-  let html = `<span class="tag-chip${!state.activeSession?' active':''}" data-tag="__all__">all</span>`;
-  
-  for (const s of state.sessions) {
-    const isActive = state.activeSession === s.id;
-    html += `<span class="tag-chip${isActive?' active':''}" data-tag="${s.id}">${s.name}</span>`;
-  }
-  
-  html += `<span class="tag-chip add-new" data-tag="__new__">+ tag</span>`;
-  bar.innerHTML = html;
-  
-  // Single delegated click handler
-  bar.onclick = (e) => {
-    const chip = e.target.closest('.tag-chip');
-    if (!chip) return;
-    
-    const tag = chip.dataset.tag;
-    if (tag === '__new__') {
-      // Add tag instantly
-      const name = `Tag ${state.sessions.length + 1}`;
-      const s = createSession(name, []);
-      switchSession(s.id);
-      renderTagBar();
-      toast(`created "${name}" - rename in drawer`);
-    } else if (tag === '__all__') {
-      switchSession(null);
-      renderTagBar();
-    } else {
-      switchSession(tag);
-      renderTagBar();
-    }
-  };
-}
-
-function openSessionDrawer() {
-  renderSessionList();
-  updateDrawerCaptureToggle();
-  document.getElementById('session-drawer').classList.add('open');
-  document.getElementById('session-scrim').classList.add('open');
-  document.getElementById('tag-bar').classList.remove('show');
-}
-
-function closeSessionDrawer() {
-  document.getElementById('session-drawer').classList.remove('open');
-  document.getElementById('session-scrim').classList.remove('open');
-}
-
-function renderSessionList() {
-  const list = document.getElementById('sd-list');
-  let html = '';
-  // "All thoughts" item
-  const isAll = !state.activeSession;
-  html += `<button class="sd-item all-item${isAll?' active':''}" data-sid="__all__">
-    <canvas class="sd-thumb" width="48" height="48"></canvas>
-    <span class="sd-info"><span class="sd-name">all thoughts</span></span>
-    <span class="sd-count">${state.thoughts.length}</span>
-  </button>`;
-  // Sessions sorted by touched (most recent first)
-  const sorted = [...state.sessions].sort((a,b) => b.touched - a.touched);
-  for (const s of sorted) {
-    const isActive = state.activeSession === s.id;
-    html += `<div class="sd-item${isActive?' active':''}" data-sid="${s.id}">
-      <canvas class="sd-thumb" width="48" height="48"></canvas>
-      <span class="sd-info">
-        <span class="sd-name">${s.name}</span>
-        <span class="sd-meta">${relativeTime(s.touched)}</span>
-      </span>
-      <span class="sd-count">${s.thoughtIds.size}</span>
-      <button class="sd-rename" data-rename="${s.id}" title="rename">✎</button>
-      <button class="sd-delete" data-del="${s.id}" title="delete">×</button>
-    </div>`;
-  }
-  list.innerHTML = html;
-
-  // Render thumbnails
-  renderSessionThumbnails();
-
-  // Events
-  list.querySelectorAll('.sd-item[data-sid]').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.sd-delete') || e.target.closest('.sd-rename')) return;
-      const sid = el.dataset.sid;
-      switchSession(sid === '__all__' ? null : sid);
-      closeSessionDrawer();
-    });
-  });
-  // Rename buttons
-  list.querySelectorAll('.sd-rename').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const sid = btn.dataset.rename;
-      const s = getSession(sid);
-      if (!s) return;
-      
-      const item = btn.closest('.sd-item');
-      const nameEl = item.querySelector('.sd-name');
-      nameEl.innerHTML = `<input class="sd-rename-input" value="${s.name}" maxlength="30">`;
-      const inp = nameEl.querySelector('input');
-      inp.focus(); inp.select();
-      
-      const commit = () => {
-        const v = inp.value.trim();
-        if (v) { s.name = v; s.touched = Date.now(); save(); }
-        renderSessionList();
-      };
-      inp.addEventListener('blur', commit);
-      inp.addEventListener('keydown', (ke) => {
-        if (ke.key === 'Enter') { ke.preventDefault(); commit(); }
-        if (ke.key === 'Escape') renderSessionList();
-      });
-    });
-  });
-  // Delete buttons
-  list.querySelectorAll('.sd-delete').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const sid = btn.dataset.del;
-      const s = getSession(sid);
-      if (!s) return;
-      
-      // Show delete menu if session has thoughts
-      if (s.thoughtIds.size > 0) {
-        const menu = document.createElement('div');
-        menu.style.cssText = `
-          position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-          background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
-          border-radius:16px;padding:16px;z-index:200;
-          backdrop-filter:blur(20px);min-width:280px;
-        `;
-        menu.innerHTML = `
-          <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Delete "${s.name}"?</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px">${s.thoughtIds.size} thoughts</div>
-          <button id="del-session-only" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">Delete session only (keep thoughts)</button>
-          <button id="del-all" style="width:100%;padding:12px;background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.2);border-radius:10px;color:rgba(255,100,100,0.9);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">Delete session + all thoughts</button>
-          <button id="del-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
-        `;
-        document.body.appendChild(menu);
-        
-        menu.querySelector('#del-session-only').addEventListener('click', () => {
-          deleteSession(sid);
-          renderSessionList();
-          menu.remove();
-          toast('session deleted');
-        });
-        
-        menu.querySelector('#del-all').addEventListener('click', () => {
-          // Delete all thoughts in session
-          const toDelete = Array.from(s.thoughtIds);
-          for (const tid of toDelete) {
-            const mesh = getMesh(tid);
-            if (mesh) thoughtGroup.remove(mesh);
-          }
-          // Remove thoughts from state
-          state.thoughts = state.thoughts.filter(t => !toDelete.includes(t.id));
-          // Clean orphaned connections
-          state.connections = state.connections.filter(c => {
-            const fromExists = state.thoughts.find(t => t.id === c.from);
-            const toExists = state.thoughts.find(t => t.id === c.to);
-            return fromExists && toExists;
-          });
-          deleteSession(sid);
-          rebuildConnections();
-          applyFilter();
-          save();
-          renderSessionList();
-          menu.remove();
-          toast(`deleted session + ${toDelete.length} thoughts`);
-        });
-        
-        menu.querySelector('#del-cancel').addEventListener('click', () => menu.remove());
-      } else {
-        // Empty session - just delete
-        deleteSession(sid);
-        renderSessionList();
-        toast('session deleted');
-      }
-    });
-  });
-}
-
-function renderSessionThumbnails() {
-  const list = document.getElementById('sd-list');
-  const items = list.querySelectorAll('.sd-item');
-  
-  items.forEach(item => {
-    const canvas = item.querySelector('.sd-thumb');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    const sid = item.dataset.sid;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, 48, 48);
-    
-    // Get thoughts for this session
-    let thoughts = [];
-    if (sid === '__all__') {
-      thoughts = state.thoughts;
-    } else {
-      const session = getSession(sid);
-      if (session) {
-        thoughts = state.thoughts.filter(t => session.thoughtIds.has(t.id));
-      }
-    }
-    
-    if (thoughts.length === 0) return;
-    
-    // Find bounds
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    thoughts.forEach(t => {
-      minX = Math.min(minX, t.position[0]);
-      maxX = Math.max(maxX, t.position[0]);
-      minY = Math.min(minY, t.position[1]);
-      maxY = Math.max(maxY, t.position[1]);
-    });
-    
-    const rangeX = maxX - minX || 1;
-    const rangeY = maxY - minY || 1;
-    const padding = 6;
-    
-    // Draw thoughts as dots
-    thoughts.forEach(t => {
-      const x = padding + ((t.position[0] - minX) / rangeX) * (48 - padding * 2);
-      const y = padding + ((t.position[1] - minY) / rangeY) * (48 - padding * 2);
-      
-      ctx.fillStyle = t.color || '#6ea8fe';
-      ctx.beginPath();
-      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    
-    // Draw connections
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 0.5;
-    state.connections.forEach(conn => {
-      const tA = thoughts.find(t => t.id === conn.from);
-      const tB = thoughts.find(t => t.id === conn.to);
-      if (!tA || !tB) return;
-      
-      const x1 = padding + ((tA.position[0] - minX) / rangeX) * (48 - padding * 2);
-      const y1 = padding + ((tA.position[1] - minY) / rangeY) * (48 - padding * 2);
-      const x2 = padding + ((tB.position[0] - minX) / rangeX) * (48 - padding * 2);
-      const y2 = padding + ((tB.position[1] - minY) / rangeY) * (48 - padding * 2);
-      
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    });
-  });
-}
-
-function switchSession(sessionId) {
-  state.activeSession = sessionId;
-  if (sessionId) {
-    const s = getSession(sessionId);
-    if (s) s.touched = Date.now();
-  }
-  applyFilter(); save();
-}
-
-// Camera flight disabled - was causing zoom issues
-function frameSessionThoughts(sessionId) {
-  // Disabled for stability
-}
-
-function flyToPosition(x, y, z) {
-  // Disabled for stability
-}
-
-function createSession(name, thoughtIds) {
-  // Assign a hue and position based on session count
-  const hue = (state.sessions.length * 137.5) % 360; // golden angle
-  
-  // Fibonacci sphere for even 3D distribution
-  const i = state.sessions.length;
-  const phi = Math.acos(1 - 2 * (i + 0.5) / Math.max(1, state.sessions.length + 1));
-  const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-  const radius = 25; // distance from origin
-  
-  const s = {
-    id: uid(),
-    name: name || `Session ${state.sessions.length + 1}`,
-    thoughtIds: new Set(thoughtIds || []),
-    hue: hue,
-    position: [
-      radius * Math.sin(phi) * Math.cos(theta),
-      radius * Math.sin(phi) * Math.sin(theta),
-      radius * Math.cos(phi)
-    ],
-    created: Date.now(),
-    touched: Date.now()
-  };
-  state.sessions.push(s);
-  save();
-  return s;
-}
-
-function deleteSession(sid) {
-  state.sessions = state.sessions.filter(s => s.id !== sid);
-  if (state.activeSession === sid) state.activeSession = null;
-  applyFilter(); save();
-}
-
-// Session button — touchend for iOS PWA (click not reliably synthesised over
-// a full-screen canvas with touch-action:none); click retained for mouse/desktop.
-const sessionBtnEl = document.getElementById('session-btn');
-sessionBtnEl.addEventListener('pointerdown', (e) => {
-  e.preventDefault(); e.stopPropagation(); openSessionDrawer();
-}, { passive: false });
-sessionBtnEl.addEventListener('touchend', (e) => {
-  e.preventDefault(); e.stopPropagation();
-}, { passive: false });
-sessionBtnEl.addEventListener('click', (e) => {
-  e.stopPropagation(); openSessionDrawer();
-});
-// Scrim closes drawer
-document.getElementById('session-scrim').addEventListener('click', closeSessionDrawer);
-// New session from drawer
-document.getElementById('sd-new-session').addEventListener('click', () => {
-  const s = createSession();
-  switchSession(s.id);
-  closeSessionDrawer();
-  toast(s.name);
-  // Immediately open drawer for rename
-  setTimeout(() => { openSessionDrawer(); }, 300);
-});
-
-// ═══════════════════════════════════════════
-// Drawer utilities (merged from tray)
-// ═══════════════════════════════════════════
-
-document.getElementById('sd-export').addEventListener('click', () => {
-  // Show export options
-  const menu = document.createElement('div');
-  menu.style.cssText = `
-    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-    background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
-    border-radius:16px;padding:16px;z-index:200;
-    backdrop-filter:blur(20px);min-width:280px;
-  `;
-  menu.innerHTML = `
-    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Export Options</div>
-    <button id="export-json" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">💾 Download JSON</button>
-    <button id="export-copy" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">📋 Copy to Clipboard</button>
-    <button id="export-qr" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">📱 Show QR Code</button>
-    <button id="export-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
-  `;
-  document.body.appendChild(menu);
-  
-  const data = JSON.stringify({
-    thoughts:state.thoughts, connections:state.connections, folders:state.folders,
-    sessions: state.sessions.map(s => ({ ...s, thoughtIds: Array.from(s.thoughtIds) }))
-  }, null, 2);
-  
-  // Download JSON
-  menu.querySelector('#export-json').addEventListener('click', () => {
-    const blob = new Blob([data],{type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href=url; a.download=`atem-${new Date().toISOString().slice(0,10)}.json`;
-    a.click(); URL.revokeObjectURL(url);
-    menu.remove();
-    closeSessionDrawer(); toast('downloaded');
-  });
-  
-  // Copy to clipboard
-  menu.querySelector('#export-copy').addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(data);
-      menu.remove();
-      closeSessionDrawer(); toast('copied to clipboard');
-    } catch(e) {
-      toast('copy failed');
-    }
-  });
-  
-  // Show QR code
-  menu.querySelector('#export-qr').addEventListener('click', () => {
-    menu.remove();
-    const qrContainer = document.createElement('div');
-    qrContainer.style.cssText = `
-      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-      background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
-      border-radius:16px;padding:20px;z-index:200;
-      backdrop-filter:blur(20px);text-align:center;
-    `;
-    
-    // Compress data for QR
-    const compressed = JSON.stringify({
-      t:state.thoughts, c:state.connections, f:state.folders,
-      s: state.sessions.map(s => ({ ...s, thoughtIds: Array.from(s.thoughtIds) }))
-    });
-    
-    qrContainer.innerHTML = `
-      <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:16px">Scan to import</div>
-      <div id="qr-canvas" style="background:white;padding:16px;border-radius:12px;display:inline-block"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:12px">${state.thoughts.length} thoughts, ${state.connections.length} connections</div>
-      <button id="qr-close" style="margin-top:16px;width:100%;padding:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;font-family:inherit">Close</button>
-    `;
-    document.body.appendChild(qrContainer);
-    
-    // Generate QR using a simple canvas-based approach
-    const qrDiv = qrContainer.querySelector('#qr-canvas');
-    qrDiv.innerHTML = `<div style="padding:40px;font-size:12px;color:#333">QR: ${compressed.length} chars<br><small>Too large for QR - use Copy instead</small></div>`;
-    
-    qrContainer.querySelector('#qr-close').addEventListener('click', () => {
-      qrContainer.remove();
-      closeSessionDrawer();
-    });
-  });
-  
-  // Cancel
-  menu.querySelector('#export-cancel').addEventListener('click', () => {
-    menu.remove();
-  });
-});
-
-document.getElementById('sd-import').addEventListener('click', () => {
-  // Show import options
-  const menu = document.createElement('div');
-  menu.style.cssText = `
-    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-    background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
-    border-radius:16px;padding:16px;z-index:200;
-    backdrop-filter:blur(20px);min-width:280px;
-  `;
-  menu.innerHTML = `
-    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Import Options</div>
-    <button id="import-file" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">📂 Choose JSON File</button>
-    <button id="import-paste" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">📋 Paste from Clipboard</button>
-    <button id="import-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
-  `;
-  document.body.appendChild(menu);
-  
-  // File import
-  menu.querySelector('#import-file').addEventListener('click', () => {
-    menu.remove();
-    const input = document.createElement('input');
-    input.type='file'; input.accept='.json';
-    input.onchange = (ev) => {
-      const file = ev.target.files[0]; if(!file) return;
-      const reader = new FileReader();
-      reader.onload = (r) => {
-        try {
-          const data = JSON.parse(r.target.result);
-          importData(data);
-        } catch(err){toast('import failed');}
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-    closeSessionDrawer();
-  });
-  
-  // Paste import
-  menu.querySelector('#import-paste').addEventListener('click', async () => {
-    menu.remove();
-    try {
-      const text = await navigator.clipboard.readText();
-      const data = JSON.parse(text);
-      importData(data);
-      closeSessionDrawer();
-    } catch(e) {
-      toast('paste failed - check clipboard');
-    }
-  });
-  
-  // Cancel
-  menu.querySelector('#import-cancel').addEventListener('click', () => {
-    menu.remove();
-  });
-  
-  function importData(data) {
-    if (data.thoughts || data.t) {
-      while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
-      while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
-      
-      // Support both full and compressed format
-      state.thoughts = data.thoughts || data.t || [];
-      state.connections = data.connections || data.c || [];
-      state.folders = data.folders || data.f || [];
-      state.sessions = (data.sessions || data.s || []).map(s => ({ 
-        ...s, 
-        thoughtIds: new Set(s.thoughtIds||[]) 
-      }));
-      
-      // Migrate: ensure new fields have defaults
-      for(const t of state.thoughts){ if(!t.size) t.size=1.0; }
-      for(const c of state.connections){ if(!c.color) c.color='#6ea8fe'; }
-      
-      for(const t of state.thoughts) addThoughtMesh(t);
-      rebuildMaps();
-      rebuildConnections(); applyFilter(); save();
-      toast('imported '+state.thoughts.length+' thoughts');
-      if(state.thoughts.length>0) hideHint();
-    }
-  }
-});
-
-function updateDrawerCaptureToggle() {
-  const dot = document.getElementById('sd-capture-dot');
-  if (dot) dot.classList.toggle('on', !!state.openToCapture);
-}
-
-document.getElementById('sd-open-capture').addEventListener('click', () => {
-  state.openToCapture=!state.openToCapture; updateDrawerCaptureToggle(); updateCaptureToggle(); save();
-  toast(state.openToCapture?'will open to capture':'will open to board');
-  closeSessionDrawer();
-});
-
-document.getElementById('sd-migrate').addEventListener('click', () => {
-  if (!confirm('move all thoughts to Session 1?')) return;
-  
-  // Find or create Session 1
-  let s1 = state.sessions.find(s => s.name === 'Session 1');
-  if (!s1) {
-    s1 = createSession('Session 1', []);
-  }
-  
-  // Add all thoughts to Session 1
-  state.thoughts.forEach(t => s1.thoughtIds.add(t.id));
-  
-  // Recolor all to Session 1 color
-  const color = s1.hue !== undefined ? `hsl(${s1.hue}, 70%, 60%)` : COLORS[0];
-  state.thoughts.forEach(t => {
-    t.color = color;
-    const mesh = getMesh(t.id);
-    if (mesh) {
-      mesh.material.color.set(color);
-      mesh.material.emissive.set(color);
-    }
-  });
-  
-  save();
-  renderSessionList();
-  toast(`${state.thoughts.length} thoughts → Session 1`);
-  closeSessionDrawer();
-});
-
-document.getElementById('sd-clear').addEventListener('click', () => {
-  if(!confirm('clear all thoughts?')) return;
-  state.thoughts=[]; state.connections=[]; state.folders=[]; state.activeFolder=null;
-  state.sessions=[]; state.activeSession=null;
-  while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
-  while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
-  renderFolderBar(); applyFilter(); save();
-  closeSessionDrawer(); toast('cleared');
-});
-
-document.getElementById('sd-reset-view').addEventListener('click', () => { camera.position.set(0,0,18); controls.target.set(0,0,0); save(); closeSessionDrawer(); });
-document.getElementById('sd-dump-state').addEventListener('click', () => {
-  const dump = { ...state, sessions: state.sessions.map(s=>({...s,thoughtIds:Array.from(s.thoughtIds)})) };
-  console.log(JSON.stringify(dump, null, 2));
-  closeSessionDrawer(); toast('state → console');
-});
-document.getElementById('sd-force-save').addEventListener('click', () => { save(); closeSessionDrawer(); toast('saved'); });
-document.getElementById('sd-test-thought').addEventListener('click', () => {
-  const x = (Math.random() - 0.5) * 10;
-  const y = (Math.random() - 0.5) * 10;
-  const z = (Math.random() - 0.5) * 5;
-  const text = `test ${Date.now().toString(36)}`;
-  createThought(x, y, z, text);
-  closeSessionDrawer();
-  toast('test thought added');
-});
-
-document.getElementById('sd-bulk-test').addEventListener('click', () => {
-  closeSessionDrawer();
-  
-  // Show menu
-  const menu = document.createElement('div');
-  menu.style.cssText = `
-    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-    background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.15);
-    border-radius:16px;padding:16px;z-index:200;
-    backdrop-filter:blur(20px);min-width:280px;
-  `;
-  menu.innerHTML = `
-    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:12px;font-weight:500">Generate Test Thoughts</div>
-    <button id="gen-100" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">100 thoughts</button>
-    <button id="gen-500" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:8px;font-family:inherit">500 thoughts</button>
-    <button id="gen-1000" style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;cursor:pointer;margin-bottom:12px;font-family:inherit">1000 thoughts</button>
-    <button id="gen-cancel" style="width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
-  `;
-  document.body.appendChild(menu);
-  
-  function generateBulk(count) {
-    const start = performance.now();
-    const spread = Math.sqrt(count) * 2; // Scale spread with count
-    
-    for(let i = 0; i < count; i++) {
-      const x = (Math.random() - 0.5) * spread;
-      const y = (Math.random() - 0.5) * spread;
-      const z = (Math.random() - 0.5) * spread * 0.5;
-      const text = `test-${i}-${Date.now().toString(36)}`;
-      createThought(x, y, z, text);
-    }
-    
-    const elapsed = performance.now() - start;
-    menu.remove();
-    toast(`generated ${count} thoughts in ${Math.round(elapsed)}ms`);
-  }
-  
-  menu.querySelector('#gen-100').addEventListener('click', () => generateBulk(100));
-  menu.querySelector('#gen-500').addEventListener('click', () => generateBulk(500));
-  menu.querySelector('#gen-1000').addEventListener('click', () => generateBulk(1000));
-  menu.querySelector('#gen-cancel').addEventListener('click', () => menu.remove());
-});
-
-document.getElementById('sd-clean-connections').addEventListener('click', () => {
-  const before = state.connections.length;
-  // Clean orphaned connections
-  state.connections = state.connections.filter(c => {
-    const fromExists = state.thoughts.find(t => t.id === c.from);
-    const toExists = state.thoughts.find(t => t.id === c.to);
-    return fromExists && toExists;
-  });
-  const removed = before - state.connections.length;
-  rebuildConnections();
-  save();
-  closeSessionDrawer();
-  toast(`cleaned ${removed} orphaned connection${removed !== 1 ? 's' : ''}`);
-});
-
-document.getElementById('sd-show-orphans').addEventListener('click', () => {
-  const connected = new Set();
-  for(const c of state.connections){connected.add(c.from);connected.add(c.to);}
-  let count=0;
-  for(const mesh of thoughtGroup.children){
-    if(!connected.has(mesh.userData.id)){
-      count++;
-      mesh.material.emissive.set('#ff4444'); mesh.material.emissiveIntensity=0.8;
-      setTimeout(()=>{
-        const t=state.thoughts.find(x=>x.id===mesh.userData.id);
-        if(t) mesh.material.emissive.set(t.color||'#6ea8fe');
-        mesh.userData.targetEmissive=0.15;
-      },1500);
-    }
-  }
-  closeSessionDrawer(); toast(count+' orphan'+(count!==1?'s':''));
-});
-document.getElementById('sd-toggle-fps').addEventListener('click', () => {
-  showFps=!showFps;
-  document.getElementById('fps').classList.toggle('on', showFps);
-  document.getElementById('sd-fps-dot').classList.toggle('on', showFps);
-  closeSessionDrawer();
-});
-
-// ═══════════════════════════════════════════
-// Persistence
+// PERSISTENCE
 // ═══════════════════════════════════════════
 
 async function save() {
@@ -1522,115 +528,42 @@ async function save() {
     px:camera.position.x,py:camera.position.y,pz:camera.position.z,
     tx:controls.target.x,ty:controls.target.y,tz:controls.target.z
   };
-  // Serialize sessions (Set → Array)
-  const serializable = {
-    ...state,
-    sessions: state.sessions.map(s => ({ ...s, thoughtIds: Array.from(s.thoughtIds) }))
-  };
-  
-  // Primary: IndexedDB
-  try {
-    await set('atem-state', serializable);
-  } catch(e) {
-    console.warn('IndexedDB save failed', e);
-  }
-  
-  // Fallback: localStorage (for export compatibility)
-  try { 
-    localStorage.setItem('atem-state-backup', JSON.stringify(serializable)); 
-  } catch(e){}
+  try { await set('atem-state', state); } catch(e) { console.warn('idb save failed', e); }
+  try { localStorage.setItem('atem-state-backup', JSON.stringify(state)); } catch(e){}
 }
 
 async function load() {
   let s = null;
-  
-  // Try IndexedDB first
-  try {
-    s = await get('atem-state');
-  } catch(e) {
-    console.warn('IndexedDB load failed', e);
-  }
-  
-  // Fallback to localStorage if IndexedDB empty
+  try { s = await get('atem-state'); } catch(e) { console.warn('idb load failed', e); }
   if (!s) {
     try {
       const raw = localStorage.getItem('atem-state') || localStorage.getItem('atem-state-backup');
-      if (raw) {
-        s = JSON.parse(raw);
-        // Migrate to IndexedDB
-        if (s) {
-          await set('atem-state', s);
-          console.log('Migrated from localStorage to IndexedDB');
-        }
-      }
-    } catch(e) {
-      console.warn('localStorage load failed', e);
-    }
+      if (raw) { s = JSON.parse(raw); if (s) await set('atem-state', s); }
+    } catch(e) { console.warn('ls load failed', e); }
   }
-  
-  if (!s) {
-    // No data - show import hint
-    setTimeout(() => {
-      if (state.thoughts.length === 0) {
-        toast('no data found - import your thoughts or start fresh', 5000);
-      }
-    }, 1000);
-    return;
-  }
-  
-  // Hydrate state
+  if (!s) return;
+
   try {
     state.version = s.version || state.version;
-    state.thoughts = s.thoughts||[]; 
-    state.connections = s.connections||[];
-    state.folders = s.folders||[]; 
-    state.activeFolder = s.activeFolder||null;
-    state.openToCapture = s.openToCapture||false;
-    
-    // v5 migration
-    state.sessions = (s.sessions||[]).map(sess => ({
-      ...sess,
-      thoughtIds: new Set(sess.thoughtIds || [])
-    }));
-    state.activeSession = s.activeSession || null;
-    
-    // Validate activeSession still exists
-    if (state.activeSession && !getSession(state.activeSession)) {
-      // Fall back to most recently touched
-      if (state.sessions.length > 0) {
-        const sorted = [...state.sessions].sort((a,b) => b.touched - a.touched);
-        state.activeSession = sorted[0].id;
-      } else {
-        state.activeSession = null;
-      }
+    state.thoughts = s.thoughts || [];
+    state.connections = s.connections || [];
+    state.openToCapture = s.openToCapture || false;
+
+    if (s.camera) {
+      camera.position.set(s.camera.px,s.camera.py,s.camera.pz);
+      controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz);
     }
-    
-    if (s.camera) { 
-      camera.position.set(s.camera.px,s.camera.py,s.camera.pz); 
-      controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz); 
-    }
-    
-    for (const t of state.thoughts) { if (t.folder===undefined) t.folder=null; }
-    
+
     // Clean orphaned connections
     const validIds = new Set(state.thoughts.map(t => t.id));
     state.connections = state.connections.filter(c => validIds.has(c.from) && validIds.has(c.to));
-    
-    // Auto-migrate: move all orphaned thoughts to "Session 1"
-    if (state.thoughts.length > 0 && state.sessions.length === 0) {
-      const allIds = state.thoughts.map(t => t.id);
-      const s1 = createSession('Session 1', allIds);
-      state.activeSession = s1.id;
-      toast('all thoughts moved to Session 1');
-    }
-    
+
     for (const t of state.thoughts) addThoughtMesh(t);
     rebuildMaps();
-    rebuildConnections(); applyFilter(); updateCaptureToggle();
+    rebuildConnections();
+    updateCaptureToggle();
     if (state.thoughts.length > 0) hideHint();
-  } catch(e) { 
-    console.warn('state hydration failed', e); 
-  }
+  } catch(e) { console.warn('hydrate failed', e); }
 }
 
 // ═══════════════════════════════════════════
@@ -1640,40 +573,25 @@ async function load() {
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
 function createThought(x, y, z, text, color) {
-  // Default color: if in session, use session's hue; otherwise cycle through palette
-  let defaultColor;
-  if (!color && state.activeSession) {
-    const sess = getActiveSession();
-    if (sess && sess.hue !== undefined) {
-      // Convert session hue to color
-      defaultColor = `hsl(${sess.hue}, 70%, 60%)`;
-    }
-  }
-  if (!defaultColor) defaultColor = state.activeSession ? COLORS[colorIdx++ % COLORS.length] : COLORS[0];
-  
   const t = {
     id:uid(), text:text||'',
     position:[x,y,z],
-    color: color || defaultColor,
+    color: color || COLORS[0],
     created:Date.now(), touched:Date.now(),
-    size: 1.0
+    size: 1.0,
+    props: {}  // extensibility hook for Stage 2/3
   };
   state.thoughts.push(t);
   thoughtMap.set(t.id, t);
-  // Auto-add to active session
-  if (state.activeSession) {
-    const sess = getActiveSession();
-    if (sess) { sess.thoughtIds.add(t.id); sess.touched = Date.now(); }
-  }
-  addThoughtMesh(t); applyFilter(); save(); hideHint();
+  addThoughtMesh(t); save(); hideHint();
+  needsRender = true;
   return t;
 }
 
-function updateThought(id, text, folder, color, size) {
-  const t = state.thoughts.find(t => t.id===id);
+function updateThought(id, text, color, size) {
+  const t = thoughtMap.get(id);
   if (!t) return;
   t.text = text; t.touched = Date.now();
-  if (folder !== undefined) t.folder = folder;
   if (color !== undefined) t.color = color;
   if (size !== undefined) t.size = size;
   const mesh = getMesh(id);
@@ -1682,49 +600,45 @@ function updateThought(id, text, folder, color, size) {
     if (color) { mesh.material.color.set(color); mesh.material.emissive.set(color); }
     if (size !== undefined) mesh.scale.setScalar(size);
   }
-  thoughtMap.set(id, t);
-  applyFilter(); save();
+  save(); needsRender = true;
 }
 
 function deleteThought(id) {
   state.thoughts = state.thoughts.filter(t=>t.id!==id);
   state.connections = state.connections.filter(c=>c.from!==id&&c.to!==id);
-  for (const s of state.sessions) s.thoughtIds.delete(id);
   const mesh = getMesh(id);
   if (mesh) thoughtGroup.remove(mesh);
   thoughtMap.delete(id);
   meshMap.delete(id);
-  rebuildConnections(); applyFilter(); save();
+  rebuildConnections(); save(); needsRender = true;
 }
 
 function moveThought(id, x, y, z) {
-  const t = thoughtMap.get(id) || state.thoughts.find(t=>t.id===id);
+  const t = thoughtMap.get(id);
   if (t) { t.position=[x,y,z]; t.touched=Date.now(); }
 }
 
 function addConnection(fromId, toId, label, color) {
-  if (fromId===toId) return;
+  if (fromId === toId) return;
   const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||'#6ea8fe' };
   state.connections.push(conn);
-  rebuildConnections(); applyFilter(); save();
+  rebuildConnections(); save();
   needsRender = true;
-  // Open connection editor for the new connection (skip if label===null = auto-created)
-  if (label === null) { needsRender = true; }
-  else if (!label) openConnEditor(conn.id);
+  if (label === null) return;  // silent
+  if (!label) openConnEditor(conn.id);
   else toast('connected');
 }
 
 function deleteConnection(connKey) {
   state.connections = state.connections.filter(c => [c.from,c.to].sort().join('|') !== connKey);
-  rebuildConnections(); applyFilter(); save(); toast('disconnected');
+  rebuildConnections(); save(); toast('disconnected');
   needsRender = true;
 }
 
 // ═══════════════════════════════════════════
-// Connection Editor
+// CONNECTION EDITOR
 // ═══════════════════════════════════════════
 
-let editingConnId = null;
 const connEditorEl = document.getElementById('conn-editor');
 const connCustomInput = document.getElementById('conn-custom-input');
 
@@ -1733,14 +647,11 @@ function openConnEditor(connId) {
   if (!conn) return;
   editingConnId = connId;
   controls.enabled = false;
-  
-  // Render presets
+
   const presetRow = document.getElementById('conn-preset-row');
-  presetRow.innerHTML = CONN_PRESETS.map(p => 
+  presetRow.innerHTML = CONN_PRESETS.map(p =>
     `<button class="conn-preset${conn.label===p.label?' active':''}" data-label="${p.label}" data-color="${p.color}">${p.label}</button>`
   ).join('');
-  
-  // Preset click handlers  
   presetRow.querySelectorAll('.conn-preset').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1749,15 +660,13 @@ function openConnEditor(connId) {
       connCustomInput.value = '';
       conn.label = btn.dataset.label;
       conn.color = btn.dataset.color;
-      // Update color swatch selection
       document.querySelectorAll('#conn-color-row .conn-cswatch').forEach(s => {
         s.classList.toggle('active', s.dataset.color === conn.color);
       });
-      rebuildConnections(); applyFilter(); save();
+      rebuildConnections(); save();
     });
   });
-  
-  // Custom input
+
   connCustomInput.value = (conn.label && !CONN_PRESETS.find(p=>p.label===conn.label)) ? conn.label : '';
   connCustomInput.oninput = () => {
     const v = connCustomInput.value.trim();
@@ -1767,8 +676,7 @@ function openConnEditor(connId) {
       rebuildConnections(); save();
     }
   };
-  
-  // Color swatches
+
   const colorRow = document.getElementById('conn-color-row');
   colorRow.innerHTML = CONN_COLORS.map(c =>
     `<div class="conn-cswatch${conn.color===c?' active':''}" data-color="${c}" style="background:${c}"></div>`
@@ -1782,7 +690,7 @@ function openConnEditor(connId) {
       rebuildConnections(); save();
     });
   });
-  
+
   connEditorEl.classList.add('open');
 }
 
@@ -1797,20 +705,16 @@ document.getElementById('conn-done-btn').addEventListener('click', () => closeCo
 document.getElementById('conn-del-btn').addEventListener('click', () => {
   if (editingConnId) {
     const conn = state.connections.find(c => c.id === editingConnId);
-    if (conn) {
-      const key = [conn.from, conn.to].sort().join('|');
-      deleteConnection(key);
-    }
+    if (conn) deleteConnection([conn.from, conn.to].sort().join('|'));
   }
   closeConnEditor();
 });
 connCustomInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); closeConnEditor(); }
-  if (e.key === 'Escape') { e.preventDefault(); closeConnEditor(); }
+  if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); closeConnEditor(); }
 });
 
 // ═══════════════════════════════════════════
-// Editor
+// EDITOR
 // ═══════════════════════════════════════════
 
 const editorEl = document.getElementById('editor');
@@ -1820,181 +724,78 @@ function renderEditorColors() {
   const btn = document.getElementById('ed-color-btn');
   const palette = document.getElementById('ed-color-palette');
   if (!btn || !palette) return;
-  
-  // Set button color to current editing color
   btn.style.background = editingColor;
-  
-  // Generate palette based on session
-  let colors = COLORS;
-  if (state.activeSession) {
-    const sess = getActiveSession();
-    if (sess && sess.hue !== undefined) {
-      colors = [
-        `hsl(${sess.hue}, 70%, 60%)`,
-        `hsl(${sess.hue}, 80%, 65%)`,
-        `hsl(${sess.hue}, 60%, 55%)`,
-        `hsl(${(sess.hue + 30) % 360}, 70%, 60%)`,
-        `hsl(${(sess.hue - 30 + 360) % 360}, 70%, 60%)`,
-        `hsl(${sess.hue}, 50%, 50%)`,
-        `hsl(${sess.hue}, 90%, 70%)`,
-        `hsl(${sess.hue}, 40%, 45%)`
-      ];
-    }
-  }
-  
-  // Render palette
-  palette.innerHTML = colors.map(c => 
+  palette.innerHTML = COLORS.map(c =>
     `<div class="ed-color-swatch" data-color="${c}" style="background:${c}"></div>`
   ).join('');
-  
-  // Toggle palette on button click
-  btn.onclick = (e) => {
-    e.stopPropagation();
-    palette.classList.toggle('open');
-  };
-  
-  // Select color from palette
+  btn.onclick = (e) => { e.stopPropagation(); palette.classList.toggle('open'); };
   palette.querySelectorAll('.ed-color-swatch').forEach(swatch => {
     swatch.onclick = (e) => {
       e.stopPropagation();
       editingColor = swatch.dataset.color;
       btn.style.background = editingColor;
       palette.classList.remove('open');
-      
       if (editingId) {
         const mesh = getMesh(editingId);
-        if (mesh) {
-          mesh.material.color.set(editingColor);
-          mesh.material.emissive.set(editingColor);
-        }
+        if (mesh) { mesh.material.color.set(editingColor); mesh.material.emissive.set(editingColor); }
       }
     };
   });
-  
-  // Close palette when clicking outside
-  document.addEventListener('click', () => palette.classList.remove('open'));
-}
-
-function renderEditorFolders() {
-  // Deprecated - folders removed
-}
-
-function renderEditorSessions() {
-  const row = document.getElementById('ed-session-row');
-  if (!editingId) { row.innerHTML = ''; return; }
-  const sessions = sessionsForThought(editingId);
-  if (sessions.length === 0 && !state.activeSession) { row.innerHTML = ''; return; }
-  let html = '';
-  if (sessions.length > 0) {
-    for (const s of sessions) html += `<span class="s-badge">${s.name}</span>`;
-  }
-  // Show "remove from session" if in active session
-  if (state.activeSession) {
-    const active = getActiveSession();
-    if (active && active.thoughtIds.has(editingId)) {
-      html += `<span id="ed-remove-session">remove from ${active.name}</span>`;
-    }
-  }
-  row.innerHTML = html;
-  const rmBtn = document.getElementById('ed-remove-session');
-  if (rmBtn) {
-    rmBtn.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      const active = getActiveSession();
-      if (active) {
-        active.thoughtIds.delete(editingId);
-        active.touched = Date.now();
-        save(); applyFilter();
-        toast('removed from ' + active.name);
-      }
-      closeEditor(false);
-    });
-  }
 }
 
 function openEditor(id) {
-  clearSelection(); closeConnDeletePill(); closeConnEditor();
+  clearSelection(); closeConnEditor();
   editingId = id;
-  const t = state.thoughts.find(t=>t.id===id);
+  const t = thoughtMap.get(id);
   edText.value = t ? t.text : '';
-  editingFolder = t ? (t.folder||null) : (state.activeFolder||null);
   editingColor = t ? t.color : COLORS[0];
-  editingSize = t ? (t.size || 1.0) : 1.0;
-  renderEditorColors(); renderEditorFolders(); renderEditorSessions();
-  // Size buttons
-  document.querySelectorAll('.size-btn').forEach(btn => {
-    btn.classList.toggle('active', parseFloat(btn.dataset.size) === editingSize);
-  });
-  editorEl.classList.add('open'); controls.enabled=false;
-  edText.style.height='auto';
-  
-  // Glow connections from this thought
+  renderEditorColors();
+  editorEl.classList.add('open'); controls.enabled = false;
+  edText.style.height = 'auto';
+
+  // Glow connected thoughts briefly
   for (const child of lineGroup.children) {
     if (child.userData.isConnLabel) continue;
     if (child.userData.from === id || child.userData.to === id) {
-      child.material.opacity = Math.min((child.userData.baseOpacity || 0.35) + 0.3, 1.0);
-      // Fade back after a moment
       const base = child.userData.baseOpacity || 0.35;
+      child.material.opacity = Math.min(base + 0.3, 1.0);
       setTimeout(() => { if (child.material) child.material.opacity = base; needsRender = true; }, 800);
     }
   }
   needsRender = true;
-  
+
   edText.focus();
   edText.selectionStart = edText.value.length;
-  setTimeout(()=>{ edText.focus(); }, 80);
+  setTimeout(()=>edText.focus(), 80);
 }
 
 function closeEditor(doSave) {
   if (doSave && editingId) {
     const text = edText.value.trim();
     if (!text) deleteThought(editingId);
-    else updateThought(editingId, text, editingFolder, editingColor, editingSize);
+    else updateThought(editingId, text, editingColor);
   }
-  editingId=null; editingFolder=null; editingColor=null; editingSize=1.0;
-  editorEl.classList.remove('open'); controls.enabled=true;
-  renderFolderBar();
+  editingId = null; editingColor = null;
+  editorEl.classList.remove('open'); controls.enabled = true;
 }
 
-document.getElementById('save-btn').addEventListener('click',()=>closeEditor(true));
-document.getElementById('cancel-btn').addEventListener('click',()=>{
-  if (editingId) { const t=state.thoughts.find(t=>t.id===editingId); if(t&&!t.text) deleteThought(editingId); }
+document.getElementById('save-btn').addEventListener('click', ()=>closeEditor(true));
+document.getElementById('cancel-btn').addEventListener('click', ()=>{
+  if (editingId) { const t = thoughtMap.get(editingId); if (t && !t.text) deleteThought(editingId); }
   closeEditor(false);
 });
-document.getElementById('del-btn').addEventListener('click',()=>{ if(editingId) deleteThought(editingId); closeEditor(false); });
-edText.addEventListener('keydown',(e)=>{
-  if(e.key==='Escape'){ if(editingId){ const _t=state.thoughts.find(t=>t.id===editingId); if(_t&&!_t.text) deleteThought(editingId); } closeEditor(false); e.preventDefault(); }
-  if(e.key==='Enter'&&!e.shiftKey){closeEditor(true);e.preventDefault();}
+document.getElementById('del-btn').addEventListener('click', ()=>{ if(editingId) deleteThought(editingId); closeEditor(false); });
+edText.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (editingId) { const _t = thoughtMap.get(editingId); if (_t && !_t.text) deleteThought(editingId); }
+    closeEditor(false); e.preventDefault();
+  }
+  if (e.key === 'Enter' && !e.shiftKey) { closeEditor(true); e.preventDefault(); }
 });
-edText.addEventListener('input',()=>{ edText.style.height='auto'; edText.style.height=Math.min(edText.scrollHeight,200)+'px'; });
-
-// Size buttons
-document.querySelectorAll('.size-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    editingSize = parseFloat(btn.dataset.size);
-    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    // Live preview
-    if (editingId) {
-      const mesh = getMesh(editingId);
-      if (mesh) mesh.scale.setScalar(editingSize);
-      needsRender = true;
-    }
-  });
-});
+edText.addEventListener('input', () => { edText.style.height='auto'; edText.style.height=Math.min(edText.scrollHeight,200)+'px'; });
 
 // ═══════════════════════════════════════════
-// Connection delete pill
-// ═══════════════════════════════════════════
-
-const connPill = document.getElementById('conn-delete-pill');
-function showConnDeletePill(x, y, connKey) { pendingDeleteConnId=connKey; connPill.style.left=x+'px'; connPill.style.top=y+'px'; connPill.classList.add('open'); }
-function closeConnDeletePill() { pendingDeleteConnId=null; connPill.classList.remove('open'); }
-connPill.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); if(pendingDeleteConnId) deleteConnection(pendingDeleteConnId); closeConnDeletePill(); });
-
-// ═══════════════════════════════════════════
-// Lasso select
+// LASSO
 // ═══════════════════════════════════════════
 
 const lassoRect = document.getElementById('lasso-rect');
@@ -2004,10 +805,7 @@ function clearSelection() {
   selectedIds.clear();
   lassoBar.classList.remove('open');
   lassoRect.style.display = 'none';
-  for (const mesh of thoughtGroup.children) {
-    const t = state.thoughts.find(x=>x.id===mesh.userData.id);
-    if (t && isThoughtVisible(t)) mesh.userData.targetEmissive = 0.15;
-  }
+  for (const mesh of thoughtGroup.children) mesh.userData.targetEmissive = 0.15;
 }
 
 function updateLassoRect() {
@@ -2015,98 +813,64 @@ function updateLassoRect() {
   const x = Math.min(lassoStart.x, lassoEnd.x), y = Math.min(lassoStart.y, lassoEnd.y);
   const w = Math.abs(lassoEnd.x - lassoStart.x), h = Math.abs(lassoEnd.y - lassoStart.y);
   lassoRect.style.display = 'block';
-  lassoRect.style.left=x+'px'; lassoRect.style.top=y+'px';
-  lassoRect.style.width=w+'px'; lassoRect.style.height=h+'px';
+  lassoRect.style.left = x+'px'; lassoRect.style.top = y+'px';
+  lassoRect.style.width = w+'px'; lassoRect.style.height = h+'px';
 }
 
 function finishLasso() {
   if (!lassoStart || !lassoEnd) { lassoRect.style.display='none'; return; }
-  const x1=Math.min(lassoStart.x,lassoEnd.x), y1=Math.min(lassoStart.y,lassoEnd.y);
-  const x2=Math.max(lassoStart.x,lassoEnd.x), y2=Math.max(lassoStart.y,lassoEnd.y);
+  const x1 = Math.min(lassoStart.x, lassoEnd.x), y1 = Math.min(lassoStart.y, lassoEnd.y);
+  const x2 = Math.max(lassoStart.x, lassoEnd.x), y2 = Math.max(lassoStart.y, lassoEnd.y);
   if (x2-x1 < 20 && y2-y1 < 20) { lassoRect.style.display='none'; return; }
   selectedIds.clear();
   for (const mesh of thoughtGroup.children) {
-    const t = state.thoughts.find(x=>x.id===mesh.userData.id);
-    if (!t || !isThoughtVisible(t)) continue;
     const sp = mesh.position.clone().project(camera);
     const sx = (sp.x+1)/2 * window.innerWidth, sy = (1-sp.y)/2 * window.innerHeight;
-    if (sx>=x1 && sx<=x2 && sy>=y1 && sy<=y2) { selectedIds.add(t.id); mesh.userData.targetEmissive = 0.5; }
+    if (sx>=x1 && sx<=x2 && sy>=y1 && sy<=y2) { selectedIds.add(mesh.userData.id); mesh.userData.targetEmissive = 0.5; }
   }
   lassoRect.style.display = 'none';
   if (selectedIds.size > 0) { lassoBar.classList.add('open'); toast(selectedIds.size + ' selected'); }
 }
 
-document.getElementById('lasso-clear-btn').addEventListener('pointerdown',(e)=>{ e.stopPropagation(); e.preventDefault(); clearSelection(); });
-
-// Lasso → recolor selected
-document.getElementById('lasso-recolor-btn').addEventListener('pointerdown',(e)=>{
+document.getElementById('lasso-clear').addEventListener('pointerdown', (e)=>{ e.stopPropagation(); e.preventDefault(); clearSelection(); });
+document.getElementById('lasso-recolor').addEventListener('pointerdown', (e)=>{
   e.stopPropagation(); e.preventDefault();
   if (selectedIds.size === 0) return;
-  
-  // Use active session's base color, or first color in palette
-  let color = COLORS[0];
-  if (state.activeSession) {
-    const sess = getActiveSession();
-    if (sess && sess.hue !== undefined) {
-      color = `hsl(${sess.hue}, 70%, 60%)`;
-    }
-  }
-  
-  // Recolor all selected thoughts
+  // Cycle through palette on each tap
+  const idx = Math.floor(Math.random() * COLORS.length);
+  const color = COLORS[idx];
   for (const id of selectedIds) {
-    updateThought(id, state.thoughts.find(t=>t.id===id)?.text, null, color);
+    updateThought(id, thoughtMap.get(id)?.text, color);
     const mesh = getMesh(id);
-    if (mesh) {
-      mesh.material.color.set(color);
-      mesh.material.emissive.set(color);
-    }
+    if (mesh) { mesh.material.color.set(color); mesh.material.emissive.set(color); }
   }
-  
-  save();
-  toast(`${selectedIds.size} recolored`);
-  clearSelection();
-});
-
-// Lasso → new session
-document.getElementById('lasso-new-session-btn').addEventListener('pointerdown',(e)=>{
-  e.stopPropagation(); e.preventDefault();
-  if (selectedIds.size === 0) return;
-  const name = prompt('session name')?.trim();
-  if (!name) return;
-  const s = createSession(name, selectedIds);
-  switchSession(s.id);
-  toast(s.name + ' (' + s.thoughtIds.size + ')');
+  save(); toast(`${selectedIds.size} recolored`);
   clearSelection();
 });
 
 // ═══════════════════════════════════════════
-// Raycast helpers
+// RAYCASTING
 // ═══════════════════════════════════════════
 
 function ndcFromEvent(e) {
   let x,y;
-  if(e.touches&&e.touches.length>0){x=e.touches[0].clientX;y=e.touches[0].clientY;}
-  else if(e.changedTouches&&e.changedTouches.length>0){x=e.changedTouches[0].clientX;y=e.changedTouches[0].clientY;}
-  else{x=e.clientX??0;y=e.clientY??0;}
+  if (e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
+  else if (e.changedTouches && e.changedTouches.length > 0) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; }
+  else { x = e.clientX ?? 0; y = e.clientY ?? 0; }
   pointer.set((x/window.innerWidth)*2-1, -(y/window.innerHeight)*2+1);
 }
 
 function hitThought(e) {
   ndcFromEvent(e);
   raycaster.setFromCamera(pointer, camera);
-  const visible = thoughtGroup.children.filter(m => {
-    const t = state.thoughts.find(x=>x.id===m.userData.id);
-    return t && isThoughtVisible(t);
-  });
-  const hits = raycaster.intersectObjects(visible, false);
+  const hits = raycaster.intersectObjects(thoughtGroup.children, false);
   return hits.length ? hits[0].object : null;
 }
 
 function hitLine(e) {
   ndcFromEvent(e);
   raycaster.setFromCamera(pointer, camera);
-  const visibleLines = lineGroup.children.filter(l => l.visible);
-  const hits = raycaster.intersectObjects(visibleLines, false);
+  const hits = raycaster.intersectObjects(lineGroup.children.filter(l=>!l.userData.isConnLabel), false);
   return hits.length ? hits[0].object : null;
 }
 
@@ -2120,10 +884,14 @@ function worldPosFromScreen(e) {
 }
 
 // ═══════════════════════════════════════════
-// Pointer interaction
+// POINTER
 // ═══════════════════════════════════════════
 
-function pxFromEvent(e) { if(e.touches&&e.touches.length>0)return{x:e.touches[0].clientX,y:e.touches[0].clientY}; if(e.changedTouches&&e.changedTouches.length>0)return{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY}; return{x:e.clientX??0,y:e.clientY??0}; }
+function pxFromEvent(e) {
+  if (e.touches && e.touches.length > 0) return { x:e.touches[0].clientX, y:e.touches[0].clientY };
+  if (e.changedTouches && e.changedTouches.length > 0) return { x:e.changedTouches[0].clientX, y:e.changedTouches[0].clientY };
+  return { x:e.clientX??0, y:e.clientY??0 };
+}
 
 function isOverlayOpen() {
   return editorEl.classList.contains('open') || connEditorEl.classList.contains('open');
@@ -2133,7 +901,6 @@ function onPointerDown(e) {
   if (isOverlayOpen()) return;
   if (e.target !== canvas) return;
   if (e.touches && e.touches.length > 1) { clearHold(); multiTouchActive = true; return; }
-  closeConnDeletePill();
   const px = pxFromEvent(e);
   pointerStart = px; pointerMoved = false; holdTriggered = false;
   isDragging = false; lassoActive = false; lassoHoldTriggered = false;
@@ -2171,6 +938,7 @@ function onPointerMove(e) {
   const px = pxFromEvent(e);
   const dx = px.x-pointerStart.x, dy = px.y-pointerStart.y;
   if (Math.sqrt(dx*dx+dy*dy) > DRAG_THRESH) pointerMoved = true;
+
   if (draggedMesh && !holdTriggered && pointerMoved) {
     clearTimeout(holdTimer); isDragging = true;
     const wp = worldPosFromScreen(e);
@@ -2178,6 +946,7 @@ function onPointerMove(e) {
     moveThought(draggedMesh.userData.id, draggedMesh.position.x, draggedMesh.position.y, draggedMesh.position.z);
     updateConnectionPositions();
   }
+
   if (holdTriggered && connectSource) {
     const srcMesh = getMesh(connectSource);
     if (srcMesh) {
@@ -2189,23 +958,24 @@ function onPointerMove(e) {
     }
     const hit = hitThought(e);
     for (const child of thoughtGroup.children) {
-      const t = state.thoughts.find(x=>x.id===child.userData.id);
-      if (t && isThoughtVisible(t)) child.userData.targetEmissive = (hit===child && child.userData.id!==connectSource) ? 0.5 : 0.15;
+      child.userData.targetEmissive = (hit===child && child.userData.id!==connectSource) ? 0.5 : 0.15;
     }
   }
-  if (lassoActive && lassoHoldTriggered) { controls.enabled = false; lassoEnd = px; updateLassoRect(); }
 
+  if (lassoActive && lassoHoldTriggered) { controls.enabled = false; lassoEnd = px; updateLassoRect(); }
 }
 
 function onPointerUp(e) {
   if (isOverlayOpen()) return;
   if (multiTouchActive) { multiTouchActive = false; draggedMesh=null; isDragging=false; holdTriggered=false; controls.enabled=true; return; }
   clearTimeout(holdTimer); clearTimeout(lassoHoldTimer);
+
   if (lassoActive && lassoHoldTriggered && lassoEnd) {
     finishLasso(); lassoActive=false; lassoHoldTriggered=false; lassoStart=null; lassoEnd=null;
     controls.enabled = true; return;
   }
   lassoActive=false; lassoHoldTriggered=false; lassoStart=null; lassoEnd=null; lassoRect.style.display='none';
+
   if (holdTriggered && connectSource) {
     pendingLineMesh.visible = false;
     const hit = hitThought(e);
@@ -2214,16 +984,15 @@ function onPointerUp(e) {
     } else if (!hit && pointerMoved) {
       const wp = worldPosFromScreen(e);
       const newT = createThought(wp.x, wp.y, wp.z);
-      // add connection silently without opening conn editor
       const conn = { id:uid(), from:connectSource, to:newT.id, created:Date.now(), label:null, color:'#6ea8fe' };
       state.connections.push(conn);
-      rebuildConnections(); applyFilter(); save(); needsRender = true;
+      rebuildConnections(); save(); needsRender = true;
       setTimeout(() => openEditor(newT.id), 80);
     }
     const src = getMesh(connectSource);
     if (src) src.userData.targetEmissive = 0.15;
     for (const child of thoughtGroup.children) child.userData.targetEmissive = 0.15;
-    connectSource = null; applyFilter();
+    connectSource = null;
   } else if (isDragging && draggedMesh) {
     save();
   } else if (draggedMesh && !pointerMoved) {
@@ -2233,12 +1002,8 @@ function onPointerUp(e) {
     else {
       const lineHit = hitLine(e);
       if (lineHit && lineHit.userData.connKey) {
-        // Find the connection and open editor
-        const connKey = lineHit.userData.connKey;
-        const conn = state.connections.find(c => [c.from,c.to].sort().join('|') === connKey);
-        if (conn) {
-          openConnEditor(conn.id);
-        }
+        const conn = state.connections.find(c => [c.from,c.to].sort().join('|') === lineHit.userData.connKey);
+        if (conn) openConnEditor(conn.id);
       } else {
         const wp = worldPosFromScreen(e);
         const t = createThought(wp.x, wp.y, wp.z);
@@ -2254,17 +1019,21 @@ function clearHold() {
   if (connectSource) { const src = getMesh(connectSource); if (src) src.userData.targetEmissive = 0.15; connectSource = null; pendingLineMesh.visible = false; }
 }
 
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(e.touches.length>1){multiTouchActive=true;clearHold();draggedMesh=null;holdTriggered=true;controls.enabled=true;return;} multiTouchActive=false; onPointerDown(e); }, { passive:false });
-canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); onPointerMove(e); }, { passive:false });
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (e.touches.length > 1) { multiTouchActive = true; clearHold(); draggedMesh = null; holdTriggered = true; controls.enabled = true; return; }
+  multiTouchActive = false; onPointerDown(e);
+}, { passive:false });
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); onPointerMove(e); }, { passive:false });
 canvas.addEventListener('touchend', onPointerUp);
 canvas.addEventListener('touchcancel', ()=>{ clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; draggedMesh=null; isDragging=false; holdTriggered=false; multiTouchActive=false; controls.enabled=true; });
 canvas.addEventListener('mousedown', onPointerDown);
 window.addEventListener('mousemove', onPointerMove);
+window.addEventListener('mouseup', onPointerUp);
 
-// Dedicated hover highlight on mousemove (desktop only)
+// Hover highlight (desktop)
 window.addEventListener('mousemove', (e) => {
   if (isDragging || holdTriggered || connectSource || isOverlayOpen()) {
-    // During drag/connect, reset all to normal when not in connect mode
     if (!connectSource) {
       for (const child of thoughtGroup.children) child.userData.targetEmissive = 0.15;
       for (const child of lineGroup.children) {
@@ -2276,14 +1045,11 @@ window.addEventListener('mousemove', (e) => {
   const hit = hitThought(e);
   for (const child of thoughtGroup.children) {
     const tId = child.userData.id;
-    if (!hit) {
-      child.userData.targetEmissive = 0.15;
-    } else if (tId === hit.userData.id) {
-      child.userData.targetEmissive = 0.75;
-    } else {
+    if (!hit) child.userData.targetEmissive = 0.15;
+    else if (tId === hit.userData.id) child.userData.targetEmissive = 0.75;
+    else {
       const isConnected = state.connections.some(c =>
-        (c.from === hit.userData.id && c.to === tId) ||
-        (c.to === hit.userData.id && c.from === tId)
+        (c.from === hit.userData.id && c.to === tId) || (c.to === hit.userData.id && c.from === tId)
       );
       child.userData.targetEmissive = isConnected ? 0.5 : 0.05;
     }
@@ -2291,226 +1057,246 @@ window.addEventListener('mousemove', (e) => {
   for (const child of lineGroup.children) {
     if (child.userData.isConnLabel) continue;
     const base = child.userData.baseOpacity || 0.35;
-    if (!hit) {
-      child.material.opacity = base;
-    } else {
+    if (!hit) child.material.opacity = base;
+    else {
       const isRelated = child.userData.from === hit.userData.id || child.userData.to === hit.userData.id;
       child.material.opacity = isRelated ? 0.9 : 0.04;
     }
   }
   needsRender = true;
 });
-window.addEventListener('mouseup', onPointerUp);
 
 // ═══════════════════════════════════════════
-// Tray
+// MENU
 // ═══════════════════════════════════════════
 
-const trayEl = document.getElementById('tray');
-const trayBtn = document.getElementById('tray-btn');
-const trayScrim = document.getElementById('tray-scrim');
+const menuDrawer = document.getElementById('menu-drawer');
+const menuScrim = document.getElementById('menu-scrim');
+function openMenu() { menuDrawer.classList.add('open'); menuScrim.classList.add('open'); }
+function closeMenu() { menuDrawer.classList.remove('open'); menuScrim.classList.remove('open'); }
 
-function openTray() { trayEl.classList.add('open'); trayScrim.classList.add('open'); }
-function closeTray() { trayEl.classList.remove('open'); trayScrim.classList.remove('open'); }
+document.getElementById('menu-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); openMenu(); }, { passive:false });
+menuScrim.addEventListener('click', closeMenu);
 
-trayBtn.addEventListener('click', openTray);
-trayScrim.addEventListener('click', closeTray);
-
-document.getElementById('btn-export').addEventListener('click', () => {
-  // v5: include sessions in export
-  const data = JSON.stringify({
-    thoughts:state.thoughts, connections:state.connections, folders:state.folders,
-    sessions: state.sessions.map(s => ({ ...s, thoughtIds: Array.from(s.thoughtIds) }))
-  }, null, 2);
-  const blob = new Blob([data],{type:'application/json'});
+document.getElementById('m-export').addEventListener('click', () => {
+  const data = JSON.stringify({ thoughts:state.thoughts, connections:state.connections }, null, 2);
+  const blob = new Blob([data], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href=url; a.download=`atem-${new Date().toISOString().slice(0,10)}.json`;
+  a.href = url; a.download = `atem-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(url);
-  closeTray(); toast('exported');
+  closeMenu(); toast('exported');
 });
 
-document.getElementById('btn-import').addEventListener('click', () => {
+document.getElementById('m-import').addEventListener('click', () => {
   const input = document.createElement('input');
-  input.type='file'; input.accept='.json';
+  input.type = 'file'; input.accept = '.json';
   input.onchange = (ev) => {
-    const file = ev.target.files[0]; if(!file) return;
+    const file = ev.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (r) => {
       try {
         const data = JSON.parse(r.target.result);
         if (data.thoughts) {
-          while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
-          while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
-          state.thoughts=data.thoughts; state.connections=data.connections||[];
-          state.folders=data.folders||[];
-          // v5: import sessions
-          state.sessions = (data.sessions||[]).map(s => ({ ...s, thoughtIds: new Set(s.thoughtIds||[]) }));
-          for(const t of state.thoughts){if(t.folder===undefined)t.folder=null;}
-          for(const t of state.thoughts) addThoughtMesh(t);
-          rebuildConnections(); applyFilter(); save();
-          toast('imported '+state.thoughts.length+' thoughts');
-          if(state.thoughts.length>0) hideHint();
+          while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
+          while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+          state.thoughts = data.thoughts;
+          state.connections = data.connections || [];
+          for (const t of state.thoughts) { if (!t.size) t.size = 1.0; if (!t.props) t.props = {}; }
+          for (const c of state.connections) { if (!c.color) c.color = '#6ea8fe'; }
+          for (const t of state.thoughts) addThoughtMesh(t);
+          rebuildMaps();
+          rebuildConnections(); save();
+          toast('imported ' + state.thoughts.length + ' thoughts');
+          if (state.thoughts.length > 0) hideHint();
         }
-      } catch(err){toast('import failed');}
+      } catch (err) { toast('import failed'); }
     };
     reader.readAsText(file);
   };
-  input.click(); closeTray();
+  input.click(); closeMenu();
+});
+
+document.getElementById('m-reset-view').addEventListener('click', () => {
+  camera.position.set(0,0,18); controls.target.set(0,0,0); save(); closeMenu();
 });
 
 function updateCaptureToggle() {
-  const dot = document.getElementById('capture-toggle-dot');
-  if (dot) dot.classList.toggle('on', !!state.openToCapture);
+  document.getElementById('m-capture-dot').classList.toggle('on', !!state.openToCapture);
 }
-document.getElementById('btn-open-capture').addEventListener('click', () => {
-  state.openToCapture=!state.openToCapture; updateCaptureToggle(); save();
-  toast(state.openToCapture?'will open to capture':'will open to board');
-  closeTray();
+document.getElementById('m-open-capture').addEventListener('click', () => {
+  state.openToCapture = !state.openToCapture; updateCaptureToggle(); save();
+  toast(state.openToCapture ? 'will open to capture' : 'will open to space');
+  closeMenu();
 });
 
-document.getElementById('btn-clear').addEventListener('click', () => {
-  if(!confirm('clear all thoughts?')) return;
-  state.thoughts=[]; state.connections=[]; state.folders=[]; state.activeFolder=null;
-  state.sessions=[]; state.activeSession=null;
-  while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
-  while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
-  renderFolderBar(); applyFilter(); save();
-  closeTray(); toast('cleared');
+document.getElementById('m-toggle-fps').addEventListener('click', () => {
+  showFps = !showFps;
+  document.getElementById('fps').classList.toggle('on', showFps);
+  document.getElementById('m-fps-dot').classList.toggle('on', showFps);
+  closeMenu();
 });
 
-document.getElementById('btn-reset-view').addEventListener('click', () => { camera.position.set(0,0,18); controls.target.set(0,0,0); save(); closeTray(); });
-document.getElementById('btn-dump-state').addEventListener('click', () => {
-  // Pretty print with Sets converted
-  const dump = { ...state, sessions: state.sessions.map(s=>({...s,thoughtIds:Array.from(s.thoughtIds)})) };
-  console.log(JSON.stringify(dump, null, 2));
-  closeTray(); toast('state → console');
+document.getElementById('m-dump').addEventListener('click', () => {
+  console.log(JSON.stringify(state, null, 2));
+  closeMenu(); toast('state → console');
 });
-document.getElementById('btn-force-save').addEventListener('click', () => { save(); closeTray(); toast('saved'); });
-document.getElementById('btn-show-orphans').addEventListener('click', () => {
+
+document.getElementById('m-orphans').addEventListener('click', () => {
   const connected = new Set();
-  for(const c of state.connections){connected.add(c.from);connected.add(c.to);}
-  let count=0;
-  for(const mesh of thoughtGroup.children){
-    if(!connected.has(mesh.userData.id)){
+  for (const c of state.connections) { connected.add(c.from); connected.add(c.to); }
+  let count = 0;
+  for (const mesh of thoughtGroup.children) {
+    if (!connected.has(mesh.userData.id)) {
       count++;
-      mesh.material.emissive.set('#ff4444'); mesh.material.emissiveIntensity=0.8;
-      setTimeout(()=>{
-        const t=state.thoughts.find(x=>x.id===mesh.userData.id);
-        if(t) mesh.material.emissive.set(t.color||'#6ea8fe');
-        mesh.userData.targetEmissive=0.15;
-      },1500);
+      mesh.material.emissive.set('#ff4444'); mesh.material.emissiveIntensity = 0.8;
+      setTimeout(() => {
+        const t = thoughtMap.get(mesh.userData.id);
+        if (t) mesh.material.emissive.set(t.color || '#6ea8fe');
+        mesh.userData.targetEmissive = 0.15;
+      }, 1500);
     }
   }
-  closeTray(); toast(count+' orphan'+(count!==1?'s':''));
-});
-document.getElementById('btn-toggle-fps').addEventListener('click', () => {
-  showFps=!showFps;
-  document.getElementById('fps').classList.toggle('on', showFps);
-  document.getElementById('fps-dot').classList.toggle('on', showFps);
-  closeTray();
+  closeMenu(); toast(count + ' orphan' + (count !== 1 ? 's' : ''));
 });
 
-// ═══════════════════════════════════════════
-// Toast & Hint
-// ═══════════════════════════════════════════
-
-function toast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800); }
-function hideHint() { if(!hintVisible) return; hintVisible=false; const h=document.getElementById('hint'); h.style.opacity='0'; setTimeout(()=>h.style.display='none',800); }
-
-// ═══════════════════════════════════════════
-// Stats & FPS
-// ═══════════════════════════════════════════
-
-let fpsFrames=0, fpsLast=performance.now(), fpsValue=0;
-
-function updateStats() {
-  const el=document.getElementById('stats');
-  const tc=state.thoughts.length, cc=state.connections.length;
-  if(tc===0){el.textContent='';return;}
-  let s=`${tc} thought${tc!==1?'s':''}`;
-  if(cc>0) s+=` · ${cc} connection${cc!==1?'s':''}`;
-  if(state.activeFolder) s+=` · ${state.activeFolder}`;
-  // v5: show session-scoped count
-  if(state.activeSession) {
-    const sess = getActiveSession();
-    if (sess) s = `${sess.thoughtIds.size} in session · ${tc} total`;
+document.getElementById('m-bulk').addEventListener('click', () => {
+  const spread = Math.sqrt(100) * 2;
+  for (let i = 0; i < 100; i++) {
+    const x = (Math.random()-0.5)*spread, y = (Math.random()-0.5)*spread, z = (Math.random()-0.5)*spread*0.5;
+    createThought(x, y, z, `test-${i}`);
   }
-  el.textContent=s;
-}
+  closeMenu(); toast('+100');
+});
+
+document.getElementById('m-clear').addEventListener('click', () => {
+  if (!confirm('clear all thoughts?')) return;
+  state.thoughts = []; state.connections = [];
+  while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
+  while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+  thoughtMap.clear(); meshMap.clear();
+  save(); closeMenu(); toast('cleared');
+});
 
 // ═══════════════════════════════════════════
-// Animation
+// KEYBOARD
 // ═══════════════════════════════════════════
 
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (connEditorEl.classList.contains('open')) { closeConnEditor(); e.preventDefault(); }
+    else if (menuDrawer.classList.contains('open')) { closeMenu(); e.preventDefault(); }
+    else if (editorEl.classList.contains('open')) { closeEditor(false); e.preventDefault(); }
+  }
+});
+
+// Drag-drop import
+document.body.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
+document.body.addEventListener('drop', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.endsWith('.json')) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.thoughts) return;
+      while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
+      while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+      state.thoughts = data.thoughts;
+      state.connections = data.connections || [];
+      for (const t of state.thoughts) { if (!t.size) t.size = 1.0; if (!t.props) t.props = {}; }
+      for (const c of state.connections) { if (!c.color) c.color = '#6ea8fe'; }
+      for (const t of state.thoughts) addThoughtMesh(t);
+      rebuildMaps();
+      rebuildConnections(); save();
+      toast(`imported ${state.thoughts.length} thoughts`);
+      if (state.thoughts.length > 0) hideHint();
+    } catch (err) { toast('import failed'); }
+  };
+  reader.readAsText(file);
+});
+
+// ═══════════════════════════════════════════
+// TOAST / HINT
+// ═══════════════════════════════════════════
+
+function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'), 1800); }
+function hideHint() { if (!hintVisible) return; hintVisible = false; const h = document.getElementById('hint'); h.style.opacity = '0'; setTimeout(()=>h.style.display='none', 800); }
+
+// ═══════════════════════════════════════════
+// ANIMATION
+// ═══════════════════════════════════════════
+
+let fpsFrames = 0, fpsLast = performance.now(), fpsValue = 0;
 let lastTime = performance.now();
-
 let needsRender = true;
-function requestRender() { needsRender = true; }
 
-// Frustum for culling
 const frustum = new THREE.Frustum();
-const cameraViewProjectionMatrix = new THREE.Matrix4();
+const camMatrix = new THREE.Matrix4();
 
 function animate() {
   requestAnimationFrame(animate);
-  const now=performance.now(); const dt=(now-lastTime)/1000; lastTime=now;
+  const now = performance.now(); const dt = (now-lastTime)/1000; lastTime = now;
   fpsFrames++;
-  if(now-fpsLast>=500){ fpsValue=Math.round(fpsFrames/((now-fpsLast)/1000)); fpsFrames=0; fpsLast=now; if(showFps) document.getElementById('fps').textContent=fpsValue+' fps'; }
-  
+  if (now-fpsLast >= 500) {
+    fpsValue = Math.round(fpsFrames/((now-fpsLast)/1000)); fpsFrames = 0; fpsLast = now;
+    if (showFps) document.getElementById('fps').textContent = fpsValue + ' fps';
+  }
+
   controls.update();
-  
-  // Update frustum for label culling
+
   camera.updateMatrixWorld();
-  cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-  frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
-  
-  // Animate thoughts (breathing, emissive) + frustum cull labels
-  let hasAnimation = false;
-  for(const mesh of thoughtGroup.children){
-    const ud=mesh.userData; ud.breath+=dt*0.8;
-    if(!isDragging||mesh!==draggedMesh){ mesh.position.y+=Math.sin(ud.breath)*0.0003; mesh.position.x+=Math.cos(ud.breath*0.7)*0.0002; }
-    const ce=mesh.material.emissiveIntensity; const te=ud.targetEmissive+Math.sin(ud.breath)*0.03; 
-    mesh.material.emissiveIntensity+=(te-ce)*0.1;
-    const co=mesh.material.opacity; mesh.material.opacity+=(ud.targetOpacity-co)*0.08;
-    
-    // Frustum culling for labels (hide if off-screen)
+  camMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  frustum.setFromProjectionMatrix(camMatrix);
+
+  let hasAnim = false;
+  for (const mesh of thoughtGroup.children) {
+    const ud = mesh.userData; ud.breath += dt*0.8;
+    if (!isDragging || mesh !== draggedMesh) {
+      mesh.position.y += Math.sin(ud.breath)*0.0003;
+      mesh.position.x += Math.cos(ud.breath*0.7)*0.0002;
+    }
+    const ce = mesh.material.emissiveIntensity;
+    const te = ud.targetEmissive + Math.sin(ud.breath)*0.03;
+    mesh.material.emissiveIntensity += (te-ce)*0.1;
+    const co = mesh.material.opacity;
+    mesh.material.opacity += (ud.targetOpacity-co)*0.08;
+
     const label = mesh.getObjectByName('label');
     if (label) {
       const inView = frustum.containsPoint(mesh.position);
       label.visible = inView && ud.targetOpacity > 0.5;
     }
-    
-    // Check if animation is still converging
-    if(Math.abs(ce-te) > 0.01 || Math.abs(co-ud.targetOpacity) > 0.01) hasAnimation = true;
+
+    if (Math.abs(ce-te) > 0.01 || Math.abs(co-ud.targetOpacity) > 0.01) hasAnim = true;
   }
-  
-  if(lineGroup.children.length>0) updateConnectionPositions();
-  updateStats();
-  
-  // Only render if needed: dragging, animating, camera moving, or explicit request
-  if(needsRender || isDragging || hasAnimation || controls.autoRotate) {
+
+  if (lineGroup.children.length > 0) updateConnectionPositions();
+
+  if (needsRender || isDragging || hasAnim) {
     renderer.render(scene, camera);
     needsRender = false;
   }
 }
 
-// ═══════════════════════════════════════════
-// Resize
-// ═══════════════════════════════════════════
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  needsRender = true;
+});
 
-window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); });
-
 // ═══════════════════════════════════════════
-// Init
+// INIT
 // ═══════════════════════════════════════════
 
 (async () => {
   await load();
   animate();
 
-  // If no data, load bible demo
   if (state.thoughts.length === 0) {
+    // Bible demo on first launch — teaches by example, no onboarding chrome
     const BIBLE = [
       {id:'claim',text:'The claim',position:[0,0,0],color:'#b8a9f5',size:1.4},
       {id:'soul',text:'The soul',position:[-2,1.5,0],color:'#b8a9f5',size:1.1},
@@ -2527,156 +1313,42 @@ window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.in
       {id:'complete',text:'Three is complete',position:[-5,-2.5,0],color:'#7ed4a4',size:0.85},
       {id:'spatial',text:'Spatial cognition',position:[8,-5.5,0],color:'#7ab8f5',size:1.0},
       {id:'external',text:'Extended cognition',position:[11,-4,0],color:'#7ab8f5',size:0.9},
-      {id:'bisociation',text:'Bisociation',position:[11,-2,0],color:'#7ab8f5',size:0.85},
       {id:'flow',text:'Flow conditions',position:[8,-2.5,0],color:'#7ab8f5',size:1.0},
-      {id:'attention',text:'Attention scarcity',position:[8,-0.5,0],color:'#7ab8f5',size:0.85},
-      {id:'signatures',text:'Cognitive signatures',position:[11,0.2,0],color:'#7ab8f5',size:0.85},
       {id:'s1',text:'Stage 1: Presets',position:[-2.5,7,0],color:'#f5c97a',size:1.2},
       {id:'s2',text:'Stage 2: Prompting',position:[1.5,8,0],color:'#f5c97a',size:1.05},
       {id:'s3',text:'Stage 3: Code',position:[5.5,7,0],color:'#f5c97a',size:1.05},
-      {id:'graceful',text:'Graceful degradation',position:[1.5,5.5,0],color:'#f5c97a',size:0.75},
-      {id:'gesture',text:'Gestures',position:[4.5,4,0],color:'#f5a07a',size:0.85},
-      {id:'visual',text:'Visual language',position:[7.5,3,0],color:'#f5a07a',size:0.85},
-      {id:'colorm',text:'Color = meaning',position:[10,4,0],color:'#f5a07a',size:0.7},
-      {id:'motion',text:'Motion = alive',position:[10,2.5,0],color:'#f5a07a',size:0.7},
-      {id:'notdoc',text:'Not a document',position:[-11,7,0],color:'#a0a09a',size:0.7},
-      {id:'notboard',text:'Not a whiteboard',position:[-11,8.5,0],color:'#a0a09a',size:0.7},
-      {id:'notmind',text:'Not a mind map',position:[-9,9,0],color:'#a0a09a',size:0.7},
-      {id:'notchat',text:'Not a chat',position:[-9,7,0],color:'#a0a09a',size:0.7},
-      {id:'never',text:'Never',position:[-10,7.8,0],color:'#a0a09a',size:0.55},
-      {id:'h1',text:'H1: Spatial',position:[-4.5,10.5,0],color:'#f5a0c0',size:0.7},
-      {id:'h4',text:'H4: Empty wins',position:[-1.5,11.5,0],color:'#f5a0c0',size:0.7},
-      {id:'h5',text:'H5: Flow states',position:[1.5,10.5,0],color:'#f5a0c0',size:0.75},
-      {id:'h7',text:'H7: Each unique',position:[4.5,11.5,0],color:'#f5a0c0',size:0.7},
-      {id:'h8',text:'H8: Stage 1=flow',position:[7.5,10.5,0],color:'#f5a0c0',size:0.7},
-      {id:'stack',text:'The stack',position:[12,7,0],color:'#a0d47a',size:0.9},
-      {id:'layers',text:'Layered separation',position:[14,5.5,0],color:'#a0d47a',size:0.75},
-      {id:'order',text:'Build order: sacred',position:[14,8,0],color:'#a0d47a',size:0.75},
-      {id:'creep',text:'No feature creep',position:[12,9.5,0],color:'#a0d47a',size:0.7},
     ];
     const BCONNS = [
       ['claim','soul','why it matters'],['claim','medium','what it is'],['claim','fundamental','how'],
       ['claim','cheap','constraint'],['claim','joy','feeling'],['claim','sensitive','nature'],
-      ['soul','joy','produces'],['medium','fundamental','requires'],
       ['claim','space','primitive 1'],['claim','thought2','primitive 2'],['claim','conn3','primitive 3'],
       ['space','thought2','contains'],['thought2','conn3','enables'],['conn3','density','core insight'],
-      ['space','empty','opens as'],['space','complete','proof'],['thought2','complete','proof'],
-      ['conn3','complete','proof'],['space','spatial','cognitive basis'],['thought2','external','cognitive basis'],
-      ['conn3','bisociation','cognitive basis'],['empty','flow','enables'],['flow','attention','requires'],
-      ['signatures','medium','validates'],['flow','joy','produces'],['soul','s1','stage 1'],
-      ['s1','s2','adds prompting'],['s2','s3','adds code'],['graceful','s1','principle'],
-      ['graceful','s2','principle'],['graceful','s3','principle'],['s1','gesture','interaction'],
-      ['gesture','visual','expressed as'],['visual','colorm','includes'],['visual','motion','includes'],
-      ['claim','notdoc','not this'],['claim','notboard','not this'],
-      ['h1','spatial','tests'],['h4','empty','tests'],['h5','flow','tests'],['h8','s1','validates'],
-      ['stack','layers','enables'],['layers','order','guides'],['order','creep','prevents'],['stack','cheap','satisfies'],
+      ['space','empty','opens as'],['space','complete','proof'],['thought2','complete','proof'],['conn3','complete','proof'],
+      ['space','spatial','cognitive basis'],['thought2','external','cognitive basis'],['flow','joy','produces'],
+      ['soul','s1','stage 1'],['s1','s2','adds prompting'],['s2','s3','adds code'],
     ];
-
     for (const t of BIBLE) {
       const now = Date.now();
-      const thought = { id:t.id, text:t.text, position:t.position, color:t.color, size:t.size, created:now, touched:now, folder:null };
+      const thought = { id:t.id, text:t.text, position:t.position, color:t.color, size:t.size, created:now, touched:now, props:{} };
       state.thoughts.push(thought);
       thoughtMap.set(thought.id, thought);
       addThoughtMesh(thought);
     }
     for (const [from, to, label] of BCONNS) {
-      state.connections.push({ from, to, label: label||'', type:'relates' });
+      state.connections.push({ id:uid(), from, to, label:label||null, color:'#6ea8fe', created:Date.now() });
     }
-    const bs = createSession('atem bible', state.thoughts.map(t=>t.id));
-    state.activeSession = bs.id;
     rebuildMaps();
     rebuildConnections();
-    applyFilter();
     await save();
     hideHint();
-    camera.position.set(0, 0, 28);
+    camera.position.set(0, 0, 24);
     controls.target.set(0, 0, 0);
-    toast('welcome to atem — tap anywhere to add a thought');
-  } else if (!state.activeSession) {
-    const sorted = [...state.sessions].sort((a,b) => b.touched - a.touched);
-    state.activeSession = sorted.length ? sorted[0].id : null;
-    applyFilter();
-  } else {
-    applyFilter();
   }
 })();
 
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-  // ESC closes drawer/editor/conn-editor
-  if (e.key === 'Escape') {
-    const drawer = document.getElementById('session-drawer');
-    const editor = document.getElementById('editor');
-    if (connEditorEl.classList.contains('open')) {
-      closeConnEditor();
-      e.preventDefault();
-    } else if (drawer.classList.contains('open')) {
-      closeSessionDrawer();
-      e.preventDefault();
-    } else if (editor.classList.contains('open')) {
-      closeEditor(false);
-      e.preventDefault();
-    }
-  }
-});
-
-// Hover near top to show tag bar
-let tagBarTimeout;
-document.addEventListener('mousemove', (e) => {
-  const tagBar = document.getElementById('tag-bar');
-  if (e.clientY < 60) {
-    tagBar.classList.add('show');
-    clearTimeout(tagBarTimeout);
-    tagBarTimeout = setTimeout(() => tagBar.classList.remove('show'), 2000);
-  }
-});
-
-// Drag-drop import
-document.body.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-});
-
-document.body.addEventListener('drop', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  const file = e.dataTransfer.files[0];
-  if (file && file.name.endsWith('.json')) {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (data.thoughts) {
-          while(thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
-          while(lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
-          state.thoughts = data.thoughts || [];
-          state.connections = data.connections || [];
-          state.folders = data.folders || [];
-          state.sessions = (data.sessions || []).map(s => ({
-            ...s,
-            thoughtIds: new Set(s.thoughtIds || [])
-          }));
-          for(const t of state.thoughts){ if(!t.size) t.size=1.0; }
-          for(const c of state.connections){ if(!c.color) c.color='#6ea8fe'; }
-          for (const t of state.thoughts) addThoughtMesh(t);
-          rebuildMaps();
-          rebuildConnections();
-          applyFilter();
-          save();
-          toast(`imported ${state.thoughts.length} thoughts`);
-          if (state.thoughts.length > 0) hideHint();
-        }
-      } catch (err) {
-        toast('import failed');
-      }
-    };
-    reader.readAsText(file);
-  }
-});
-
-setInterval(save,10000);
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v14.0 — Layer 1: Expression (connections + sizes + presets)');
+setInterval(save, 10000);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+console.log('atem v15 — three primitives only');
 </script>
 </body>
 </html>
