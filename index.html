@@ -176,6 +176,62 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 #lasso-bar button:active{background:rgba(255,255,255,0.12)}
 
+/* ─── Starter Gallery ─── */
+#gallery-scrim{position:fixed;inset:0;z-index:9995;display:none;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#gallery-scrim.open{display:block}
+#gallery-panel{
+  position:fixed;top:0;right:0;bottom:0;
+  width:min(340px,100vw);
+  background:rgba(8,8,12,0.98);
+  border-left:1px solid rgba(255,255,255,0.07);
+  z-index:9996;
+  transform:translateX(100%);
+  transition:transform 0.28s cubic-bezier(0.32,0.72,0,1);
+  display:flex;flex-direction:column;
+  padding:max(20px,env(safe-area-inset-top,0px)) 0 max(20px,env(safe-area-inset-bottom,0px));
+  overflow:hidden;
+}
+#gallery-panel.open{transform:translateX(0)}
+#gallery-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
+#gallery-title{font-size:13px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase}
+#gallery-close{
+  background:none;border:none;color:rgba(255,255,255,0.3);
+  font-size:20px;cursor:pointer;padding:0;line-height:1;
+}
+#gallery-close:active{color:rgba(255,255,255,0.7)}
+#gallery-subtitle{padding:14px 20px 4px;font-size:11px;color:rgba(255,255,255,0.18);line-height:1.5;flex-shrink:0}
+#gallery-list{
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:8px 12px 12px;flex:1;
+}
+.gcard{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;padding:14px 16px;
+  margin-bottom:8px;cursor:pointer;
+  transition:all 0.15s;position:relative;overflow:hidden;
+}
+.gcard:active{background:rgba(255,255,255,0.07);transform:scale(0.98)}
+.gcard-accent{
+  position:absolute;top:0;left:0;bottom:0;width:3px;border-radius:14px 0 0 14px;
+}
+.gcard-name{font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:4px;padding-left:10px}
+.gcard-desc{font-size:11px;color:rgba(255,255,255,0.3);line-height:1.5;padding-left:10px}
+.gcard-meta{
+  display:flex;gap:10px;margin-top:8px;padding-left:10px;
+}
+.gcard-tag{
+  font-size:9px;color:rgba(255,255,255,0.18);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:6px;padding:2px 7px;
+  letter-spacing:0.05em;text-transform:uppercase;
+}
+
 /* ─── FPS ─── */
 #fps{
   position:fixed;top:max(16px,env(safe-area-inset-top,0px));right:16px;
@@ -237,6 +293,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 </button>
 <div id="menu-scrim"></div>
 <div id="menu-drawer">
+  <div class="sep">start</div>
+  <button id="m-gallery">start from a board</button>
   <div class="sep">data</div>
   <button id="m-export">export</button>
   <button id="m-import">import</button>
@@ -250,7 +308,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-bulk">+ 100 test</button>
   <div class="sep"></div>
   <button id="m-clear" class="danger">clear all</button>
-  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v15</div>
+  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v16</div>
+</div>
+
+<!-- Starter Gallery -->
+<div id="gallery-scrim"></div>
+<div id="gallery-panel">
+  <div id="gallery-header">
+    <span id="gallery-title">start from a board</span>
+    <button id="gallery-close">×</button>
+  </div>
+  <div id="gallery-subtitle">Each board is a different way of thinking. Pick one, make it yours.</div>
+  <div id="gallery-list"></div>
 </div>
 
 <!-- Lasso -->
@@ -279,7 +348,7 @@ import { get, set } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 15,
+  version: 16,
   thoughts: [],
   connections: [],
   camera: null,
@@ -1184,7 +1253,8 @@ document.getElementById('m-clear').addEventListener('click', () => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (connEditorEl.classList.contains('open')) { closeConnEditor(); e.preventDefault(); }
+    if (galleryPanel.classList.contains('open')) { closeGallery(); e.preventDefault(); }
+    else if (connEditorEl.classList.contains('open')) { closeConnEditor(); e.preventDefault(); }
     else if (menuDrawer.classList.contains('open')) { closeMenu(); e.preventDefault(); }
     else if (editorEl.classList.contains('open')) { closeEditor(false); e.preventDefault(); }
   }
@@ -1216,6 +1286,328 @@ document.body.addEventListener('drop', (e) => {
   };
   reader.readAsText(file);
 });
+
+// ═══════════════════════════════════════════
+// STARTER BOARDS
+// ═══════════════════════════════════════════
+
+const STARTER_BOARDS = [
+  {
+    id: 'decision',
+    name: 'The decision you keep avoiding',
+    desc: 'Two paths. What you\'re afraid to admit. What you actually want.',
+    accent: '#f87171',
+    tags: ['clarity', 'personal'],
+    thoughts: [
+      {id:'d1', text:'The decision', position:[0,0,0], color:'#f87171', size:1.4},
+      {id:'d2', text:'Option A', position:[-4,2,0], color:'#fb923c', size:1.1},
+      {id:'d3', text:'Option B', position:[4,2,0], color:'#6ea8fe', size:1.1},
+      {id:'d4', text:'What I\'m afraid of', position:[0,-3,0], color:'#a78bfa', size:1.0},
+      {id:'d5', text:'What it would cost me', position:[-4,-1,0], color:'#a78bfa', size:0.9},
+      {id:'d6', text:'What it would free me from', position:[4,-1,0], color:'#34d399', size:0.9},
+      {id:'d7', text:'What I keep telling myself', position:[0,4,0], color:'#f5c97a', size:0.9},
+      {id:'d8', text:'What I\'d tell a friend to do', position:[0,-5.5,0], color:'#67e8f9', size:0.85},
+      {id:'d9', text:'The real question underneath', position:[7,0,0], color:'#f472b6', size:1.0},
+    ],
+    connections: [
+      ['d1','d2','path 1'],['d1','d3','path 2'],
+      ['d1','d4','rooted in'],['d2','d5','costs'],['d3','d6','frees'],
+      ['d7','d1','blocks'],['d8','d1','cuts through'],['d9','d4','is actually'],
+    ]
+  },
+  {
+    id: 'belief',
+    name: 'A belief most people don\'t share',
+    desc: 'The claim. The evidence. The counterarguments you haven\'t beaten yet.',
+    accent: '#a78bfa',
+    tags: ['argument', 'worldview'],
+    thoughts: [
+      {id:'b1', text:'The claim', position:[0,0,0], color:'#a78bfa', size:1.4},
+      {id:'b2', text:'Why I believe this', position:[-5,1,0], color:'#a78bfa', size:1.0},
+      {id:'b3', text:'Where I first saw it', position:[-5,-2,0], color:'#a78bfa', size:0.9},
+      {id:'b4', text:'The strongest objection', position:[5,1,0], color:'#f87171', size:1.1},
+      {id:'b5', text:'My response to it', position:[5,-2,0], color:'#34d399', size:1.0},
+      {id:'b6', text:'What would change my mind', position:[0,4,0], color:'#fbbf24', size:1.0},
+      {id:'b7', text:'Who else believes this?', position:[-3,3.5,0], color:'#67e8f9', size:0.85},
+      {id:'b8', text:'What it implies about everything else', position:[0,-4,0], color:'#fb923c', size:0.9},
+      {id:'b9', text:'The version I can\'t defend yet', position:[8,0,0], color:'#f472b6', size:0.85},
+    ],
+    connections: [
+      ['b1','b2','because'],['b1','b3','came from'],['b1','b4','challenged by'],
+      ['b4','b5','answered by'],['b6','b1','falsified if'],['b7','b2','supports'],
+      ['b1','b8','implies'],['b9','b1','edges into'],
+    ]
+  },
+  {
+    id: 'postmortem',
+    name: 'Why something failed',
+    desc: 'The event. The causes you owned. The ones you didn\'t. What you\'d do different.',
+    accent: '#fb923c',
+    tags: ['reflection', 'learning'],
+    thoughts: [
+      {id:'pm1', text:'What failed', position:[0,0,0], color:'#fb923c', size:1.4},
+      {id:'pm2', text:'What I thought would happen', position:[-5,2,0], color:'#6ea8fe', size:1.0},
+      {id:'pm3', text:'What actually happened', position:[5,2,0], color:'#f87171', size:1.0},
+      {id:'pm4', text:'What I controlled', position:[-5,-2,0], color:'#fbbf24', size:1.0},
+      {id:'pm5', text:'What I didn\'t control', position:[5,-2,0], color:'#a78bfa', size:1.0},
+      {id:'pm6', text:'The first sign I ignored', position:[0,4,0], color:'#f472b6', size:0.9},
+      {id:'pm7', text:'What I\'d do at step 1 now', position:[-3,-4.5,0], color:'#34d399', size:0.9},
+      {id:'pm8', text:'What I\'m still not sure about', position:[3,-4.5,0], color:'#67e8f9', size:0.9},
+      {id:'pm9', text:'The thing I\'m not saying', position:[8,0,0], color:'#f87171', size:0.85},
+    ],
+    connections: [
+      ['pm1','pm2','vs'],['pm1','pm3','became'],['pm2','pm3','gap'],
+      ['pm4','pm1','shaped'],['pm5','pm1','shaped'],['pm6','pm1','preceded'],
+      ['pm7','pm4','changes'],['pm8','pm5','lives in'],['pm9','pm1','underlies'],
+    ]
+  },
+  {
+    id: 'creative',
+    name: 'A creative project seed',
+    desc: 'Core vibe. References. Constraints. What makes it different from everything else.',
+    accent: '#f5c97a',
+    tags: ['creative', 'making'],
+    thoughts: [
+      {id:'cr1', text:'The core feeling', position:[0,0,0], color:'#f5c97a', size:1.4},
+      {id:'cr2', text:'The medium', position:[-4,2,0], color:'#fb923c', size:1.0},
+      {id:'cr3', text:'A reference that nails it', position:[4,2,0], color:'#f5c97a', size:1.0},
+      {id:'cr4', text:'A reference to avoid', position:[4,-2,0], color:'#f87171', size:0.9},
+      {id:'cr5', text:'The constraint that makes it interesting', position:[-4,-2,0], color:'#67e8f9', size:0.9},
+      {id:'cr6', text:'Who is it for', position:[0,4.5,0], color:'#6ea8fe', size:0.9},
+      {id:'cr7', text:'What it\'s actually about', position:[-7,0,0], color:'#a78bfa', size:1.0},
+      {id:'cr8', text:'The part I\'m most afraid to make', position:[0,-4.5,0], color:'#f472b6', size:0.9},
+      {id:'cr9', text:'The version I could finish this week', position:[7,0,0], color:'#34d399', size:0.9},
+    ],
+    connections: [
+      ['cr1','cr2','expressed in'],['cr1','cr3','feels like'],['cr1','cr4','nothing like'],
+      ['cr5','cr2','shapes'],['cr6','cr1','shaped by'],['cr7','cr1','underneath'],
+      ['cr8','cr7','is about'],['cr9','cr2','starts with'],
+    ]
+  },
+  {
+    id: 'person',
+    name: 'Someone you\'re trying to understand',
+    desc: 'Their worldview. Their fears. What they want. What you keep missing.',
+    accent: '#67e8f9',
+    tags: ['people', 'empathy'],
+    thoughts: [
+      {id:'pe1', text:'The person', position:[0,0,0], color:'#67e8f9', size:1.4},
+      {id:'pe2', text:'What they say they want', position:[-5,2,0], color:'#6ea8fe', size:1.0},
+      {id:'pe3', text:'What I think they actually want', position:[5,2,0], color:'#6ea8fe', size:1.0},
+      {id:'pe4', text:'What they\'re afraid of', position:[-5,-2,0], color:'#f87171', size:1.0},
+      {id:'pe5', text:'Their model of how the world works', position:[5,-2,0], color:'#a78bfa', size:1.0},
+      {id:'pe6', text:'Where that model came from', position:[8,-4,0], color:'#a78bfa', size:0.85},
+      {id:'pe7', text:'What I keep getting wrong about them', position:[0,4.5,0], color:'#fbbf24', size:0.9},
+      {id:'pe8', text:'What they see in me', position:[-7,0,0], color:'#34d399', size:0.9},
+      {id:'pe9', text:'The conversation we haven\'t had', position:[0,-5,0], color:'#f472b6', size:0.9},
+    ],
+    connections: [
+      ['pe2','pe3','vs actual'],['pe4','pe2','hides in'],['pe5','pe3','explains'],
+      ['pe6','pe5','formed'],['pe7','pe2','because'],['pe8','pe1','sees'],
+      ['pe9','pe4','about'],['pe1','pe2','claims'],['pe1','pe4','fears'],
+    ]
+  },
+  {
+    id: 'trade',
+    name: 'A trade pre-mortem',
+    desc: 'The thesis. The assumptions. What makes you wrong. What you\'re watching for.',
+    accent: '#34d399',
+    tags: ['finance', 'thinking'],
+    thoughts: [
+      {id:'tr1', text:'The thesis', position:[0,0,0], color:'#34d399', size:1.4},
+      {id:'tr2', text:'Core assumption 1', position:[-5,2,0], color:'#6ea8fe', size:1.0},
+      {id:'tr3', text:'Core assumption 2', position:[5,2,0], color:'#6ea8fe', size:1.0},
+      {id:'tr4', text:'What makes me wrong', position:[0,4,0], color:'#f87171', size:1.1},
+      {id:'tr5', text:'The data I\'m ignoring', position:[-5,-2,0], color:'#fbbf24', size:0.9},
+      {id:'tr6', text:'Who\'s on the other side', position:[5,-2,0], color:'#a78bfa', size:0.9},
+      {id:'tr7', text:'The signal to exit', position:[-3,-4.5,0], color:'#fb923c', size:0.9},
+      {id:'tr8', text:'The signal I\'m right', position:[3,-4.5,0], color:'#34d399', size:0.9},
+      {id:'tr9', text:'Am I trading the thesis or the emotion?', position:[8,0,0], color:'#f472b6', size:0.85},
+    ],
+    connections: [
+      ['tr1','tr2','rests on'],['tr1','tr3','rests on'],['tr4','tr2','invalidates'],
+      ['tr4','tr3','invalidates'],['tr5','tr1','against'],['tr6','tr1','disputes'],
+      ['tr7','tr1','ends'],['tr8','tr1','confirms'],['tr9','tr1','questions'],
+    ]
+  },
+  {
+    id: 'conversation',
+    name: 'A conversation you need to have',
+    desc: 'What you want to say. What they\'ll hear. What you actually want to happen.',
+    accent: '#f472b6',
+    tags: ['communication', 'personal'],
+    thoughts: [
+      {id:'cv1', text:'The conversation', position:[0,0,0], color:'#f472b6', size:1.4},
+      {id:'cv2', text:'What I want to say', position:[-5,2,0], color:'#6ea8fe', size:1.0},
+      {id:'cv3', text:'What they\'ll probably hear', position:[5,2,0], color:'#fb923c', size:1.0},
+      {id:'cv4', text:'What I actually want', position:[0,4.5,0], color:'#34d399', size:1.1},
+      {id:'cv5', text:'What I\'m afraid they\'ll say', position:[-5,-2,0], color:'#f87171', size:0.9},
+      {id:'cv6', text:'What I\'d be relieved to hear', position:[5,-2,0], color:'#34d399', size:0.9},
+      {id:'cv7', text:'Why I keep postponing it', position:[0,-4.5,0], color:'#a78bfa', size:0.9},
+      {id:'cv8', text:'What happens if I never have it', position:[-7,0,0], color:'#fbbf24', size:0.85},
+      {id:'cv9', text:'The first sentence', position:[7,0,0], color:'#67e8f9', size:0.85},
+    ],
+    connections: [
+      ['cv1','cv2','begins with'],['cv2','cv3','becomes'],['cv4','cv2','hides in'],
+      ['cv5','cv7','causes'],['cv6','cv4','reveals'],['cv7','cv8','leads to'],
+      ['cv9','cv1','starts'],['cv3','cv5','triggers'],
+    ]
+  },
+  {
+    id: 'inherited',
+    name: 'A belief you inherited',
+    desc: 'Where it came from. Whether you still hold it. What it costs you to keep it.',
+    accent: '#fbbf24',
+    tags: ['identity', 'reflection'],
+    thoughts: [
+      {id:'ih1', text:'The belief', position:[0,0,0], color:'#fbbf24', size:1.4},
+      {id:'ih2', text:'Who gave it to me', position:[-5,2,0], color:'#a78bfa', size:1.0},
+      {id:'ih3', text:'How old I was', position:[-5,-1,0], color:'#a78bfa', size:0.85},
+      {id:'ih4', text:'Do I still hold it?', position:[5,1,0], color:'#fbbf24', size:1.0},
+      {id:'ih5', text:'What it\'s protected me from', position:[5,-2,0], color:'#34d399', size:0.9},
+      {id:'ih6', text:'What it\'s cost me', position:[0,-4,0], color:'#f87171', size:1.0},
+      {id:'ih7', text:'The version I\'d choose now', position:[0,4.5,0], color:'#67e8f9', size:1.0},
+      {id:'ih8', text:'What letting it go would mean', position:[8,0,0], color:'#f472b6', size:0.85},
+      {id:'ih9', text:'Who I\'d be without it', position:[-8,0,0], color:'#fb923c', size:0.85},
+    ],
+    connections: [
+      ['ih1','ih2','given by'],['ih2','ih3','when'],['ih1','ih4','still true?'],
+      ['ih1','ih5','protects by'],['ih1','ih6','costs'],['ih7','ih1','replaces'],
+      ['ih8','ih7','means'],['ih9','ih1','without'],['ih4','ih7','or'],
+    ]
+  },
+  {
+    id: 'learning',
+    name: 'Something you\'re learning',
+    desc: 'The concept. What you already know. What\'s still confusing. The question you can\'t answer.',
+    accent: '#6ea8fe',
+    tags: ['learning', 'concepts'],
+    thoughts: [
+      {id:'lrn1', text:'The thing I\'m learning', position:[0,0,0], color:'#6ea8fe', size:1.4},
+      {id:'lrn2', text:'What I already knew going in', position:[-5,2,0], color:'#34d399', size:1.0},
+      {id:'lrn3', text:'The part that clicked', position:[5,2,0], color:'#34d399', size:1.0},
+      {id:'lrn4', text:'The part that still confuses me', position:[5,-2,0], color:'#fbbf24', size:1.0},
+      {id:'lrn5', text:'A better analogy', position:[-5,-2,0], color:'#67e8f9', size:0.9},
+      {id:'lrn6', text:'Where I want to go with this', position:[0,5,0], color:'#a78bfa', size:0.9},
+      {id:'lrn7', text:'The question I can\'t answer yet', position:[0,-5,0], color:'#f87171', size:1.0},
+      {id:'lrn8', text:'Who knows this better than me', position:[-8,0,0], color:'#fb923c', size:0.85},
+      {id:'lrn9', text:'The first thing I\'d teach someone', position:[8,0,0], color:'#f472b6', size:0.85},
+    ],
+    connections: [
+      ['lrn1','lrn2','builds on'],['lrn1','lrn3','suddenly'],['lrn1','lrn4','still unclear'],
+      ['lrn5','lrn4','explains'],['lrn6','lrn3','opens to'],['lrn7','lrn4','deepens'],
+      ['lrn8','lrn7','can answer'],['lrn9','lrn3','starts with'],
+    ]
+  },
+  {
+    id: 'work',
+    name: 'Why you do what you do',
+    desc: 'The work. The deeper thing it\'s reaching for. The fear underneath it all.',
+    accent: '#34d399',
+    tags: ['purpose', 'work'],
+    thoughts: [
+      {id:'wk1', text:'The work', position:[0,0,0], color:'#34d399', size:1.4},
+      {id:'wk2', text:'What I say it\'s about', position:[-5,2,0], color:'#6ea8fe', size:1.0},
+      {id:'wk3', text:'What it\'s actually about', position:[5,2,0], color:'#34d399', size:1.0},
+      {id:'wk4', text:'Who I\'m doing it for', position:[0,5,0], color:'#f5c97a', size:1.0},
+      {id:'wk5', text:'The fear underneath', position:[-5,-2,0], color:'#f87171', size:1.0},
+      {id:'wk6', text:'What I\'d work on if no one watched', position:[5,-2,0], color:'#a78bfa', size:0.9},
+      {id:'wk7', text:'The day it felt most real', position:[-3,-5,0], color:'#67e8f9', size:0.9},
+      {id:'wk8', text:'What I\'m building toward', position:[3,-5,0], color:'#fb923c', size:0.9},
+      {id:'wk9', text:'The version that doesn\'t need an audience', position:[9,0,0], color:'#f472b6', size:0.85},
+    ],
+    connections: [
+      ['wk1','wk2','described as'],['wk2','wk3','actually'],['wk4','wk1','drives'],
+      ['wk5','wk2','hides in'],['wk6','wk3','closer to'],['wk7','wk3','was'],
+      ['wk8','wk1','aims at'],['wk9','wk6','is'],['wk5','wk8','also'],
+    ]
+  },
+];
+
+// ─── Gallery UI ───
+
+const galleryScrim = document.getElementById('gallery-scrim');
+const galleryPanel = document.getElementById('gallery-panel');
+
+function openGallery() {
+  renderGalleryCards();
+  galleryScrim.classList.add('open');
+  galleryPanel.classList.add('open');
+}
+
+function closeGallery() {
+  galleryScrim.classList.remove('open');
+  galleryPanel.classList.remove('open');
+}
+
+function renderGalleryCards() {
+  const list = document.getElementById('gallery-list');
+  list.innerHTML = STARTER_BOARDS.map(b => `
+    <div class="gcard" data-board-id="${b.id}">
+      <div class="gcard-accent" style="background:${b.accent}"></div>
+      <div class="gcard-name">${b.name}</div>
+      <div class="gcard-desc">${b.desc}</div>
+      <div class="gcard-meta">
+        ${b.tags.map(t => `<span class="gcard-tag">${t}</span>`).join('')}
+        <span class="gcard-tag">${b.thoughts.length} nodes</span>
+      </div>
+    </div>
+  `).join('');
+  list.querySelectorAll('.gcard').forEach(card => {
+    card.addEventListener('click', () => {
+      const board = STARTER_BOARDS.find(b => b.id === card.dataset.boardId);
+      if (board) loadStarterBoard(board);
+    });
+  });
+}
+
+function loadStarterBoard(board) {
+  if (state.thoughts.length > 0) {
+    if (!confirm(`Load "${board.name}"?\n\nThis replaces your current space. Export first if you want to keep it.`)) return;
+  }
+
+  // Clear scene
+  while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
+  while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+  thoughtMap.clear(); meshMap.clear();
+
+  const now = Date.now();
+  state.thoughts = board.thoughts.map(t => ({
+    ...t,
+    position: [...t.position],
+    created: now,
+    touched: now,
+    props: {}
+  }));
+
+  const idMap = {};
+  for (const t of board.thoughts) idMap[t.id] = t.id;
+
+  state.connections = board.connections.map(([from, to, label]) => ({
+    id: uid(),
+    from, to,
+    label: label || null,
+    color: board.accent,
+    created: now
+  }));
+
+  for (const t of state.thoughts) { addThoughtMesh(t); }
+  rebuildMaps();
+  rebuildConnections();
+  save();
+  hideHint();
+
+  camera.position.set(0, 0, 22);
+  controls.target.set(0, 0, 0);
+  needsRender = true;
+
+  closeGallery();
+  toast(`"${board.name}" loaded`);
+}
+
+document.getElementById('gallery-close').addEventListener('click', closeGallery);
+galleryScrim.addEventListener('click', closeGallery);
+document.getElementById('m-gallery').addEventListener('click', () => { closeMenu(); openGallery(); });
 
 // ═══════════════════════════════════════════
 // TOAST / HINT
@@ -1296,7 +1688,8 @@ window.addEventListener('resize', () => {
   animate();
 
   if (state.thoughts.length === 0) {
-    // Bible demo on first launch — teaches by example, no onboarding chrome
+    // Fresh state: show gallery so they pick a starting point
+    // Bible demo is now board #0 — "the claim"
     const BIBLE = [
       {id:'claim',text:'The claim',position:[0,0,0],color:'#b8a9f5',size:1.4},
       {id:'soul',text:'The soul',position:[-2,1.5,0],color:'#b8a9f5',size:1.1},
@@ -1343,12 +1736,14 @@ window.addEventListener('resize', () => {
     hideHint();
     camera.position.set(0, 0, 24);
     controls.target.set(0, 0, 0);
+    // Open gallery after a beat so they see what atem looks like first
+    setTimeout(() => openGallery(), 1200);
   }
 })();
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v15 — three primitives only');
+console.log('atem v16 — three primitives + starter boards');
 </script>
 </body>
 </html>
