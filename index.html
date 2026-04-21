@@ -34,8 +34,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   color:#fff;font-size:16px;line-height:1.5;
   font-family:inherit;resize:none;
 }
-#editor textarea::placeholder{color:rgba(255,255,255,0.25)}
-#ed-color-btn{
+#editor textarea::placeholder{color:rgba(255,255,255,0.25)}#ed-color-btn{
   width:20px;height:20px;border-radius:50%;
   border:1.5px solid rgba(255,255,255,0.2);
   cursor:pointer;position:absolute;top:16px;right:16px;
@@ -234,56 +233,86 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 /* ─── Board Slots ─── */
 #boards-overlay{
   position:fixed;inset:0;z-index:9993;display:none;
-  background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  flex-direction:column;align-items:center;justify-content:center;
-  padding:max(40px,env(safe-area-inset-top,0px)) 24px max(40px,env(safe-area-inset-bottom,0px));
+  background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  flex-direction:column;
+  padding:max(20px,env(safe-area-inset-top,0px)) 0 max(20px,env(safe-area-inset-bottom,0px));
 }
 #boards-overlay.open{display:flex}
-#boards-title{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:24px}
-#boards-list{width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px}
-.bslot{
-  display:flex;align-items:center;gap:12px;
-  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px;padding:14px 16px;cursor:pointer;transition:all 0.12s;
+#boards-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:4px 24px 20px;flex-shrink:0;
 }
-.bslot.active{border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.07)}
-.bslot:active{transform:scale(0.98)}
-.bslot-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0}
-.bslot.active .bslot-dot{background:#6ea8fe}
-.bslot-info{flex:1;min-width:0}
-.bslot-name{font-size:14px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bslot.active .bslot-name{color:#fff}
-.bslot-count{font-size:11px;color:rgba(255,255,255,0.25);margin-top:2px}
-.bslot-rename{
-  background:none;border:none;color:rgba(255,255,255,0.2);font-size:12px;
-  cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit;
-}
-.bslot-rename:active{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6)}
+#boards-heading{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase}
 #boards-close{
-  margin-top:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
   color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;
-  padding:8px 24px;border-radius:8px;font-family:inherit;
+  padding:6px 14px;border-radius:8px;font-family:inherit;
 }
 #boards-close:active{background:rgba(255,255,255,0.12)}
+#boards-grid{
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 20px 20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(180px,45vw),1fr));
+  gap:12px;align-content:start;
+}
+.bcard{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;overflow:hidden;cursor:pointer;
+  transition:all 0.15s;
+}
+.bcard.active{border-color:rgba(110,168,254,0.5)}
+.bcard:active{transform:scale(0.97)}
+.bcard-thumb{
+  width:100%;aspect-ratio:16/10;
+  background:#050508;
+  position:relative;overflow:hidden;
+}
+.bcard-thumb canvas{width:100%!important;height:100%!important;object-fit:cover}
+.bcard-thumb-empty{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,0.08);font-size:11px;letter-spacing:0.08em;
+}
+.bcard-info{padding:10px 12px 12px}
+.bcard-name{
+  font-size:13px;color:rgba(255,255,255,0.8);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:3px;
+}
+.bcard.active .bcard-name{color:#6ea8fe}
+.bcard-count{font-size:11px;color:rgba(255,255,255,0.22)}
+.bcard-rename{
+  display:block;width:100%;text-align:left;
+  background:none;border:none;border-top:1px solid rgba(255,255,255,0.05);
+  color:rgba(255,255,255,0.2);font-size:11px;
+  cursor:pointer;padding:7px 12px;font-family:inherit;
+  transition:color 0.1s;
+}
+.bcard-rename:active{color:rgba(255,255,255,0.6)}
 
-/* ─── Rich Editor (title + body) ─── */
+/* ─── Rich Editor (body-first, title optional) ─── */
+#ed-body{
+  -webkit-user-select:text;user-select:text;
+  width:100%;min-height:72px;max-height:200px;
+  background:transparent;border:none;outline:none;
+  color:#fff;font-size:16px;line-height:1.6;
+  font-family:inherit;resize:none;
+}
+#ed-body::placeholder{color:rgba(255,255,255,0.22)}
+#ed-title-row{
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.07);
+  margin-top:8px;
+}
 #ed-title{
   -webkit-user-select:text;user-select:text;
   width:100%;background:transparent;border:none;outline:none;
-  color:#fff;font-size:16px;font-weight:500;
-  font-family:inherit;padding:0;margin-bottom:8px;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  padding-bottom:8px;
+  color:rgba(255,255,255,0.55);font-size:13px;
+  font-family:inherit;padding:0;letter-spacing:0.02em;
 }
-#ed-title::placeholder{color:rgba(255,255,255,0.2)}
-#ed-body{
-  -webkit-user-select:text;user-select:text;
-  width:100%;min-height:60px;max-height:180px;
-  background:transparent;border:none;outline:none;
-  color:rgba(255,255,255,0.75);font-size:14px;line-height:1.6;
-  font-family:inherit;resize:none;
-}
-#ed-body::placeholder{color:rgba(255,255,255,0.18)}
+#ed-title::placeholder{color:rgba(255,255,255,0.18)}
 #fps{
   position:fixed;top:max(16px,env(safe-area-inset-top,0px));right:16px;
   font-size:10px;color:rgba(255,255,255,0.2);
@@ -312,11 +341,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 
 <!-- Editor -->
 <div id="editor">
-  <!-- Classic mode -->
-  <textarea id="ed-text" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
-  <!-- Rich mode -->
-  <input id="ed-title" type="text" placeholder="title" autocomplete="off" autocorrect="on" spellcheck="true" style="display:none">
-  <textarea id="ed-body" placeholder="notes, context, anything..." autocomplete="off" autocorrect="on" spellcheck="true" style="display:none"></textarea>
+  <!-- Body always first — this is what you type into -->
+  <textarea id="ed-body" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
+  <!-- Title optional, below body in rich mode -->
+  <div id="ed-title-row" style="display:none">
+    <input id="ed-title" type="text" placeholder="title (optional)" autocomplete="off" autocorrect="on" spellcheck="true">
+  </div>
   <button id="ed-color-btn" title="change color"></button>
   <div id="ed-color-palette"></div>
   <div id="editor-actions">
@@ -357,7 +387,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-export">export</button>
   <button id="m-import">import</button>
   <div class="sep">view</div>
-  <button id="m-richmode">rich notes <span class="toggle" id="m-rich-dot"></span></button>
+  <button id="m-richmode">title field <span class="toggle" id="m-rich-dot"></span></button>
   <button id="m-reset-view">reset camera</button>
   <button id="m-toggle-fps">fps <span class="toggle" id="m-fps-dot"></span></button>
   <button id="m-open-capture">open to capture <span class="toggle" id="m-capture-dot"></span></button>
@@ -367,7 +397,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-bulk">+ 100 test</button>
   <div class="sep"></div>
   <button id="m-clear" class="danger">clear all</button>
-  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v17</div>
+  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v18</div>
 </div>
 
 <!-- Starter Gallery (full-screen) -->
@@ -381,9 +411,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 
 <!-- Board Slots -->
 <div id="boards-overlay">
-  <div id="boards-title">your boards</div>
-  <div id="boards-list"></div>
-  <button id="boards-close">done</button>
+  <div id="boards-header">
+    <span id="boards-heading">your boards</span>
+    <button id="boards-close">done</button>
+  </div>
+  <div id="boards-grid"></div>
 </div>
 
 <!-- Lasso -->
@@ -412,7 +444,7 @@ import { get, set } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 17,
+  version: 18,
   thoughts: [],
   connections: [],
   camera: null,
@@ -517,34 +549,69 @@ function makeThoughtMaterial(color) {
   });
 }
 
-function createLabel(text) {
+function getLabelText(t) {
+  if (t && t.text) return t.text;
+  if (t && t.body) {
+    const first = t.body.split('\n')[0];
+    return first.length > 50 ? first.slice(0, 48) + '…' : first;
+  }
+  return '';
+}
+
+function createLabel(text, bodyText) {
+  const hasBody = !!(bodyText && bodyText.trim().length > 0);
+  const hasTitle = !!(text && text.trim().length > 0);
   const c = document.createElement('canvas');
-  c.width = 1024; c.height = 256;
+  c.width = 1024; c.height = hasBody ? 320 : 256;
   const ctx = c.getContext('2d');
   ctx.scale(2, 2);
-  ctx.clearRect(0, 0, 512, 128);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-  ctx.font = '300 24px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  let display = text || '';
-  if (display.length > 60) display = display.slice(0, 58) + '…';
-  const words = display.split(' ');
-  let lines = [], line = '';
-  for (const w of words) {
-    const test = line ? line+' '+w : w;
-    if (ctx.measureText(test).width > 460) { lines.push(line); line = w; }
-    else line = test;
+  ctx.clearRect(0, 0, 512, c.height / 2);
+
+  let titleLines = [];
+  if (hasTitle) {
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.font = '300 24px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    let display = text.length > 60 ? text.slice(0, 58) + '…' : text;
+    let line = '';
+    for (const w of display.split(' ')) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > 460) { titleLines.push(line); line = w; }
+      else line = test;
+    }
+    if (line) titleLines.push(line);
+    if (titleLines.length > 3) titleLines = titleLines.slice(0, 3);
+    const lineH = 30;
+    const startY = hasBody ? 38 : (c.height / 4) - ((titleLines.length - 1) * lineH) / 2;
+    titleLines.forEach((l, i) => ctx.fillText(l, 256, startY + i * lineH));
   }
-  if (line) lines.push(line);
-  if (lines.length > 3) lines = lines.slice(0,3);
-  const lineH = 30;
-  const startY = 64 - ((lines.length-1)*lineH)/2;
-  lines.forEach((l,i) => ctx.fillText(l, 256, startY + i*lineH));
+
+  if (hasBody) {
+    ctx.fillStyle = hasTitle ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.72)';
+    ctx.font = hasTitle ? '300 17px -apple-system, BlinkMacSystemFont, sans-serif'
+                        : '300 22px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const bodyPreview = bodyText.length > 100 ? bodyText.slice(0, 98) + '…' : bodyText;
+    let blines = [], bline = '';
+    for (const w of bodyPreview.replace(/\n/g, ' ').split(' ')) {
+      const test = bline ? bline + ' ' + w : w;
+      if (ctx.measureText(test).width > 450) { blines.push(bline); bline = w; }
+      else bline = test;
+    }
+    if (bline) blines.push(bline);
+    if (blines.length > 3) blines = blines.slice(0, 3);
+    const bLineH = hasTitle ? 22 : 28;
+    const titleBlockH = titleLines.length * 30;
+    const bstartY = hasTitle ? 38 + titleBlockH + 10 : (c.height / 4) - ((blines.length - 1) * bLineH) / 2;
+    blines.forEach((l, i) => ctx.fillText(l, 256, bstartY + i * bLineH));
+  }
+
   const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
-  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0.85, depthTest:false });
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85, depthTest: false });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(3, 0.75, 1);
-  sprite.position.y = -SPHERE_RADIUS - 0.5;
+  sprite.scale.set(3, hasBody ? 0.95 : 0.75, 1);
+  sprite.position.y = -SPHERE_RADIUS - (hasBody ? 0.62 : 0.5);
+  sprite.userData.hasBody = hasBody;
   return sprite;
 }
 
@@ -555,17 +622,27 @@ function addThoughtMesh(t) {
   mesh.userData = { id:t.id, targetEmissive:0.15, targetOpacity:0.9, breath:Math.random()*Math.PI*2 };
   const size = t.size || 1.0;
   mesh.scale.setScalar(size);
-  if (t.text) { const l = createLabel(t.text); l.name='label'; mesh.add(l); }
+  const labelText = getLabelText(t);
+  if (labelText) {
+    const l = createLabel(t.text || '', t.body || '');
+    l.name = 'label'; mesh.add(l);
+  }
   thoughtGroup.add(mesh);
   meshMap.set(t.id, mesh);
   return mesh;
 }
 
-function updateLabel(mesh, text) {
+function updateLabel(mesh, text, body) {
   const old = mesh.getObjectByName('label');
   if (old) mesh.remove(old);
-  if (text) { const l = createLabel(text); l.name='label'; mesh.add(l); }
+  const labelText = text || (body ? body.split('\n')[0] : '');
+  if (labelText) {
+    const l = createLabel(text || '', body || '');
+    l.name = 'label'; mesh.add(l);
+  }
 }
+
+function getMesh(id) { return meshMap.get(id); }
 
 function getMesh(id) { return meshMap.get(id); }
 
@@ -612,23 +689,34 @@ function rebuildConnections() {
     line.userData = { from:c.from, to:c.to, density, connKey:key, connId:firstConn?.id, baseOpacity };
     lineGroup.add(line);
 
-    // Directional arrow (cone at target end)
+    // Directional arrow — two short angled lines forming a fork at target
     if (c.directed) {
       const dir = new THREE.Vector3().subVectors(mB.position, mA.position);
       const len = dir.length();
       if (len > 0.1) {
-        const arrowGeo = new THREE.ConeGeometry(0.1, 0.35, 8);
-        const arrowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(connColor), transparent:true, opacity: Math.min(baseOpacity+0.2,1) });
-        const arrow = new THREE.Mesh(arrowGeo, arrowMat);
-        // Position near target, offset by sphere radius
         const norm = dir.clone().normalize();
-        const arrowPos = mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.2));
-        arrow.position.copy(arrowPos);
-        // Orient cone along direction
-        const axis = new THREE.Vector3(0,1,0);
-        arrow.quaternion.setFromUnitVectors(axis, norm);
-        arrow.userData = { isArrow:true, from:c.from, to:c.to, connKey:key };
-        lineGroup.add(arrow);
+        const arrowTip = mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.08));
+        const arrowBase = arrowTip.clone().sub(norm.clone().multiplyScalar(0.45));
+
+        // Two perpendicular axes for fork spread
+        const up = new THREE.Vector3(0, 1, 0);
+        let perp = new THREE.Vector3().crossVectors(norm, up).normalize();
+        if (perp.length() < 0.1) perp = new THREE.Vector3().crossVectors(norm, new THREE.Vector3(1, 0, 0)).normalize();
+
+        const spread = 0.18;
+        const forkL = arrowBase.clone().add(perp.clone().multiplyScalar(spread));
+        const forkR = arrowBase.clone().sub(perp.clone().multiplyScalar(spread));
+
+        const arrowColor = new THREE.Color(connColor);
+        const arrowOpacity = Math.min(baseOpacity + 0.25, 0.95);
+
+        for (const forkPt of [forkL, forkR]) {
+          const geo = new THREE.BufferGeometry().setFromPoints([arrowTip.clone(), forkPt]);
+          const mat = new THREE.LineBasicMaterial({ color: arrowColor, transparent: true, opacity: arrowOpacity });
+          const fork = new THREE.Line(geo, mat);
+          fork.userData = { isArrow: true, from: c.from, to: c.to, connKey: key, isLeft: forkPt === forkL };
+          lineGroup.add(fork);
+        }
       }
     }
 
@@ -666,8 +754,19 @@ function updateConnectionPositions() {
         const len = dir.length();
         if (len > 0.1) {
           const norm = dir.clone().normalize();
-          child.position.copy(mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.2)));
-          child.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), norm);
+          const arrowTip = mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.08));
+          const arrowBase = arrowTip.clone().sub(norm.clone().multiplyScalar(0.45));
+          const up = new THREE.Vector3(0, 1, 0);
+          let perp = new THREE.Vector3().crossVectors(norm, up).normalize();
+          if (perp.length() < 0.1) perp = new THREE.Vector3().crossVectors(norm, new THREE.Vector3(1, 0, 0)).normalize();
+          const spread = 0.18;
+          const forkPt = child.userData.isLeft
+            ? arrowBase.clone().add(perp.clone().multiplyScalar(spread))
+            : arrowBase.clone().sub(perp.clone().multiplyScalar(spread));
+          const pos = child.geometry.attributes.position;
+          pos.setXYZ(0, arrowTip.x, arrowTip.y, arrowTip.z);
+          pos.setXYZ(1, forkPt.x, forkPt.y, forkPt.z);
+          pos.needsUpdate = true;
         }
       }
       continue;
@@ -689,6 +788,49 @@ pendingLineMesh = (() => {
 })();
 
 // ═══════════════════════════════════════════
+// SUPABASE SYNC (paste your credentials below)
+// ═══════════════════════════════════════════
+
+const SUPABASE_URL = 'https://wfjxnbuisodojrzdlqji.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmanhuYnVpc29kb2pyemRscWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODU1NTQsImV4cCI6MjA5MjM2MTU1NH0.a6vPNXcuTorU40nrpDOC4_Y2vNE4mjnq2hlM8bRKaS4';
+
+async function syncToSupabase(boardId, data) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/boards`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        id: boardId,
+        name: data.boardName || boardId,
+        data: data,
+        updated_at: new Date().toISOString()
+      })
+    });
+  } catch(e) { console.warn('supabase sync failed', e); }
+}
+
+async function loadFromSupabase(boardId) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/boards?id=eq.${boardId}&select=data`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+      }
+    });
+    const rows = await res.json();
+    if (rows && rows[0] && rows[0].data) return rows[0].data;
+  } catch(e) { console.warn('supabase load failed', e); }
+  return null;
+}
+
+// ═══════════════════════════════════════════
 // PERSISTENCE
 // ═══════════════════════════════════════════
 
@@ -700,12 +842,16 @@ async function save() {
   const key = 'atem-' + state.boardId;
   try { await set(key, state); } catch(e) { console.warn('idb save failed', e); }
   try { localStorage.setItem(key+'-backup', JSON.stringify(state)); } catch(e){}
-  // Also save board registry
+
+  // Registry
   const registry = await getBoardRegistry();
   const idx = registry.findIndex(b => b.id === state.boardId);
   const entry = { id: state.boardId, name: state.boardName, count: state.thoughts.length, updated: Date.now() };
   if (idx >= 0) registry[idx] = entry; else registry.push(entry);
   try { await set('atem-boards', registry); } catch(e) {}
+
+  // Supabase sync (non-blocking)
+  syncToSupabase(state.boardId, state).catch(() => {});
 }
 
 async function getBoardRegistry() {
@@ -743,7 +889,10 @@ async function loadBoard(boardId) {
 
   const key = 'atem-' + boardId;
   let s = null;
-  try { s = await get(key); } catch(e) {}
+
+  // Remote first
+  s = await loadFromSupabase(boardId);
+  if (!s) { try { s = await get(key); } catch(e) {} }
   if (!s) {
     try {
       const raw = localStorage.getItem(key+'-backup');
@@ -778,25 +927,30 @@ async function loadBoard(boardId) {
 }
 
 async function load() {
-  // Determine which board to load
   let boardId = 'board-1';
-  try {
-    const lastBoard = localStorage.getItem('atem-last-board');
-    if (lastBoard) boardId = lastBoard;
-  } catch(e) {}
+  try { const lb = localStorage.getItem('atem-last-board'); if (lb) boardId = lb; } catch(e) {}
   state.boardId = boardId;
 
   let s = null;
-  const key = 'atem-' + boardId;
-  try { s = await get(key); } catch(e) { console.warn('idb load failed', e); }
-  // Legacy fallback for v15/v16 data
+
+  // Try Supabase first (source of truth)
+  s = await loadFromSupabase(boardId);
+
+  // Fall back to IndexedDB
+  if (!s) {
+    const key = 'atem-' + boardId;
+    try { s = await get(key); } catch(e) {}
+  }
+  // Fall back to legacy keys
   if (!s) {
     try { s = await get('atem-state'); } catch(e) {}
   }
   if (!s) {
     try {
-      const raw = localStorage.getItem(key+'-backup') || localStorage.getItem('atem-state') || localStorage.getItem('atem-state-backup');
-      if (raw) { s = JSON.parse(raw); if (s) await set(key, s); }
+      const raw = localStorage.getItem('atem-' + boardId + '-backup')
+        || localStorage.getItem('atem-state')
+        || localStorage.getItem('atem-state-backup');
+      if (raw) { s = JSON.parse(raw); if (s) await set('atem-' + boardId, s); }
     } catch(e) {}
   }
   if (!s) return;
@@ -856,7 +1010,7 @@ function updateThought(id, text, color, size, body) {
   if (size !== undefined) t.size = size;
   const mesh = getMesh(id);
   if (mesh) {
-    updateLabel(mesh, text);
+    updateLabel(mesh, t.text, t.body);
     if (color) { mesh.material.color.set(color); mesh.material.emissive.set(color); }
     if (size !== undefined) mesh.scale.setScalar(size);
   }
@@ -1020,35 +1174,28 @@ function renderEditorColors() {
 function updateRichModeUI() {
   const dot = document.getElementById('m-rich-dot');
   if (dot) dot.classList.toggle('on', !!state.richMode);
-  const edText = document.getElementById('ed-text');
-  const edTitle = document.getElementById('ed-title');
-  const edBody = document.getElementById('ed-body');
-  if (edText) edText.style.display = state.richMode ? 'none' : '';
-  if (edTitle) edTitle.style.display = state.richMode ? '' : 'none';
-  if (edBody) edBody.style.display = state.richMode ? '' : 'none';
+  // Title row only visible in rich mode
+  const titleRow = document.getElementById('ed-title-row');
+  if (titleRow) titleRow.style.display = state.richMode ? '' : 'none';
 }
 
 function openEditor(id) {
   clearSelection(); closeConnEditor();
   editingId = id;
   const t = thoughtMap.get(id);
-  const edText = document.getElementById('ed-text');
-  const edTitle = document.getElementById('ed-title');
   const edBody = document.getElementById('ed-body');
+  const edTitle = document.getElementById('ed-title');
 
-  if (state.richMode) {
-    edTitle.value = t ? t.text : '';
-    edBody.value = t ? (t.body||'') : '';
-    edBody.style.height = 'auto';
-  } else {
-    edText.value = t ? t.text : '';
-    edText.style.height = 'auto';
-  }
+  edBody.value = t ? (t.body || '') : '';
+  if (edTitle) edTitle.value = t ? (t.text || '') : '';
   editingColor = t ? t.color : COLORS[0];
   renderEditorColors();
-  editorEl.classList.add('open'); controls.enabled = false;
+  updateRichModeUI();
+  editorEl.classList.add('open');
+  controls.enabled = false;
+  edBody.style.height = 'auto';
 
-  // Glow connected thoughts briefly
+  // Glow connected thoughts
   for (const child of lineGroup.children) {
     if (child.userData.isConnLabel || child.userData.isArrow) continue;
     if (child.userData.from === id || child.userData.to === id) {
@@ -1058,68 +1205,66 @@ function openEditor(id) {
     }
   }
   needsRender = true;
-
-  if (state.richMode) {
-    edTitle.focus();
-    edTitle.selectionStart = edTitle.value.length;
-    setTimeout(()=>edTitle.focus(), 80);
-  } else {
-    edText.focus();
-    edText.selectionStart = edText.value.length;
-    setTimeout(()=>edText.focus(), 80);
-  }
+  edBody.focus();
+  edBody.selectionStart = edBody.value.length;
+  setTimeout(() => edBody.focus(), 80);
 }
 
 function closeEditor(doSave) {
   if (doSave && editingId) {
-    const edText = document.getElementById('ed-text');
-    const edTitle = document.getElementById('ed-title');
     const edBody = document.getElementById('ed-body');
-    let text, body;
-    if (state.richMode) {
-      text = edTitle.value.trim();
-      body = edBody.value.trim();
-      // If no title but has body, use first line of body as title
-      if (!text && body) { const lines = body.split('\n'); text = lines[0]; body = lines.slice(1).join('\n').trim(); }
+    const edTitle = document.getElementById('ed-title');
+    const body = edBody ? edBody.value.trim() : '';
+    const title = (state.richMode && edTitle) ? edTitle.value.trim() : '';
+    if (!body && !title) {
+      deleteThought(editingId);
     } else {
-      text = edText.value.trim();
-      body = '';
+      updateThought(editingId, title, editingColor, undefined, body);
     }
-    if (!text && !body) deleteThought(editingId);
-    else updateThought(editingId, text, editingColor, undefined, body);
   }
   editingId = null; editingColor = null;
   editorEl.classList.remove('open'); controls.enabled = true;
 }
 
 document.getElementById('save-btn').addEventListener('click', ()=>closeEditor(true));
-document.getElementById('cancel-btn').addEventListener('click', ()=>{
-  if (editingId) { const t = thoughtMap.get(editingId); if (t && !t.text) deleteThought(editingId); }
+document.getElementById('cancel-btn').addEventListener('click', () => {
+  if (editingId) {
+    const t = thoughtMap.get(editingId);
+    if (t && !t.text && !t.body) deleteThought(editingId);
+  }
   closeEditor(false);
 });
 document.getElementById('del-btn').addEventListener('click', ()=>{ if(editingId) deleteThought(editingId); closeEditor(false); });
-// Editor keyboard + input handlers (mode-aware)
+// Editor keyboard + input handlers
 function setupEditorListeners() {
-  const edText = document.getElementById('ed-text');
-  const edTitle = document.getElementById('ed-title');
   const edBody = document.getElementById('ed-body');
+  const edTitle = document.getElementById('ed-title');
 
-  edText.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
-    if (e.key === 'Enter' && !e.shiftKey) { closeEditor(true); e.preventDefault(); }
-  });
-  edText.addEventListener('input', () => { edText.style.height='auto'; edText.style.height=Math.min(edText.scrollHeight,200)+'px'; });
-
-  edTitle.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
-    if (e.key === 'Enter') { edBody.focus(); e.preventDefault(); }
-  });
   edBody.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
+    // Enter saves only in classic (no-rich) mode; in rich mode Enter is newline
+    if (e.key === 'Enter' && !e.shiftKey && !state.richMode) { closeEditor(true); e.preventDefault(); }
   });
-  edBody.addEventListener('input', () => { edBody.style.height='auto'; edBody.style.height=Math.min(edBody.scrollHeight,180)+'px'; });
+  edBody.addEventListener('input', () => {
+    edBody.style.height = 'auto';
+    edBody.style.height = Math.min(edBody.scrollHeight, 200) + 'px';
+  });
+
+  if (edTitle) {
+    edTitle.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
+      if (e.key === 'Enter') { closeEditor(true); e.preventDefault(); }
+    });
+  }
 }
 setupEditorListeners();
+
+// Tap outside editor = save (pointerdown on canvas while editor open)
+canvas.addEventListener('pointerdown', (e) => {
+  if (editorEl.classList.contains('open') && e.target === canvas) {
+    closeEditor(true);
+  }
+}, { capture: true });
 
 // ═══════════════════════════════════════════
 // LASSO
@@ -1167,7 +1312,7 @@ document.getElementById('lasso-recolor').addEventListener('pointerdown', (e)=>{
   const idx = Math.floor(Math.random() * COLORS.length);
   const color = COLORS[idx];
   for (const id of selectedIds) {
-    updateThought(id, thoughtMap.get(id)?.text, color);
+    updateThought(id, thoughtMap.get(id)?.text, color, undefined, thoughtMap.get(id)?.body);
     const mesh = getMesh(id);
     if (mesh) { mesh.material.color.set(color); mesh.material.emissive.set(color); }
   }
@@ -1791,7 +1936,32 @@ const STARTER_BOARDS = [
 
 const boardsOverlay = document.getElementById('boards-overlay');
 
+function captureThumbnail() {
+  // Force a render then grab the canvas pixel data as a small dataURL
+  renderer.render(scene, camera);
+  try {
+    return renderer.domElement.toDataURL('image/jpeg', 0.5);
+  } catch(e) { return null; }
+}
+
+async function saveThumbnail(boardId, dataUrl) {
+  if (!dataUrl) return;
+  try { await set('atem-thumb-' + boardId, dataUrl); } catch(e) {}
+  try { localStorage.setItem('atem-thumb-' + boardId, dataUrl); } catch(e) {}
+}
+
+async function getThumbnail(boardId) {
+  try {
+    const t = await get('atem-thumb-' + boardId);
+    if (t) return t;
+  } catch(e) {}
+  try { return localStorage.getItem('atem-thumb-' + boardId); } catch(e) { return null; }
+}
+
 function openBoards() {
+  // Capture thumbnail of current board before opening
+  const thumb = captureThumbnail();
+  if (thumb) saveThumbnail(state.boardId, thumb);
   renderBoardSlots();
   boardsOverlay.classList.add('open');
 }
@@ -1802,22 +1972,38 @@ function closeBoards() {
 
 async function renderBoardSlots() {
   const registry = await getBoardRegistry();
-  const list = document.getElementById('boards-list');
-  list.innerHTML = registry.map(b => `
-    <div class="bslot${b.id === state.boardId ? ' active' : ''}" data-board-id="${b.id}">
-      <div class="bslot-dot"></div>
-      <div class="bslot-info">
-        <div class="bslot-name">${b.name}</div>
-        <div class="bslot-count">${b.count > 0 ? b.count + ' thoughts' : 'empty'}</div>
+  const grid = document.getElementById('boards-grid');
+  grid.innerHTML = registry.map(b => `
+    <div class="bcard${b.id === state.boardId ? ' active' : ''}" data-board-id="${b.id}">
+      <div class="bcard-thumb" id="thumb-${b.id}">
+        <div class="bcard-thumb-empty">empty</div>
       </div>
-      <button class="bslot-rename" data-board-id="${b.id}">rename</button>
+      <div class="bcard-info">
+        <div class="bcard-name">${b.name}</div>
+        <div class="bcard-count">${b.count > 0 ? b.count + ' thoughts' : 'empty'}</div>
+      </div>
+      <button class="bcard-rename" data-board-id="${b.id}">rename</button>
     </div>
   `).join('');
 
-  list.querySelectorAll('.bslot').forEach(slot => {
-    slot.addEventListener('click', async (e) => {
-      if (e.target.classList.contains('bslot-rename')) return;
-      const bid = slot.dataset.boardId;
+  // Load thumbnails async
+  for (const b of registry) {
+    getThumbnail(b.id).then(thumb => {
+      if (!thumb) return;
+      const container = document.getElementById('thumb-' + b.id);
+      if (!container) return;
+      container.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = thumb;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      container.appendChild(img);
+    });
+  }
+
+  grid.querySelectorAll('.bcard').forEach(card => {
+    card.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('bcard-rename')) return;
+      const bid = card.dataset.boardId;
       if (bid === state.boardId) { closeBoards(); return; }
       closeBoards();
       await loadBoard(bid);
@@ -1825,17 +2011,16 @@ async function renderBoardSlots() {
     });
   });
 
-  list.querySelectorAll('.bslot-rename').forEach(btn => {
+  grid.querySelectorAll('.bcard-rename').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const bid = btn.dataset.boardId;
-      const newName = prompt('Board name:', registry.find(b=>b.id===bid)?.name || bid);
-      if (!newName || !newName.trim()) return;
-      const trimmed = newName.trim();
-      if (bid === state.boardId) { state.boardName = trimmed; save(); }
-      // Update registry directly
       getBoardRegistry().then(async reg => {
-        const slot = reg.find(b=>b.id===bid);
+        const slot = reg.find(b => b.id === bid);
+        const newName = prompt('Board name:', slot?.name || bid);
+        if (!newName || !newName.trim()) return;
+        const trimmed = newName.trim();
+        if (bid === state.boardId) { state.boardName = trimmed; save(); }
         if (slot) { slot.name = trimmed; try { await set('atem-boards', reg); } catch(e) {} }
         renderBoardSlots();
       });
@@ -1853,7 +2038,7 @@ document.getElementById('m-richmode').addEventListener('click', () => {
   state.richMode = !state.richMode;
   updateRichModeUI();
   save(); closeMenu();
-  toast(state.richMode ? 'rich notes on' : 'classic mode');
+  toast(state.richMode ? 'title field on' : 'title field off');
 });
 
 // ─── Gallery UI ───
@@ -1908,14 +2093,18 @@ function loadStarterBoard(board) {
     props: {}
   }));
 
-  state.connections = board.connections.map(([from, to, label, directed]) => ({
-    id: uid(),
-    from, to,
-    label: label || null,
-    color: board.accent,
-    directed: directed || false,
-    created: now
-  }));
+  state.connections = board.connections.map(([from, to, label, directed]) => {
+    // Use preset color if label matches, otherwise board accent
+    const preset = CONN_PRESETS.find(p => p.label === label);
+    return {
+      id: uid(),
+      from, to,
+      label: label || null,
+      color: preset ? preset.color : board.accent,
+      directed: directed || false,
+      created: now
+    };
+  });
 
   for (const t of state.thoughts) addThoughtMesh(t);
   rebuildMaps();
@@ -2069,7 +2258,7 @@ window.addEventListener('resize', () => {
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v17 — boards + rich notes + directed connections');
+console.log('atem v18 — boards + rich notes + directed connections');
 </script>
 </body>
 </html>
