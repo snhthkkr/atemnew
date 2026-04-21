@@ -177,62 +177,113 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 #lasso-bar button:active{background:rgba(255,255,255,0.12)}
 
 /* ─── Starter Gallery ─── */
-#gallery-scrim{position:fixed;inset:0;z-index:9995;display:none;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-#gallery-scrim.open{display:block}
-#gallery-panel{
-  position:fixed;top:0;right:0;bottom:0;
-  width:min(340px,100vw);
-  background:rgba(8,8,12,0.98);
-  border-left:1px solid rgba(255,255,255,0.07);
-  z-index:9996;
-  transform:translateX(100%);
-  transition:transform 0.28s cubic-bezier(0.32,0.72,0,1);
-  display:flex;flex-direction:column;
+#gallery-overlay{
+  position:fixed;inset:0;z-index:9995;display:none;
+  background:rgba(0,0,0,0.92);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  flex-direction:column;
   padding:max(20px,env(safe-area-inset-top,0px)) 0 max(20px,env(safe-area-inset-bottom,0px));
-  overflow:hidden;
 }
-#gallery-panel.open{transform:translateX(0)}
+#gallery-overlay.open{display:flex}
 #gallery-header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 20px 16px;
-  border-bottom:1px solid rgba(255,255,255,0.06);
-  flex-shrink:0;
+  padding:4px 24px 20px;flex-shrink:0;
 }
-#gallery-title{font-size:13px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase}
+#gallery-title{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase}
 #gallery-close{
-  background:none;border:none;color:rgba(255,255,255,0.3);
-  font-size:20px;cursor:pointer;padding:0;line-height:1;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;
+  padding:6px 14px;border-radius:8px;font-family:inherit;
 }
-#gallery-close:active{color:rgba(255,255,255,0.7)}
-#gallery-subtitle{padding:14px 20px 4px;font-size:11px;color:rgba(255,255,255,0.18);line-height:1.5;flex-shrink:0}
-#gallery-list{
+#gallery-close:active{background:rgba(255,255,255,0.12);color:#fff}
+#gallery-grid{
   overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:8px 12px 12px;flex:1;
+  padding:0 20px 20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));
+  gap:12px;
+  align-content:start;
 }
 .gcard{
   background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.07);
-  border-radius:14px;padding:14px 16px;
-  margin-bottom:8px;cursor:pointer;
-  transition:all 0.15s;position:relative;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px;padding:20px;
+  cursor:pointer;transition:all 0.15s;
+  position:relative;overflow:hidden;
 }
-.gcard:active{background:rgba(255,255,255,0.07);transform:scale(0.98)}
-.gcard-accent{
-  position:absolute;top:0;left:0;bottom:0;width:3px;border-radius:14px 0 0 14px;
+.gcard::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent);opacity:0.7;
+  border-radius:16px 16px 0 0;
 }
-.gcard-name{font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:4px;padding-left:10px}
-.gcard-desc{font-size:11px;color:rgba(255,255,255,0.3);line-height:1.5;padding-left:10px}
+.gcard:active{transform:scale(0.97);background:rgba(255,255,255,0.06)}
+.gcard-name{
+  font-size:15px;color:rgba(255,255,255,0.9);
+  margin-bottom:8px;line-height:1.3;font-weight:400;
+}
+.gcard-desc{font-size:12px;color:rgba(255,255,255,0.35);line-height:1.6}
 .gcard-meta{
-  display:flex;gap:10px;margin-top:8px;padding-left:10px;
+  display:flex;gap:6px;margin-top:14px;align-items:center;
 }
-.gcard-tag{
-  font-size:9px;color:rgba(255,255,255,0.18);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:6px;padding:2px 7px;
-  letter-spacing:0.05em;text-transform:uppercase;
+.gcard-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent);opacity:0.6;flex-shrink:0;
 }
+.gcard-nodes{font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:0.05em}
 
-/* ─── FPS ─── */
+/* ─── Board Slots ─── */
+#boards-overlay{
+  position:fixed;inset:0;z-index:9993;display:none;
+  background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:max(40px,env(safe-area-inset-top,0px)) 24px max(40px,env(safe-area-inset-bottom,0px));
+}
+#boards-overlay.open{display:flex}
+#boards-title{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:24px}
+#boards-list{width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px}
+.bslot{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;padding:14px 16px;cursor:pointer;transition:all 0.12s;
+}
+.bslot.active{border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.07)}
+.bslot:active{transform:scale(0.98)}
+.bslot-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0}
+.bslot.active .bslot-dot{background:#6ea8fe}
+.bslot-info{flex:1;min-width:0}
+.bslot-name{font-size:14px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bslot.active .bslot-name{color:#fff}
+.bslot-count{font-size:11px;color:rgba(255,255,255,0.25);margin-top:2px}
+.bslot-rename{
+  background:none;border:none;color:rgba(255,255,255,0.2);font-size:12px;
+  cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit;
+}
+.bslot-rename:active{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6)}
+#boards-close{
+  margin-top:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;
+  padding:8px 24px;border-radius:8px;font-family:inherit;
+}
+#boards-close:active{background:rgba(255,255,255,0.12)}
+
+/* ─── Rich Editor (title + body) ─── */
+#ed-title{
+  -webkit-user-select:text;user-select:text;
+  width:100%;background:transparent;border:none;outline:none;
+  color:#fff;font-size:16px;font-weight:500;
+  font-family:inherit;padding:0;margin-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  padding-bottom:8px;
+}
+#ed-title::placeholder{color:rgba(255,255,255,0.2)}
+#ed-body{
+  -webkit-user-select:text;user-select:text;
+  width:100%;min-height:60px;max-height:180px;
+  background:transparent;border:none;outline:none;
+  color:rgba(255,255,255,0.75);font-size:14px;line-height:1.6;
+  font-family:inherit;resize:none;
+}
+#ed-body::placeholder{color:rgba(255,255,255,0.18)}
 #fps{
   position:fixed;top:max(16px,env(safe-area-inset-top,0px));right:16px;
   font-size:10px;color:rgba(255,255,255,0.2);
@@ -261,7 +312,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 
 <!-- Editor -->
 <div id="editor">
+  <!-- Classic mode -->
   <textarea id="ed-text" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
+  <!-- Rich mode -->
+  <input id="ed-title" type="text" placeholder="title" autocomplete="off" autocorrect="on" spellcheck="true" style="display:none">
+  <textarea id="ed-body" placeholder="notes, context, anything..." autocomplete="off" autocorrect="on" spellcheck="true" style="display:none"></textarea>
   <button id="ed-color-btn" title="change color"></button>
   <div id="ed-color-palette"></div>
   <div id="editor-actions">
@@ -279,6 +334,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <div id="conn-color-row"></div>
   <div id="conn-editor-actions">
     <button class="conn-del-btn" id="conn-del-btn">remove</button>
+    <button id="conn-dir-btn" style="color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);border:none;font-size:13px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit">→ directed</button>
     <button class="conn-done-btn" id="conn-done-btn">done</button>
   </div>
 </div>
@@ -293,12 +349,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 </button>
 <div id="menu-scrim"></div>
 <div id="menu-drawer">
+  <div class="sep">boards</div>
+  <button id="m-boards">switch board</button>
   <div class="sep">start</div>
   <button id="m-gallery">start from a board</button>
   <div class="sep">data</div>
   <button id="m-export">export</button>
   <button id="m-import">import</button>
   <div class="sep">view</div>
+  <button id="m-richmode">rich notes <span class="toggle" id="m-rich-dot"></span></button>
   <button id="m-reset-view">reset camera</button>
   <button id="m-toggle-fps">fps <span class="toggle" id="m-fps-dot"></span></button>
   <button id="m-open-capture">open to capture <span class="toggle" id="m-capture-dot"></span></button>
@@ -308,18 +367,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-bulk">+ 100 test</button>
   <div class="sep"></div>
   <button id="m-clear" class="danger">clear all</button>
-  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v16</div>
+  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v17</div>
 </div>
 
-<!-- Starter Gallery -->
-<div id="gallery-scrim"></div>
-<div id="gallery-panel">
+<!-- Starter Gallery (full-screen) -->
+<div id="gallery-overlay">
   <div id="gallery-header">
     <span id="gallery-title">start from a board</span>
-    <button id="gallery-close">×</button>
+    <button id="gallery-close">close</button>
   </div>
-  <div id="gallery-subtitle">Each board is a different way of thinking. Pick one, make it yours.</div>
-  <div id="gallery-list"></div>
+  <div id="gallery-grid"></div>
+</div>
+
+<!-- Board Slots -->
+<div id="boards-overlay">
+  <div id="boards-title">your boards</div>
+  <div id="boards-list"></div>
+  <button id="boards-close">done</button>
 </div>
 
 <!-- Lasso -->
@@ -348,11 +412,14 @@ import { get, set } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 16,
+  version: 17,
   thoughts: [],
   connections: [],
   camera: null,
   openToCapture: false,
+  richMode: false,
+  boardId: 'board-1',
+  boardName: 'Board 1',
 };
 
 let editingId = null, editingColor = null;
@@ -545,6 +612,26 @@ function rebuildConnections() {
     line.userData = { from:c.from, to:c.to, density, connKey:key, connId:firstConn?.id, baseOpacity };
     lineGroup.add(line);
 
+    // Directional arrow (cone at target end)
+    if (c.directed) {
+      const dir = new THREE.Vector3().subVectors(mB.position, mA.position);
+      const len = dir.length();
+      if (len > 0.1) {
+        const arrowGeo = new THREE.ConeGeometry(0.1, 0.35, 8);
+        const arrowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(connColor), transparent:true, opacity: Math.min(baseOpacity+0.2,1) });
+        const arrow = new THREE.Mesh(arrowGeo, arrowMat);
+        // Position near target, offset by sphere radius
+        const norm = dir.clone().normalize();
+        const arrowPos = mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.2));
+        arrow.position.copy(arrowPos);
+        // Orient cone along direction
+        const axis = new THREE.Vector3(0,1,0);
+        arrow.quaternion.setFromUnitVectors(axis, norm);
+        arrow.userData = { isArrow:true, from:c.from, to:c.to, connKey:key };
+        lineGroup.add(arrow);
+      }
+    }
+
     const label = c.label || (density > 1 ? `×${density}` : null);
     if (label) {
       const mid = new THREE.Vector3().addVectors(mA.position, mB.position).multiplyScalar(0.5);
@@ -569,6 +656,19 @@ function updateConnectionPositions() {
           (mA.position.y + mB.position.y) / 2 + 0.25,
           (mA.position.z + mB.position.z) / 2
         );
+      }
+      continue;
+    }
+    if (child.userData.isArrow) {
+      const mA = getMesh(child.userData.from), mB = getMesh(child.userData.to);
+      if (mA && mB) {
+        const dir = new THREE.Vector3().subVectors(mB.position, mA.position);
+        const len = dir.length();
+        if (len > 0.1) {
+          const norm = dir.clone().normalize();
+          child.position.copy(mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.2)));
+          child.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), norm);
+        }
       }
       continue;
     }
@@ -597,18 +697,107 @@ async function save() {
     px:camera.position.x,py:camera.position.y,pz:camera.position.z,
     tx:controls.target.x,ty:controls.target.y,tz:controls.target.z
   };
-  try { await set('atem-state', state); } catch(e) { console.warn('idb save failed', e); }
-  try { localStorage.setItem('atem-state-backup', JSON.stringify(state)); } catch(e){}
+  const key = 'atem-' + state.boardId;
+  try { await set(key, state); } catch(e) { console.warn('idb save failed', e); }
+  try { localStorage.setItem(key+'-backup', JSON.stringify(state)); } catch(e){}
+  // Also save board registry
+  const registry = await getBoardRegistry();
+  const idx = registry.findIndex(b => b.id === state.boardId);
+  const entry = { id: state.boardId, name: state.boardName, count: state.thoughts.length, updated: Date.now() };
+  if (idx >= 0) registry[idx] = entry; else registry.push(entry);
+  try { await set('atem-boards', registry); } catch(e) {}
+}
+
+async function getBoardRegistry() {
+  try {
+    const r = await get('atem-boards');
+    if (r && Array.isArray(r)) return r;
+  } catch(e) {}
+  // Bootstrap 5 slots
+  return [
+    { id:'board-1', name:'Board 1', count:0, updated:0 },
+    { id:'board-2', name:'Board 2', count:0, updated:0 },
+    { id:'board-3', name:'Board 3', count:0, updated:0 },
+    { id:'board-4', name:'Board 4', count:0, updated:0 },
+    { id:'board-5', name:'Board 5', count:0, updated:0 },
+  ];
+}
+
+async function loadBoard(boardId) {
+  // Save current board first
+  if (state.thoughts.length > 0 || state.connections.length > 0) await save();
+
+  // Clear scene
+  while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
+  while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+  thoughtMap.clear(); meshMap.clear();
+
+  // Reset state (preserve settings)
+  const richMode = state.richMode;
+  const openToCapture = state.openToCapture;
+  state.thoughts = [];
+  state.connections = [];
+  state.boardId = boardId;
+  state.richMode = richMode;
+  state.openToCapture = openToCapture;
+
+  const key = 'atem-' + boardId;
+  let s = null;
+  try { s = await get(key); } catch(e) {}
+  if (!s) {
+    try {
+      const raw = localStorage.getItem(key+'-backup');
+      if (raw) s = JSON.parse(raw);
+    } catch(e) {}
+  }
+
+  if (s) {
+    state.thoughts = s.thoughts || [];
+    state.connections = s.connections || [];
+    state.boardName = s.boardName || boardId;
+    if (s.camera) {
+      camera.position.set(s.camera.px,s.camera.py,s.camera.pz);
+      controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz);
+    }
+    const validIds = new Set(state.thoughts.map(t=>t.id));
+    state.connections = state.connections.filter(c=>validIds.has(c.from)&&validIds.has(c.to));
+    for (const t of state.thoughts) { if(!t.size)t.size=1.0; if(!t.props)t.props={}; if(!t.body)t.body=''; }
+    for (const t of state.thoughts) addThoughtMesh(t);
+    rebuildMaps(); rebuildConnections();
+    if (state.thoughts.length > 0) hideHint();
+  }
+
+  // Update board registry name
+  const registry = await getBoardRegistry();
+  const slot = registry.find(b => b.id === boardId);
+  if (slot) { state.boardName = slot.name; }
+
+  updateRichModeUI();
+  needsRender = true;
+  toast(state.boardName);
 }
 
 async function load() {
+  // Determine which board to load
+  let boardId = 'board-1';
+  try {
+    const lastBoard = localStorage.getItem('atem-last-board');
+    if (lastBoard) boardId = lastBoard;
+  } catch(e) {}
+  state.boardId = boardId;
+
   let s = null;
-  try { s = await get('atem-state'); } catch(e) { console.warn('idb load failed', e); }
+  const key = 'atem-' + boardId;
+  try { s = await get(key); } catch(e) { console.warn('idb load failed', e); }
+  // Legacy fallback for v15/v16 data
+  if (!s) {
+    try { s = await get('atem-state'); } catch(e) {}
+  }
   if (!s) {
     try {
-      const raw = localStorage.getItem('atem-state') || localStorage.getItem('atem-state-backup');
-      if (raw) { s = JSON.parse(raw); if (s) await set('atem-state', s); }
-    } catch(e) { console.warn('ls load failed', e); }
+      const raw = localStorage.getItem(key+'-backup') || localStorage.getItem('atem-state') || localStorage.getItem('atem-state-backup');
+      if (raw) { s = JSON.parse(raw); if (s) await set(key, s); }
+    } catch(e) {}
   }
   if (!s) return;
 
@@ -617,20 +806,20 @@ async function load() {
     state.thoughts = s.thoughts || [];
     state.connections = s.connections || [];
     state.openToCapture = s.openToCapture || false;
+    state.richMode = s.richMode || false;
+    state.boardName = s.boardName || 'Board 1';
 
     if (s.camera) {
       camera.position.set(s.camera.px,s.camera.py,s.camera.pz);
       controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz);
     }
-
-    // Clean orphaned connections
-    const validIds = new Set(state.thoughts.map(t => t.id));
-    state.connections = state.connections.filter(c => validIds.has(c.from) && validIds.has(c.to));
-
+    const validIds = new Set(state.thoughts.map(t=>t.id));
+    state.connections = state.connections.filter(c=>validIds.has(c.from)&&validIds.has(c.to));
+    for (const t of state.thoughts) { if(!t.size)t.size=1.0; if(!t.props)t.props={}; if(!t.body)t.body=''; }
+    for (const c of state.connections) { if(!c.color)c.color='#6ea8fe'; if(c.directed===undefined)c.directed=false; }
     for (const t of state.thoughts) addThoughtMesh(t);
-    rebuildMaps();
-    rebuildConnections();
-    updateCaptureToggle();
+    rebuildMaps(); rebuildConnections();
+    updateCaptureToggle(); updateRichModeUI();
     if (state.thoughts.length > 0) hideHint();
   } catch(e) { console.warn('hydrate failed', e); }
 }
@@ -641,14 +830,15 @@ async function load() {
 
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
-function createThought(x, y, z, text, color) {
+function createThought(x, y, z, text, color, body) {
   const t = {
     id:uid(), text:text||'',
+    body: body||'',
     position:[x,y,z],
     color: color || COLORS[0],
     created:Date.now(), touched:Date.now(),
     size: 1.0,
-    props: {}  // extensibility hook for Stage 2/3
+    props: {}
   };
   state.thoughts.push(t);
   thoughtMap.set(t.id, t);
@@ -657,10 +847,11 @@ function createThought(x, y, z, text, color) {
   return t;
 }
 
-function updateThought(id, text, color, size) {
+function updateThought(id, text, color, size, body) {
   const t = thoughtMap.get(id);
   if (!t) return;
   t.text = text; t.touched = Date.now();
+  if (body !== undefined) t.body = body;
   if (color !== undefined) t.color = color;
   if (size !== undefined) t.size = size;
   const mesh = getMesh(id);
@@ -687,13 +878,13 @@ function moveThought(id, x, y, z) {
   if (t) { t.position=[x,y,z]; t.touched=Date.now(); }
 }
 
-function addConnection(fromId, toId, label, color) {
+function addConnection(fromId, toId, label, color, directed) {
   if (fromId === toId) return;
-  const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||'#6ea8fe' };
+  const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||'#6ea8fe', directed: directed||false };
   state.connections.push(conn);
   rebuildConnections(); save();
   needsRender = true;
-  if (label === null) return;  // silent
+  if (label === null) return;
   if (!label) openConnEditor(conn.id);
   else toast('connected');
 }
@@ -761,6 +952,21 @@ function openConnEditor(connId) {
   });
 
   connEditorEl.classList.add('open');
+
+  // Directed toggle
+  const dirBtn = document.getElementById('conn-dir-btn');
+  const updateDirBtn = () => {
+    dirBtn.textContent = conn.directed ? '→ directed' : '↔ undirected';
+    dirBtn.style.color = conn.directed ? 'rgba(255,200,100,0.9)' : 'rgba(255,255,255,0.4)';
+    dirBtn.style.background = conn.directed ? 'rgba(255,180,60,0.15)' : 'rgba(255,255,255,0.06)';
+  };
+  updateDirBtn();
+  dirBtn.onclick = (e) => {
+    e.stopPropagation();
+    conn.directed = !conn.directed;
+    updateDirBtn();
+    rebuildConnections(); save();
+  };
 }
 
 function closeConnEditor() {
@@ -787,7 +993,6 @@ connCustomInput.addEventListener('keydown', (e) => {
 // ═══════════════════════════════════════════
 
 const editorEl = document.getElementById('editor');
-const edText = document.getElementById('ed-text');
 
 function renderEditorColors() {
   const btn = document.getElementById('ed-color-btn');
@@ -812,19 +1017,40 @@ function renderEditorColors() {
   });
 }
 
+function updateRichModeUI() {
+  const dot = document.getElementById('m-rich-dot');
+  if (dot) dot.classList.toggle('on', !!state.richMode);
+  const edText = document.getElementById('ed-text');
+  const edTitle = document.getElementById('ed-title');
+  const edBody = document.getElementById('ed-body');
+  if (edText) edText.style.display = state.richMode ? 'none' : '';
+  if (edTitle) edTitle.style.display = state.richMode ? '' : 'none';
+  if (edBody) edBody.style.display = state.richMode ? '' : 'none';
+}
+
 function openEditor(id) {
   clearSelection(); closeConnEditor();
   editingId = id;
   const t = thoughtMap.get(id);
-  edText.value = t ? t.text : '';
+  const edText = document.getElementById('ed-text');
+  const edTitle = document.getElementById('ed-title');
+  const edBody = document.getElementById('ed-body');
+
+  if (state.richMode) {
+    edTitle.value = t ? t.text : '';
+    edBody.value = t ? (t.body||'') : '';
+    edBody.style.height = 'auto';
+  } else {
+    edText.value = t ? t.text : '';
+    edText.style.height = 'auto';
+  }
   editingColor = t ? t.color : COLORS[0];
   renderEditorColors();
   editorEl.classList.add('open'); controls.enabled = false;
-  edText.style.height = 'auto';
 
   // Glow connected thoughts briefly
   for (const child of lineGroup.children) {
-    if (child.userData.isConnLabel) continue;
+    if (child.userData.isConnLabel || child.userData.isArrow) continue;
     if (child.userData.from === id || child.userData.to === id) {
       const base = child.userData.baseOpacity || 0.35;
       child.material.opacity = Math.min(base + 0.3, 1.0);
@@ -833,16 +1059,34 @@ function openEditor(id) {
   }
   needsRender = true;
 
-  edText.focus();
-  edText.selectionStart = edText.value.length;
-  setTimeout(()=>edText.focus(), 80);
+  if (state.richMode) {
+    edTitle.focus();
+    edTitle.selectionStart = edTitle.value.length;
+    setTimeout(()=>edTitle.focus(), 80);
+  } else {
+    edText.focus();
+    edText.selectionStart = edText.value.length;
+    setTimeout(()=>edText.focus(), 80);
+  }
 }
 
 function closeEditor(doSave) {
   if (doSave && editingId) {
-    const text = edText.value.trim();
-    if (!text) deleteThought(editingId);
-    else updateThought(editingId, text, editingColor);
+    const edText = document.getElementById('ed-text');
+    const edTitle = document.getElementById('ed-title');
+    const edBody = document.getElementById('ed-body');
+    let text, body;
+    if (state.richMode) {
+      text = edTitle.value.trim();
+      body = edBody.value.trim();
+      // If no title but has body, use first line of body as title
+      if (!text && body) { const lines = body.split('\n'); text = lines[0]; body = lines.slice(1).join('\n').trim(); }
+    } else {
+      text = edText.value.trim();
+      body = '';
+    }
+    if (!text && !body) deleteThought(editingId);
+    else updateThought(editingId, text, editingColor, undefined, body);
   }
   editingId = null; editingColor = null;
   editorEl.classList.remove('open'); controls.enabled = true;
@@ -854,14 +1098,28 @@ document.getElementById('cancel-btn').addEventListener('click', ()=>{
   closeEditor(false);
 });
 document.getElementById('del-btn').addEventListener('click', ()=>{ if(editingId) deleteThought(editingId); closeEditor(false); });
-edText.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (editingId) { const _t = thoughtMap.get(editingId); if (_t && !_t.text) deleteThought(editingId); }
-    closeEditor(false); e.preventDefault();
-  }
-  if (e.key === 'Enter' && !e.shiftKey) { closeEditor(true); e.preventDefault(); }
-});
-edText.addEventListener('input', () => { edText.style.height='auto'; edText.style.height=Math.min(edText.scrollHeight,200)+'px'; });
+// Editor keyboard + input handlers (mode-aware)
+function setupEditorListeners() {
+  const edText = document.getElementById('ed-text');
+  const edTitle = document.getElementById('ed-title');
+  const edBody = document.getElementById('ed-body');
+
+  edText.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
+    if (e.key === 'Enter' && !e.shiftKey) { closeEditor(true); e.preventDefault(); }
+  });
+  edText.addEventListener('input', () => { edText.style.height='auto'; edText.style.height=Math.min(edText.scrollHeight,200)+'px'; });
+
+  edTitle.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
+    if (e.key === 'Enter') { edBody.focus(); e.preventDefault(); }
+  });
+  edBody.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
+  });
+  edBody.addEventListener('input', () => { edBody.style.height='auto'; edBody.style.height=Math.min(edBody.scrollHeight,180)+'px'; });
+}
+setupEditorListeners();
 
 // ═══════════════════════════════════════════
 // LASSO
@@ -963,7 +1221,10 @@ function pxFromEvent(e) {
 }
 
 function isOverlayOpen() {
-  return editorEl.classList.contains('open') || connEditorEl.classList.contains('open');
+  return editorEl.classList.contains('open')
+    || connEditorEl.classList.contains('open')
+    || boardsOverlay.classList.contains('open')
+    || galleryOverlay.classList.contains('open');
 }
 
 function onPointerDown(e) {
@@ -1253,7 +1514,8 @@ document.getElementById('m-clear').addEventListener('click', () => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (galleryPanel.classList.contains('open')) { closeGallery(); e.preventDefault(); }
+    if (boardsOverlay.classList.contains('open')) { closeBoards(); e.preventDefault(); }
+    else if (galleryOverlay.classList.contains('open')) { closeGallery(); e.preventDefault(); }
     else if (connEditorEl.classList.contains('open')) { closeConnEditor(); e.preventDefault(); }
     else if (menuDrawer.classList.contains('open')) { closeMenu(); e.preventDefault(); }
     else if (editorEl.classList.contains('open')) { closeEditor(false); e.preventDefault(); }
@@ -1299,20 +1561,20 @@ const STARTER_BOARDS = [
     accent: '#f87171',
     tags: ['clarity', 'personal'],
     thoughts: [
-      {id:'d1', text:'The decision', position:[0,0,0], color:'#f87171', size:1.4},
-      {id:'d2', text:'Option A', position:[-4,2,0], color:'#fb923c', size:1.1},
-      {id:'d3', text:'Option B', position:[4,2,0], color:'#6ea8fe', size:1.1},
-      {id:'d4', text:'What I\'m afraid of', position:[0,-3,0], color:'#a78bfa', size:1.0},
-      {id:'d5', text:'What it would cost me', position:[-4,-1,0], color:'#a78bfa', size:0.9},
+      {id:'d1', text:'The decision', position:[0,0,2], color:'#f87171', size:1.4},
+      {id:'d2', text:'Option A', position:[-4,2,1], color:'#fb923c', size:1.1},
+      {id:'d3', text:'Option B', position:[4,2,1], color:'#6ea8fe', size:1.1},
+      {id:'d4', text:'What I\'m afraid of', position:[0,-3,-1], color:'#a78bfa', size:1.0},
+      {id:'d5', text:'What it would cost me', position:[-4,-1,-2], color:'#a78bfa', size:0.9},
       {id:'d6', text:'What it would free me from', position:[4,-1,0], color:'#34d399', size:0.9},
-      {id:'d7', text:'What I keep telling myself', position:[0,4,0], color:'#f5c97a', size:0.9},
-      {id:'d8', text:'What I\'d tell a friend to do', position:[0,-5.5,0], color:'#67e8f9', size:0.85},
-      {id:'d9', text:'The real question underneath', position:[7,0,0], color:'#f472b6', size:1.0},
+      {id:'d7', text:'What I keep telling myself', position:[0,4,3], color:'#f5c97a', size:0.9},
+      {id:'d8', text:'What I\'d tell a friend to do', position:[0,-5.5,-3], color:'#67e8f9', size:0.85},
+      {id:'d9', text:'The real question underneath', position:[7,0,-1], color:'#f472b6', size:1.0},
     ],
     connections: [
-      ['d1','d2','path 1'],['d1','d3','path 2'],
-      ['d1','d4','rooted in'],['d2','d5','costs'],['d3','d6','frees'],
-      ['d7','d1','blocks'],['d8','d1','cuts through'],['d9','d4','is actually'],
+      ['d1','d2','path 1',true],['d1','d3','path 2',true],
+      ['d1','d4','rooted in',true],['d2','d5','costs',true],['d3','d6','frees',true],
+      ['d7','d1','blocks',true],['d8','d1','cuts through',true],['d9','d4','is actually',true],
     ]
   },
   {
@@ -1322,20 +1584,20 @@ const STARTER_BOARDS = [
     accent: '#a78bfa',
     tags: ['argument', 'worldview'],
     thoughts: [
-      {id:'b1', text:'The claim', position:[0,0,0], color:'#a78bfa', size:1.4},
-      {id:'b2', text:'Why I believe this', position:[-5,1,0], color:'#a78bfa', size:1.0},
-      {id:'b3', text:'Where I first saw it', position:[-5,-2,0], color:'#a78bfa', size:0.9},
+      {id:'b1', text:'The claim', position:[0,0,2], color:'#a78bfa', size:1.4},
+      {id:'b2', text:'Why I believe this', position:[-5,1,1], color:'#a78bfa', size:1.0},
+      {id:'b3', text:'Where I first saw it', position:[-5,-2,-1], color:'#a78bfa', size:0.9},
       {id:'b4', text:'The strongest objection', position:[5,1,0], color:'#f87171', size:1.1},
-      {id:'b5', text:'My response to it', position:[5,-2,0], color:'#34d399', size:1.0},
-      {id:'b6', text:'What would change my mind', position:[0,4,0], color:'#fbbf24', size:1.0},
-      {id:'b7', text:'Who else believes this?', position:[-3,3.5,0], color:'#67e8f9', size:0.85},
-      {id:'b8', text:'What it implies about everything else', position:[0,-4,0], color:'#fb923c', size:0.9},
-      {id:'b9', text:'The version I can\'t defend yet', position:[8,0,0], color:'#f472b6', size:0.85},
+      {id:'b5', text:'My response to it', position:[5,-2,-1], color:'#34d399', size:1.0},
+      {id:'b6', text:'What would change my mind', position:[0,4,3], color:'#fbbf24', size:1.0},
+      {id:'b7', text:'Who else believes this?', position:[-3,3.5,2], color:'#67e8f9', size:0.85},
+      {id:'b8', text:'What it implies about everything else', position:[0,-4,-2], color:'#fb923c', size:0.9},
+      {id:'b9', text:'The version I can\'t defend yet', position:[8,0,-3], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['b1','b2','because'],['b1','b3','came from'],['b1','b4','challenged by'],
-      ['b4','b5','answered by'],['b6','b1','falsified if'],['b7','b2','supports'],
-      ['b1','b8','implies'],['b9','b1','edges into'],
+      ['b1','b2','because',true],['b1','b3','came from',true],['b1','b4','challenged by',false],
+      ['b4','b5','answered by',true],['b6','b1','falsified if',true],['b7','b2','supports',true],
+      ['b1','b8','implies',true],['b9','b1','edges into',true],
     ]
   },
   {
@@ -1346,19 +1608,19 @@ const STARTER_BOARDS = [
     tags: ['reflection', 'learning'],
     thoughts: [
       {id:'pm1', text:'What failed', position:[0,0,0], color:'#fb923c', size:1.4},
-      {id:'pm2', text:'What I thought would happen', position:[-5,2,0], color:'#6ea8fe', size:1.0},
-      {id:'pm3', text:'What actually happened', position:[5,2,0], color:'#f87171', size:1.0},
-      {id:'pm4', text:'What I controlled', position:[-5,-2,0], color:'#fbbf24', size:1.0},
-      {id:'pm5', text:'What I didn\'t control', position:[5,-2,0], color:'#a78bfa', size:1.0},
-      {id:'pm6', text:'The first sign I ignored', position:[0,4,0], color:'#f472b6', size:0.9},
-      {id:'pm7', text:'What I\'d do at step 1 now', position:[-3,-4.5,0], color:'#34d399', size:0.9},
-      {id:'pm8', text:'What I\'m still not sure about', position:[3,-4.5,0], color:'#67e8f9', size:0.9},
-      {id:'pm9', text:'The thing I\'m not saying', position:[8,0,0], color:'#f87171', size:0.85},
+      {id:'pm2', text:'What I thought would happen', position:[-5,2,2], color:'#6ea8fe', size:1.0},
+      {id:'pm3', text:'What actually happened', position:[5,2,-2], color:'#f87171', size:1.0},
+      {id:'pm4', text:'What I controlled', position:[-5,-2,1], color:'#fbbf24', size:1.0},
+      {id:'pm5', text:'What I didn\'t control', position:[5,-2,-1], color:'#a78bfa', size:1.0},
+      {id:'pm6', text:'The first sign I ignored', position:[0,4,3], color:'#f472b6', size:0.9},
+      {id:'pm7', text:'What I\'d do at step 1 now', position:[-3,-4.5,-2], color:'#34d399', size:0.9},
+      {id:'pm8', text:'What I\'m still not sure about', position:[3,-4.5,2], color:'#67e8f9', size:0.9},
+      {id:'pm9', text:'The thing I\'m not saying', position:[8,0,-4], color:'#f87171', size:0.85},
     ],
     connections: [
-      ['pm1','pm2','vs'],['pm1','pm3','became'],['pm2','pm3','gap'],
-      ['pm4','pm1','shaped'],['pm5','pm1','shaped'],['pm6','pm1','preceded'],
-      ['pm7','pm4','changes'],['pm8','pm5','lives in'],['pm9','pm1','underlies'],
+      ['pm2','pm3','became',true],['pm4','pm1','shaped',true],['pm5','pm1','shaped',true],
+      ['pm6','pm1','preceded',true],['pm7','pm4','changes',true],['pm8','pm5','lives in',false],
+      ['pm9','pm1','underlies',true],['pm2','pm1','vs',false],['pm1','pm3','became',true],
     ]
   },
   {
@@ -1368,20 +1630,20 @@ const STARTER_BOARDS = [
     accent: '#f5c97a',
     tags: ['creative', 'making'],
     thoughts: [
-      {id:'cr1', text:'The core feeling', position:[0,0,0], color:'#f5c97a', size:1.4},
-      {id:'cr2', text:'The medium', position:[-4,2,0], color:'#fb923c', size:1.0},
-      {id:'cr3', text:'A reference that nails it', position:[4,2,0], color:'#f5c97a', size:1.0},
-      {id:'cr4', text:'A reference to avoid', position:[4,-2,0], color:'#f87171', size:0.9},
-      {id:'cr5', text:'The constraint that makes it interesting', position:[-4,-2,0], color:'#67e8f9', size:0.9},
-      {id:'cr6', text:'Who is it for', position:[0,4.5,0], color:'#6ea8fe', size:0.9},
-      {id:'cr7', text:'What it\'s actually about', position:[-7,0,0], color:'#a78bfa', size:1.0},
-      {id:'cr8', text:'The part I\'m most afraid to make', position:[0,-4.5,0], color:'#f472b6', size:0.9},
+      {id:'cr1', text:'The core feeling', position:[0,0,1], color:'#f5c97a', size:1.4},
+      {id:'cr2', text:'The medium', position:[-4,2,2], color:'#fb923c', size:1.0},
+      {id:'cr3', text:'A reference that nails it', position:[4,2,3], color:'#f5c97a', size:1.0},
+      {id:'cr4', text:'A reference to avoid', position:[4,-2,-2], color:'#f87171', size:0.9},
+      {id:'cr5', text:'The constraint that makes it interesting', position:[-4,-2,-1], color:'#67e8f9', size:0.9},
+      {id:'cr6', text:'Who is it for', position:[0,4.5,2], color:'#6ea8fe', size:0.9},
+      {id:'cr7', text:'What it\'s actually about', position:[-7,0,-2], color:'#a78bfa', size:1.0},
+      {id:'cr8', text:'The part I\'m most afraid to make', position:[0,-4.5,-3], color:'#f472b6', size:0.9},
       {id:'cr9', text:'The version I could finish this week', position:[7,0,0], color:'#34d399', size:0.9},
     ],
     connections: [
-      ['cr1','cr2','expressed in'],['cr1','cr3','feels like'],['cr1','cr4','nothing like'],
-      ['cr5','cr2','shapes'],['cr6','cr1','shaped by'],['cr7','cr1','underneath'],
-      ['cr8','cr7','is about'],['cr9','cr2','starts with'],
+      ['cr1','cr2','expressed in',true],['cr1','cr3','feels like',false],['cr4','cr1','nothing like',true],
+      ['cr5','cr2','shapes',true],['cr6','cr1','shaped by',true],['cr7','cr1','underneath',true],
+      ['cr8','cr7','is about',true],['cr9','cr2','starts with',true],
     ]
   },
   {
@@ -1391,20 +1653,20 @@ const STARTER_BOARDS = [
     accent: '#67e8f9',
     tags: ['people', 'empathy'],
     thoughts: [
-      {id:'pe1', text:'The person', position:[0,0,0], color:'#67e8f9', size:1.4},
+      {id:'pe1', text:'The person', position:[0,0,2], color:'#67e8f9', size:1.4},
       {id:'pe2', text:'What they say they want', position:[-5,2,0], color:'#6ea8fe', size:1.0},
-      {id:'pe3', text:'What I think they actually want', position:[5,2,0], color:'#6ea8fe', size:1.0},
-      {id:'pe4', text:'What they\'re afraid of', position:[-5,-2,0], color:'#f87171', size:1.0},
-      {id:'pe5', text:'Their model of how the world works', position:[5,-2,0], color:'#a78bfa', size:1.0},
-      {id:'pe6', text:'Where that model came from', position:[8,-4,0], color:'#a78bfa', size:0.85},
-      {id:'pe7', text:'What I keep getting wrong about them', position:[0,4.5,0], color:'#fbbf24', size:0.9},
-      {id:'pe8', text:'What they see in me', position:[-7,0,0], color:'#34d399', size:0.9},
-      {id:'pe9', text:'The conversation we haven\'t had', position:[0,-5,0], color:'#f472b6', size:0.9},
+      {id:'pe3', text:'What I think they actually want', position:[5,2,1], color:'#6ea8fe', size:1.0},
+      {id:'pe4', text:'What they\'re afraid of', position:[-5,-2,-2], color:'#f87171', size:1.0},
+      {id:'pe5', text:'Their model of how the world works', position:[5,-2,3], color:'#a78bfa', size:1.0},
+      {id:'pe6', text:'Where that model came from', position:[8,-4,2], color:'#a78bfa', size:0.85},
+      {id:'pe7', text:'What I keep getting wrong about them', position:[0,4.5,4], color:'#fbbf24', size:0.9},
+      {id:'pe8', text:'What they see in me', position:[-7,0,-1], color:'#34d399', size:0.9},
+      {id:'pe9', text:'The conversation we haven\'t had', position:[0,-5,-3], color:'#f472b6', size:0.9},
     ],
     connections: [
-      ['pe2','pe3','vs actual'],['pe4','pe2','hides in'],['pe5','pe3','explains'],
-      ['pe6','pe5','formed'],['pe7','pe2','because'],['pe8','pe1','sees'],
-      ['pe9','pe4','about'],['pe1','pe2','claims'],['pe1','pe4','fears'],
+      ['pe2','pe3','vs actual',false],['pe4','pe2','hides in',true],['pe5','pe3','explains',true],
+      ['pe6','pe5','formed',true],['pe7','pe2','because',true],['pe8','pe1','sees',true],
+      ['pe9','pe4','about',true],['pe1','pe2','claims',true],['pe1','pe4','fears',true],
     ]
   },
   {
@@ -1415,19 +1677,20 @@ const STARTER_BOARDS = [
     tags: ['finance', 'thinking'],
     thoughts: [
       {id:'tr1', text:'The thesis', position:[0,0,0], color:'#34d399', size:1.4},
-      {id:'tr2', text:'Core assumption 1', position:[-5,2,0], color:'#6ea8fe', size:1.0},
-      {id:'tr3', text:'Core assumption 2', position:[5,2,0], color:'#6ea8fe', size:1.0},
-      {id:'tr4', text:'What makes me wrong', position:[0,4,0], color:'#f87171', size:1.1},
-      {id:'tr5', text:'The data I\'m ignoring', position:[-5,-2,0], color:'#fbbf24', size:0.9},
-      {id:'tr6', text:'Who\'s on the other side', position:[5,-2,0], color:'#a78bfa', size:0.9},
-      {id:'tr7', text:'The signal to exit', position:[-3,-4.5,0], color:'#fb923c', size:0.9},
-      {id:'tr8', text:'The signal I\'m right', position:[3,-4.5,0], color:'#34d399', size:0.9},
-      {id:'tr9', text:'Am I trading the thesis or the emotion?', position:[8,0,0], color:'#f472b6', size:0.85},
+      {id:'tr2', text:'Core assumption 1', position:[-5,2,2], color:'#6ea8fe', size:1.0},
+      {id:'tr3', text:'Core assumption 2', position:[5,2,2], color:'#6ea8fe', size:1.0},
+      {id:'tr4', text:'What makes me wrong', position:[0,4,4], color:'#f87171', size:1.1},
+      {id:'tr5', text:'The data I\'m ignoring', position:[-5,-2,-2], color:'#fbbf24', size:0.9},
+      {id:'tr6', text:'Who\'s on the other side', position:[5,-2,-1], color:'#a78bfa', size:0.9},
+      {id:'tr7', text:'The signal to exit', position:[-3,-4.5,-3], color:'#fb923c', size:0.9},
+      {id:'tr8', text:'The signal I\'m right', position:[3,-4.5,1], color:'#34d399', size:0.9},
+      {id:'tr9', text:'Am I trading the thesis or the emotion?', position:[8,0,-4], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['tr1','tr2','rests on'],['tr1','tr3','rests on'],['tr4','tr2','invalidates'],
-      ['tr4','tr3','invalidates'],['tr5','tr1','against'],['tr6','tr1','disputes'],
-      ['tr7','tr1','ends'],['tr8','tr1','confirms'],['tr9','tr1','questions'],
+      ['tr1','tr2','rests on',true],['tr1','tr3','rests on',true],
+      ['tr4','tr2','invalidates',true],['tr4','tr3','invalidates',true],
+      ['tr5','tr1','works against',true],['tr6','tr1','disputes',true],
+      ['tr7','tr1','ends',true],['tr8','tr1','confirms',true],['tr9','tr1','questions',true],
     ]
   },
   {
@@ -1437,20 +1700,20 @@ const STARTER_BOARDS = [
     accent: '#f472b6',
     tags: ['communication', 'personal'],
     thoughts: [
-      {id:'cv1', text:'The conversation', position:[0,0,0], color:'#f472b6', size:1.4},
-      {id:'cv2', text:'What I want to say', position:[-5,2,0], color:'#6ea8fe', size:1.0},
-      {id:'cv3', text:'What they\'ll probably hear', position:[5,2,0], color:'#fb923c', size:1.0},
-      {id:'cv4', text:'What I actually want', position:[0,4.5,0], color:'#34d399', size:1.1},
-      {id:'cv5', text:'What I\'m afraid they\'ll say', position:[-5,-2,0], color:'#f87171', size:0.9},
-      {id:'cv6', text:'What I\'d be relieved to hear', position:[5,-2,0], color:'#34d399', size:0.9},
-      {id:'cv7', text:'Why I keep postponing it', position:[0,-4.5,0], color:'#a78bfa', size:0.9},
-      {id:'cv8', text:'What happens if I never have it', position:[-7,0,0], color:'#fbbf24', size:0.85},
+      {id:'cv1', text:'The conversation', position:[0,0,2], color:'#f472b6', size:1.4},
+      {id:'cv2', text:'What I want to say', position:[-5,2,1], color:'#6ea8fe', size:1.0},
+      {id:'cv3', text:'What they\'ll probably hear', position:[5,2,-1], color:'#fb923c', size:1.0},
+      {id:'cv4', text:'What I actually want', position:[0,4.5,3], color:'#34d399', size:1.1},
+      {id:'cv5', text:'What I\'m afraid they\'ll say', position:[-5,-2,-2], color:'#f87171', size:0.9},
+      {id:'cv6', text:'What I\'d be relieved to hear', position:[5,-2,2], color:'#34d399', size:0.9},
+      {id:'cv7', text:'Why I keep postponing it', position:[0,-4.5,-3], color:'#a78bfa', size:0.9},
+      {id:'cv8', text:'What happens if I never have it', position:[-7,0,-4], color:'#fbbf24', size:0.85},
       {id:'cv9', text:'The first sentence', position:[7,0,0], color:'#67e8f9', size:0.85},
     ],
     connections: [
-      ['cv1','cv2','begins with'],['cv2','cv3','becomes'],['cv4','cv2','hides in'],
-      ['cv5','cv7','causes'],['cv6','cv4','reveals'],['cv7','cv8','leads to'],
-      ['cv9','cv1','starts'],['cv3','cv5','triggers'],
+      ['cv1','cv2','begins with',true],['cv2','cv3','becomes',true],['cv4','cv2','hides in',true],
+      ['cv5','cv7','causes',true],['cv6','cv4','reveals',true],['cv7','cv8','leads to',true],
+      ['cv9','cv1','starts',true],['cv3','cv5','triggers',true],
     ]
   },
   {
@@ -1460,20 +1723,20 @@ const STARTER_BOARDS = [
     accent: '#fbbf24',
     tags: ['identity', 'reflection'],
     thoughts: [
-      {id:'ih1', text:'The belief', position:[0,0,0], color:'#fbbf24', size:1.4},
-      {id:'ih2', text:'Who gave it to me', position:[-5,2,0], color:'#a78bfa', size:1.0},
-      {id:'ih3', text:'How old I was', position:[-5,-1,0], color:'#a78bfa', size:0.85},
+      {id:'ih1', text:'The belief', position:[0,0,1], color:'#fbbf24', size:1.4},
+      {id:'ih2', text:'Who gave it to me', position:[-5,2,3], color:'#a78bfa', size:1.0},
+      {id:'ih3', text:'How old I was', position:[-5,-1,4], color:'#a78bfa', size:0.85},
       {id:'ih4', text:'Do I still hold it?', position:[5,1,0], color:'#fbbf24', size:1.0},
-      {id:'ih5', text:'What it\'s protected me from', position:[5,-2,0], color:'#34d399', size:0.9},
-      {id:'ih6', text:'What it\'s cost me', position:[0,-4,0], color:'#f87171', size:1.0},
-      {id:'ih7', text:'The version I\'d choose now', position:[0,4.5,0], color:'#67e8f9', size:1.0},
-      {id:'ih8', text:'What letting it go would mean', position:[8,0,0], color:'#f472b6', size:0.85},
-      {id:'ih9', text:'Who I\'d be without it', position:[-8,0,0], color:'#fb923c', size:0.85},
+      {id:'ih5', text:'What it\'s protected me from', position:[5,-2,-1], color:'#34d399', size:0.9},
+      {id:'ih6', text:'What it\'s cost me', position:[0,-4,-2], color:'#f87171', size:1.0},
+      {id:'ih7', text:'The version I\'d choose now', position:[0,4.5,-1], color:'#67e8f9', size:1.0},
+      {id:'ih8', text:'What letting it go would mean', position:[8,0,-3], color:'#f472b6', size:0.85},
+      {id:'ih9', text:'Who I\'d be without it', position:[-8,0,-2], color:'#fb923c', size:0.85},
     ],
     connections: [
-      ['ih1','ih2','given by'],['ih2','ih3','when'],['ih1','ih4','still true?'],
-      ['ih1','ih5','protects by'],['ih1','ih6','costs'],['ih7','ih1','replaces'],
-      ['ih8','ih7','means'],['ih9','ih1','without'],['ih4','ih7','or'],
+      ['ih2','ih1','gave',true],['ih3','ih2','when',true],['ih1','ih4','still?',false],
+      ['ih1','ih5','protects by',true],['ih1','ih6','costs',true],['ih7','ih1','replaces',true],
+      ['ih8','ih7','means',true],['ih9','ih1','without',true],['ih4','ih7','or',true],
     ]
   },
   {
@@ -1484,19 +1747,19 @@ const STARTER_BOARDS = [
     tags: ['learning', 'concepts'],
     thoughts: [
       {id:'lrn1', text:'The thing I\'m learning', position:[0,0,0], color:'#6ea8fe', size:1.4},
-      {id:'lrn2', text:'What I already knew going in', position:[-5,2,0], color:'#34d399', size:1.0},
-      {id:'lrn3', text:'The part that clicked', position:[5,2,0], color:'#34d399', size:1.0},
-      {id:'lrn4', text:'The part that still confuses me', position:[5,-2,0], color:'#fbbf24', size:1.0},
-      {id:'lrn5', text:'A better analogy', position:[-5,-2,0], color:'#67e8f9', size:0.9},
-      {id:'lrn6', text:'Where I want to go with this', position:[0,5,0], color:'#a78bfa', size:0.9},
-      {id:'lrn7', text:'The question I can\'t answer yet', position:[0,-5,0], color:'#f87171', size:1.0},
-      {id:'lrn8', text:'Who knows this better than me', position:[-8,0,0], color:'#fb923c', size:0.85},
-      {id:'lrn9', text:'The first thing I\'d teach someone', position:[8,0,0], color:'#f472b6', size:0.85},
+      {id:'lrn2', text:'What I already knew going in', position:[-5,2,-2], color:'#34d399', size:1.0},
+      {id:'lrn3', text:'The part that clicked', position:[5,2,2], color:'#34d399', size:1.0},
+      {id:'lrn4', text:'The part that still confuses me', position:[5,-2,-1], color:'#fbbf24', size:1.0},
+      {id:'lrn5', text:'A better analogy', position:[-5,-2,1], color:'#67e8f9', size:0.9},
+      {id:'lrn6', text:'Where I want to go with this', position:[0,5,3], color:'#a78bfa', size:0.9},
+      {id:'lrn7', text:'The question I can\'t answer yet', position:[0,-5,-4], color:'#f87171', size:1.0},
+      {id:'lrn8', text:'Who knows this better than me', position:[-8,0,2], color:'#fb923c', size:0.85},
+      {id:'lrn9', text:'The first thing I\'d teach someone', position:[8,0,-2], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['lrn1','lrn2','builds on'],['lrn1','lrn3','suddenly'],['lrn1','lrn4','still unclear'],
-      ['lrn5','lrn4','explains'],['lrn6','lrn3','opens to'],['lrn7','lrn4','deepens'],
-      ['lrn8','lrn7','can answer'],['lrn9','lrn3','starts with'],
+      ['lrn2','lrn1','builds on',true],['lrn1','lrn3','suddenly',true],['lrn1','lrn4','still unclear',true],
+      ['lrn5','lrn4','explains',true],['lrn3','lrn6','opens to',true],['lrn4','lrn7','deepens',true],
+      ['lrn7','lrn8','ask',true],['lrn3','lrn9','starts with',true],
     ]
   },
   {
@@ -1507,53 +1770,118 @@ const STARTER_BOARDS = [
     tags: ['purpose', 'work'],
     thoughts: [
       {id:'wk1', text:'The work', position:[0,0,0], color:'#34d399', size:1.4},
-      {id:'wk2', text:'What I say it\'s about', position:[-5,2,0], color:'#6ea8fe', size:1.0},
-      {id:'wk3', text:'What it\'s actually about', position:[5,2,0], color:'#34d399', size:1.0},
-      {id:'wk4', text:'Who I\'m doing it for', position:[0,5,0], color:'#f5c97a', size:1.0},
-      {id:'wk5', text:'The fear underneath', position:[-5,-2,0], color:'#f87171', size:1.0},
-      {id:'wk6', text:'What I\'d work on if no one watched', position:[5,-2,0], color:'#a78bfa', size:0.9},
-      {id:'wk7', text:'The day it felt most real', position:[-3,-5,0], color:'#67e8f9', size:0.9},
-      {id:'wk8', text:'What I\'m building toward', position:[3,-5,0], color:'#fb923c', size:0.9},
-      {id:'wk9', text:'The version that doesn\'t need an audience', position:[9,0,0], color:'#f472b6', size:0.85},
+      {id:'wk2', text:'What I say it\'s about', position:[-5,2,2], color:'#6ea8fe', size:1.0},
+      {id:'wk3', text:'What it\'s actually about', position:[5,2,-2], color:'#34d399', size:1.0},
+      {id:'wk4', text:'Who I\'m doing it for', position:[0,5,3], color:'#f5c97a', size:1.0},
+      {id:'wk5', text:'The fear underneath', position:[-5,-2,-3], color:'#f87171', size:1.0},
+      {id:'wk6', text:'What I\'d work on if no one watched', position:[5,-2,1], color:'#a78bfa', size:0.9},
+      {id:'wk7', text:'The day it felt most real', position:[-3,-5,2], color:'#67e8f9', size:0.9},
+      {id:'wk8', text:'What I\'m building toward', position:[3,-5,-1], color:'#fb923c', size:0.9},
+      {id:'wk9', text:'The version that doesn\'t need an audience', position:[9,0,-4], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['wk1','wk2','described as'],['wk2','wk3','actually'],['wk4','wk1','drives'],
-      ['wk5','wk2','hides in'],['wk6','wk3','closer to'],['wk7','wk3','was'],
-      ['wk8','wk1','aims at'],['wk9','wk6','is'],['wk5','wk8','also'],
+      ['wk1','wk2','described as',true],['wk2','wk3','actually',true],['wk4','wk1','drives',true],
+      ['wk5','wk2','hides in',true],['wk6','wk3','closer to',true],['wk7','wk3','was',true],
+      ['wk8','wk1','aims at',true],['wk9','wk6','is',true],['wk5','wk8','also',false],
     ]
   },
 ];
 
+// ─── Board Slots ───
+
+const boardsOverlay = document.getElementById('boards-overlay');
+
+function openBoards() {
+  renderBoardSlots();
+  boardsOverlay.classList.add('open');
+}
+
+function closeBoards() {
+  boardsOverlay.classList.remove('open');
+}
+
+async function renderBoardSlots() {
+  const registry = await getBoardRegistry();
+  const list = document.getElementById('boards-list');
+  list.innerHTML = registry.map(b => `
+    <div class="bslot${b.id === state.boardId ? ' active' : ''}" data-board-id="${b.id}">
+      <div class="bslot-dot"></div>
+      <div class="bslot-info">
+        <div class="bslot-name">${b.name}</div>
+        <div class="bslot-count">${b.count > 0 ? b.count + ' thoughts' : 'empty'}</div>
+      </div>
+      <button class="bslot-rename" data-board-id="${b.id}">rename</button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.bslot').forEach(slot => {
+    slot.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('bslot-rename')) return;
+      const bid = slot.dataset.boardId;
+      if (bid === state.boardId) { closeBoards(); return; }
+      closeBoards();
+      await loadBoard(bid);
+      try { localStorage.setItem('atem-last-board', bid); } catch(e) {}
+    });
+  });
+
+  list.querySelectorAll('.bslot-rename').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const bid = btn.dataset.boardId;
+      const newName = prompt('Board name:', registry.find(b=>b.id===bid)?.name || bid);
+      if (!newName || !newName.trim()) return;
+      const trimmed = newName.trim();
+      if (bid === state.boardId) { state.boardName = trimmed; save(); }
+      // Update registry directly
+      getBoardRegistry().then(async reg => {
+        const slot = reg.find(b=>b.id===bid);
+        if (slot) { slot.name = trimmed; try { await set('atem-boards', reg); } catch(e) {} }
+        renderBoardSlots();
+      });
+    });
+  });
+}
+
+document.getElementById('boards-close').addEventListener('click', closeBoards);
+boardsOverlay.addEventListener('click', (e) => { if (e.target === boardsOverlay) closeBoards(); });
+document.getElementById('m-boards').addEventListener('click', () => { closeMenu(); openBoards(); });
+
+// ─── Rich Mode Toggle ───
+
+document.getElementById('m-richmode').addEventListener('click', () => {
+  state.richMode = !state.richMode;
+  updateRichModeUI();
+  save(); closeMenu();
+  toast(state.richMode ? 'rich notes on' : 'classic mode');
+});
+
 // ─── Gallery UI ───
 
-const galleryScrim = document.getElementById('gallery-scrim');
-const galleryPanel = document.getElementById('gallery-panel');
+const galleryOverlay = document.getElementById('gallery-overlay');
 
 function openGallery() {
   renderGalleryCards();
-  galleryScrim.classList.add('open');
-  galleryPanel.classList.add('open');
+  galleryOverlay.classList.add('open');
 }
 
 function closeGallery() {
-  galleryScrim.classList.remove('open');
-  galleryPanel.classList.remove('open');
+  galleryOverlay.classList.remove('open');
 }
 
 function renderGalleryCards() {
-  const list = document.getElementById('gallery-list');
-  list.innerHTML = STARTER_BOARDS.map(b => `
-    <div class="gcard" data-board-id="${b.id}">
-      <div class="gcard-accent" style="background:${b.accent}"></div>
+  const grid = document.getElementById('gallery-grid');
+  grid.innerHTML = STARTER_BOARDS.map(b => `
+    <div class="gcard" data-board-id="${b.id}" style="--accent:${b.accent}">
       <div class="gcard-name">${b.name}</div>
       <div class="gcard-desc">${b.desc}</div>
       <div class="gcard-meta">
-        ${b.tags.map(t => `<span class="gcard-tag">${t}</span>`).join('')}
-        <span class="gcard-tag">${b.thoughts.length} nodes</span>
+        <div class="gcard-dot"></div>
+        <span class="gcard-nodes">${b.thoughts.length} nodes · ${b.tags.join(', ')}</span>
       </div>
     </div>
   `).join('');
-  list.querySelectorAll('.gcard').forEach(card => {
+  grid.querySelectorAll('.gcard').forEach(card => {
     card.addEventListener('click', () => {
       const board = STARTER_BOARDS.find(b => b.id === card.dataset.boardId);
       if (board) loadStarterBoard(board);
@@ -1563,10 +1891,9 @@ function renderGalleryCards() {
 
 function loadStarterBoard(board) {
   if (state.thoughts.length > 0) {
-    if (!confirm(`Load "${board.name}"?\n\nThis replaces your current space. Export first if you want to keep it.`)) return;
+    if (!confirm(`Load "${board.name}"?\n\nThis replaces your current space. Export first to keep it.`)) return;
   }
 
-  // Clear scene
   while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
   while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
   thoughtMap.clear(); meshMap.clear();
@@ -1575,23 +1902,22 @@ function loadStarterBoard(board) {
   state.thoughts = board.thoughts.map(t => ({
     ...t,
     position: [...t.position],
+    body: '',
     created: now,
     touched: now,
     props: {}
   }));
 
-  const idMap = {};
-  for (const t of board.thoughts) idMap[t.id] = t.id;
-
-  state.connections = board.connections.map(([from, to, label]) => ({
+  state.connections = board.connections.map(([from, to, label, directed]) => ({
     id: uid(),
     from, to,
     label: label || null,
     color: board.accent,
+    directed: directed || false,
     created: now
   }));
 
-  for (const t of state.thoughts) { addThoughtMesh(t); }
+  for (const t of state.thoughts) addThoughtMesh(t);
   rebuildMaps();
   rebuildConnections();
   save();
@@ -1606,7 +1932,7 @@ function loadStarterBoard(board) {
 }
 
 document.getElementById('gallery-close').addEventListener('click', closeGallery);
-galleryScrim.addEventListener('click', closeGallery);
+galleryOverlay.addEventListener('click', (e) => { if (e.target === galleryOverlay) closeGallery(); });
 document.getElementById('m-gallery').addEventListener('click', () => { closeMenu(); openGallery(); });
 
 // ═══════════════════════════════════════════
@@ -1743,7 +2069,7 @@ window.addEventListener('resize', () => {
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v16 — three primitives + starter boards');
+console.log('atem v17 — boards + rich notes + directed connections');
 </script>
 </body>
 </html>
