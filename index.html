@@ -449,7 +449,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-bulk">+ 100 test</button>
   <div class="sep"></div>
   <button id="m-clear" class="danger">clear all</button>
-  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v20</div>
+  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v21</div>
 </div>
 
 <!-- Starter Gallery (full-screen) -->
@@ -496,7 +496,7 @@ import { get, set, del } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 20,
+  version: 21,
   thoughts: [],
   connections: [],
   camera: null,
@@ -504,6 +504,7 @@ let state = {
   richMode: true,
   boardId: 'board-1',
   boardName: 'Board 1',
+  isStarterBoard: false,
 };
 
 let editingId = null, editingColor = null;
@@ -1052,7 +1053,7 @@ async function load() {
     const validIds = new Set(state.thoughts.map(t=>t.id));
     state.connections = state.connections.filter(c=>validIds.has(c.from)&&validIds.has(c.to));
     for (const t of state.thoughts) { if(!t.size)t.size=1.0; if(!t.props)t.props={}; if(!t.body)t.body=''; }
-    for (const c of state.connections) { if(!c.color)c.color='#6ea8fe'; if(c.directed===undefined)c.directed=false; }
+    for (const c of state.connections) { if(!c.color)c.color='#6ea8fe'; if(c.directed===undefined)c.directed=false; if(c._reversed===undefined)c._reversed=false; }
     for (const t of state.thoughts) addThoughtMesh(t);
     rebuildMaps(); rebuildConnections();
     updateCaptureToggle(); updateRichModeUI();
@@ -1078,6 +1079,7 @@ function createThought(x, y, z, text, color, body) {
   };
   state.thoughts.push(t);
   thoughtMap.set(t.id, t);
+  state.isStarterBoard = false;
   addThoughtMesh(t); save(); hideHint(); hideIdleChip();
   // Joy layer 1: bounce on create — damped oscillation 1.0 → 1.15 → 1.0 over ~300ms
   const mesh = getMesh(t.id);
@@ -1207,17 +1209,35 @@ function openConnEditor(connId) {
 
   connEditorEl.classList.add('open');
 
-  // Directed toggle
+  // Directed toggle — 3 states: undirected → A→B → B→A → undirected
   const dirBtn = document.getElementById('conn-dir-btn');
+  // direction state: 0=undirected, 1=forward (from→to), 2=reverse (to→from)
+  const getDirState = () => {
+    if (!conn.directed) return 0;
+    return conn._reversed ? 2 : 1;
+  };
   const updateDirBtn = () => {
-    dirBtn.textContent = conn.directed ? '→ directed' : '↔ undirected';
-    dirBtn.style.color = conn.directed ? 'rgba(255,200,100,0.9)' : 'rgba(255,255,255,0.4)';
-    dirBtn.style.background = conn.directed ? 'rgba(255,180,60,0.15)' : 'rgba(255,255,255,0.06)';
+    const s = getDirState();
+    const labels = ['↔ undirected', '→ A to B', '← B to A'];
+    const colors = ['rgba(255,255,255,0.4)', 'rgba(255,200,100,0.9)', 'rgba(100,200,255,0.9)'];
+    const bgs = ['rgba(255,255,255,0.06)', 'rgba(255,180,60,0.15)', 'rgba(60,160,255,0.15)'];
+    dirBtn.textContent = labels[s];
+    dirBtn.style.color = colors[s];
+    dirBtn.style.background = bgs[s];
   };
   updateDirBtn();
   dirBtn.onclick = (e) => {
     e.stopPropagation();
-    conn.directed = !conn.directed;
+    const s = getDirState();
+    if (s === 0) {
+      conn.directed = true; conn._reversed = false;
+    } else if (s === 1) {
+      // flip: swap from/to so the arrow points the other way
+      const tmp = conn.from; conn.from = conn.to; conn.to = tmp;
+      conn._reversed = true;
+    } else {
+      conn.directed = false; conn._reversed = false;
+    }
     updateDirBtn();
     rebuildConnections(); save();
   };
@@ -1532,6 +1552,7 @@ function onPointerMove(e) {
       pos.setXYZ(0, srcMesh.position.x, srcMesh.position.y, srcMesh.position.z);
       pos.setXYZ(1, wp.x, wp.y, wp.z);
       pos.needsUpdate = true;
+      needsRender = true;
     }
     const hit = hitThought(e);
     for (const child of thoughtGroup.children) {
@@ -2045,6 +2066,198 @@ const STARTER_BOARDS = [
       ['wk8','wk1','aims at',true,'#fb923c'],['wk9','wk6','is',true,'#f472b6'],['wk5','wk8','also',false,'#f87171'],
     ]
   },
+  {
+    id: 'atem-now',
+    // VERSION TAG: update name + ATEM_HISTORY each session
+    name: 'atem, right now (v20)',
+    desc: 'Living map of what this tool is. Green = shipped. Amber = speculative. Red = known bug. Updated every session.',
+    accent: '#7ed4a4',
+    tags: ['meta', 'reference'],
+    thoughts: [
+      // ── CORE — front, z=3 ──────────────────────────────────────────
+      {id:'an1',  text:'atem v21',               position:[0,0,3],       color:'#7ed4a4', size:1.6},
+
+      // ── THREE PRIMITIVES — z=2 ─────────────────────────────────────
+      {id:'an2',  text:'Space',                  position:[-5,2,2],      color:'#7ed4a4', size:1.25},
+      {id:'an3',  text:'Thought',                position:[0,4,2],       color:'#34d399', size:1.25},
+      {id:'an4',  text:'Connection',             position:[5,2,2],       color:'#67e8f9', size:1.25},
+
+      // ── THOUGHT FEATURES — left, z=1 to 0 ─────────────────────────
+      {id:'an5',  text:'Title + body',           position:[-7,0.5,1],    color:'#6ea8fe', size:1.0},
+      {id:'an6',  text:'8 colors',               position:[-9.5,2.5,0.5],color:'#f472b6', size:0.95},
+      {id:'an7',  text:'Size (0.5 → 2.0)',       position:[-9.5,-0.5,0.5],color:'#fb923c', size:0.85},
+      {id:'an8',  text:'Drag to move',           position:[-7,-2.5,1],   color:'#f5c97a', size:0.9},
+      {id:'an28', text:'Bounce on create',       position:[-11,1,0],     color:'#34d399', size:0.8},
+      {id:'an29', text:'Breath animation',       position:[-11,-2,0],    color:'#34d399', size:0.8},
+
+      // ── CONNECTION FEATURES — right, z=1 to 0 ─────────────────────
+      {id:'an9',  text:'Directed → (3-state)',   position:[7,0.5,1],     color:'#fbbf24', size:1.0},
+      {id:'an10', text:'Undirected ↔',           position:[9.5,2.5,0.5], color:'#6ea8fe', size:0.95},
+      {id:'an11', text:'Connection label',       position:[9.5,-0.5,0.5],color:'#a78bfa', size:0.9},
+      {id:'an12', text:'Hold 350ms + drag',      position:[7,-2.5,1],    color:'#fb923c', size:0.9},
+      {id:'an30', text:'Glow on connect',        position:[11,1,0],      color:'#34d399', size:0.8},
+      {id:'an31', text:'Draw-in animation',      position:[11,-2,0],     color:'#f5c97a', size:0.8},
+
+      // ── SPACE FEATURES — top arc, z=0 ─────────────────────────────
+      {id:'an13', text:'Infinite canvas',        position:[-3,6.5,0],    color:'#67e8f9', size:1.0},
+      {id:'an14', text:'Pinch to zoom',          position:[3,6.5,0],     color:'#34d399', size:1.0},
+      {id:'an15', text:'Orbit + pan',            position:[0,8.5,0],     color:'#7ed4a4', size:0.9},
+      {id:'an32', text:'Lasso multi-select',     position:[-6,8,0],      color:'#f5c97a', size:0.85},
+
+      // ── INTERACTIONS — bottom, z=-1 ────────────────────────────────
+      {id:'an16', text:'Tap empty → thought',    position:[-6,-5.5,-1],  color:'#fb923c', size:1.0},
+      {id:'an17', text:'Hold → connect',         position:[0,-7,-1],     color:'#f472b6', size:1.0},
+      {id:'an18', text:'Drag to empty → new + connected', position:[6,-5.5,-1], color:'#6ea8fe', size:0.85},
+      {id:'an33', text:'Tap thought → editor',   position:[-3,-9,-1.5],  color:'#fb923c', size:0.85},
+      {id:'an34', text:'Tap line → conn editor', position:[3,-9,-1.5],   color:'#67e8f9', size:0.85},
+
+      // ── PERSISTENCE — back-left, z=-2 ─────────────────────────────
+      {id:'an19', text:'IndexedDB (primary)',     position:[-8,4,-2],     color:'#a78bfa', size:0.95},
+      {id:'an35', text:'localStorage (backup)',  position:[-11,2,-2],    color:'#a78bfa', size:0.8},
+      {id:'an20', text:'5 board slots',          position:[-8,0,-2],     color:'#a78bfa', size:0.9},
+      {id:'an21', text:'Supabase sync (debounced 3s)', position:[-8,-3,-2], color:'#a78bfa', size:0.85},
+      {id:'an22', text:'Export JSON',            position:[-11,-1,-2],   color:'#67e8f9', size:0.85},
+      {id:'an36', text:'Import JSON',            position:[-11,-4,-2],   color:'#67e8f9', size:0.85},
+
+      // ── GALLERY / BOARDS UI — back-right, z=-2 ────────────────────
+      {id:'an23', text:'Board gallery',          position:[8,4,-2],      color:'#f472b6', size:0.9},
+      {id:'an37', text:'10 starter boards',      position:[11,2,-2],     color:'#f472b6', size:0.85},
+      {id:'an38', text:'Thumbnail capture',      position:[8,1,-2],      color:'#f472b6', size:0.8},
+      {id:'an39', text:'Idle chip (10s)',         position:[11,-1,-2],    color:'#34d399', size:0.8},
+
+      // ── PHILOSOPHY — deep back, z=-4 ──────────────────────────────
+      {id:'an24', text:'No modifiers. No popups.', position:[-5,1,-4],   color:'#b8a9f5', size:0.85},
+      {id:'an25', text:'Z-axis always',          position:[5,1,-4],      color:'#b8a9f5', size:0.85},
+      {id:'an26', text:'Single file. No build.', position:[0,-2.5,-4],   color:'#b8a9f5', size:0.85},
+      {id:'an27', text:'Mobile first',           position:[0,3.5,-4],    color:'#b8a9f5', size:0.85},
+
+      // ── KNOWN BUGS — red, z=-3 ────────────────────────────────────
+      {id:'an40', text:'BUG: Supabase key exposed (RLS off)', position:[-5,-3,-3], color:'#f87171', size:0.9},
+      {id:'an41', text:'BUG: No state migration hook (v→v)', position:[0,-4.5,-3], color:'#f87171', size:0.85},
+      {id:'an42', text:'BUG: Label overlap at zoom-out',     position:[5,-3,-3],   color:'#f87171', size:0.85},
+
+      // ── SPECULATIVE — amber, z=-5 ─────────────────────────────────
+      {id:'an43', text:'SPEC: Per-thought props inspector',  position:[-6,0,-5],   color:'#f5c97a', size:0.8},
+      {id:'an44', text:'SPEC: LLM layer (Stage 2)',          position:[-3,-2,-5],  color:'#f5c97a', size:0.8},
+      {id:'an45', text:'SPEC: Timeline / version history',   position:[3,-2,-5],   color:'#f5c97a', size:0.8},
+      {id:'an46', text:'SPEC: Multi-user presence',          position:[6,0,-5],    color:'#f5c97a', size:0.8},
+      {id:'an47', text:'SPEC: Twitter clip capture',         position:[0,1.5,-5],  color:'#f5c97a', size:0.85},
+    ],
+    connections: [
+      // ── primitives radiate from core ──────────────────────────────
+      ['an1','an2','primitive 1',true,'#7ed4a4'],
+      ['an1','an3','primitive 2',true,'#34d399'],
+      ['an1','an4','primitive 3',true,'#67e8f9'],
+
+      // ── Thought features ──────────────────────────────────────────
+      ['an3','an5','has',true,'#6ea8fe'],
+      ['an3','an6','has',true,'#f472b6'],
+      ['an3','an7','has',true,'#fb923c'],
+      ['an3','an8','gesture',true,'#f5c97a'],
+      ['an3','an28','joy',true,'#34d399'],
+      ['an3','an29','joy',true,'#34d399'],
+      ['an28','an29',null,false,'#34d399'],
+
+      // ── Connection features ───────────────────────────────────────
+      ['an4','an9','mode',true,'#fbbf24'],
+      ['an4','an10','mode',true,'#6ea8fe'],
+      ['an4','an11','has',true,'#a78bfa'],
+      ['an4','an12','created by',true,'#fb923c'],
+      ['an4','an30','joy',true,'#34d399'],
+      ['an4','an31','spec',true,'#f5c97a'],
+      ['an9','an10','sibling',false,'#fbbf24'],
+
+      // ── Space features ────────────────────────────────────────────
+      ['an2','an13','is',true,'#67e8f9'],
+      ['an2','an14','gesture',true,'#34d399'],
+      ['an2','an15','gesture',true,'#7ed4a4'],
+      ['an2','an32','gesture',true,'#f5c97a'],
+
+      // ── Interactions produce primitives ───────────────────────────
+      ['an16','an3','creates',true,'#fb923c'],
+      ['an17','an4','creates',true,'#f472b6'],
+      ['an18','an3','creates',true,'#6ea8fe'],
+      ['an18','an4','and',true,'#6ea8fe'],
+      ['an33','an3','opens editor',true,'#fb923c'],
+      ['an34','an4','opens editor',true,'#67e8f9'],
+      ['an12','an17','same gesture',false,'#fb923c'],
+
+      // ── Persistence cluster ───────────────────────────────────────
+      ['an19','an35','fallback',true,'#a78bfa'],
+      ['an19','an20','scoped by',false,'#a78bfa'],
+      ['an20','an21','synced via',true,'#a78bfa'],
+      ['an22','an36','pair',false,'#67e8f9'],
+      ['an19','an22','source for',true,'#67e8f9'],
+
+      // ── Gallery UI ────────────────────────────────────────────────
+      ['an23','an37','contains',true,'#f472b6'],
+      ['an23','an38','captures',true,'#f472b6'],
+      ['an23','an39','surfaces via',true,'#34d399'],
+      ['an37','an1','includes',true,'#f472b6'],
+
+      // ── Philosophy informs core ───────────────────────────────────
+      ['an24','an1','shapes',true,'#b8a9f5'],
+      ['an25','an1','shapes',true,'#b8a9f5'],
+      ['an26','an1','shapes',true,'#b8a9f5'],
+      ['an27','an1','shapes',true,'#b8a9f5'],
+      ['an24','an25',null,false,'#b8a9f5'],
+      ['an25','an26',null,false,'#b8a9f5'],
+      ['an26','an27',null,false,'#b8a9f5'],
+      ['an27','an24',null,false,'#b8a9f5'],
+
+      // ── Known bugs connect to what they affect ────────────────────
+      ['an40','an21','blocks public use',true,'#f87171'],
+      ['an41','an20','risk on',true,'#f87171'],
+      ['an42','an3','affects',true,'#f87171'],
+
+      // ── Speculative connect to nearest real feature ───────────────
+      ['an43','an3','extends',true,'#f5c97a'],
+      ['an44','an1','stage 2',true,'#f5c97a'],
+      ['an45','an20','extends',true,'#f5c97a'],
+      ['an46','an21','requires',true,'#f5c97a'],
+      ['an47','an2','records',true,'#f5c97a'],
+      ['an45','an47','related',false,'#f5c97a'],
+    ]
+  },
+];
+
+// ── ATEM HISTORY ─────────────────────────────────────────────────────────────
+// Compact delta log. Each entry = one session. Thought IDs reference an-* nodes
+// above. On version bump: add new entry here + update board name above.
+// Types: 'added' | 'fixed' | 'changed' | 'removed' | 'speculative'
+// ─────────────────────────────────────────────────────────────────────────────
+const ATEM_HISTORY = [
+  {
+    version: 19,
+    date: '2025-04',
+    changes: [
+      {type:'added',   id:'an28', text:'Joy layer 1 — bounce on create (300ms damped)'},
+      {type:'added',   id:'an30', text:'Joy layer 2 — glow pulse on connection land'},
+      {type:'added',   id:'an5',  text:'Unified label — title + ··· glyph, one sprite'},
+      {type:'fixed',   id:'an9',  text:'Arrow direction: camera-right perp basis, fixed near-vertical collapse'},
+      {type:'fixed',   id:'an21', text:'Supabase debounce — 3s last-write-wins, was firing on every save()'},
+      {type:'fixed',   id:'an22', text:'m-clear orphan thumbnail removed from IDB + localStorage'},
+      {type:'fixed',   id:'an37', text:'Starter board slot registry updates name/count/updated on load'},
+      {type:'changed', id:'an25', text:'BIBLE z-spread: primitives z+3, cognitive z-3, stages z-2'},
+      {type:'fixed',   id:'an2',  text:'Camera distance dynamic: max(22, maxR * 1.9)'},
+      {type:'fixed',   id:'an2',  text:'Fog 0.035 → 0.022, less aggressive depth fade'},
+      {type:'added',   id:'an39', text:'Gallery idle chip — fades in at 10s, no force-open'},
+      {type:'fixed',   id:'an33', text:'Editor stranded across board switch — closeEditor() on loadBoard'},
+      {type:'fixed',   id:'an33', text:'Mobile keyboard clipping — max-height: calc(100dvh - 80px)'},
+    ]
+  },
+  {
+    version: 21,
+    date: '2025-04',
+    changes: [
+      {type:'fixed',   id:'an29', text:'dt clamped to 50ms — breath/position no longer snaps after tab throttle'},
+      {type:'fixed',   id:'an12', text:'Pending line now sets needsRender — no more freeze during connection drag'},
+      {type:'changed', id:'an9',  text:'Direction: 3-state cycle ↔ → ← instead of binary toggle'},
+      {type:'added',   id:'an1',  text:'isStarterBoard flag — loading a starter from starter skips confirm'},
+      {type:'added',   id:'an47', text:'SPEC: Twitter clip capture pipeline (in BACKLOG)'},
+      {type:'added',   id:'an45', text:'This board — atem right now (v20) + ATEM_HISTORY'},
+    ]
+  },
 ];
 
 // ─── Board Slots ───
@@ -2187,7 +2400,7 @@ function renderGalleryCards() {
 }
 
 function loadStarterBoard(board) {
-  if (state.thoughts.length > 0) {
+  if (state.thoughts.length > 0 && !state.isStarterBoard) {
     if (!confirm(`Load "${board.name}"?\n\nThis replaces your current space. Export first to keep it.`)) return;
   }
   // Close any open editors — editingId would point to a thought about to be cleared
@@ -2239,6 +2452,7 @@ function loadStarterBoard(board) {
 
   // Bug 8: update board slot registry (name, count, updated) — persist metadata
   state.boardName = board.name;
+  state.isStarterBoard = true;
   save();
   getBoardRegistry().then(async reg => {
     const slot = reg.find(b => b.id === state.boardId);
@@ -2303,7 +2517,7 @@ const camMatrix = new THREE.Matrix4();
 
 function animate() {
   requestAnimationFrame(animate);
-  const now = performance.now(); const dt = (now-lastTime)/1000; lastTime = now;
+  const now = performance.now(); const dt = Math.min((now-lastTime)/1000, 0.05); lastTime = now;
   fpsFrames++;
   if (now-fpsLast >= 500) {
     fpsValue = Math.round(fpsFrames/((now-fpsLast)/1000)); fpsFrames = 0; fpsLast = now;
@@ -2422,6 +2636,7 @@ window.addEventListener('resize', () => {
     }
     rebuildMaps();
     rebuildConnections();
+    state.isStarterBoard = true;
     await save();
     hideHint();
     // Bug 10 rationale applied here too — the bible spreads to ±11
@@ -2434,7 +2649,7 @@ window.addEventListener('resize', () => {
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v20 — unified labels, joy layer, debounced sync, fixed arrows');
+console.log('atem v21 — dt clamp, pending line render fix, 3-state direction, isStarterBoard, atem-now board + ATEM_HISTORY');
 </script>
 </body>
 </html>
