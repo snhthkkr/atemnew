@@ -513,6 +513,7 @@ let editingId = null, editingColor = null;
 let editingConnId = null;
 let connectSource = null, holdTimer = null, collapseHoldTimer = null;
 let blockNextPointerUp = false;
+let editorClosedAt = 0; // timestamp of last editor close — used to swallow stray pointer events
 let multiTouchActive = false;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
@@ -608,62 +609,101 @@ function makeThoughtMaterial(color) {
 }
 
 // Unified label — one primary line (title if set, else first line of body).
-// If title is the primary AND body also exists, draw a small '···' glyph beneath
-// to signal "more inside". One label, one canvas, no awkward two-height layouts.
+// Label: title in white + first sentence of body as subtitle in dimmer smaller text.
+// One sprite, two visual tiers. Scales gracefully at zoom — title reads first,
+// subtitle only visible when close. Canvas is 2x retina.
 function createLabel(text, bodyText) {
   const title = (text || '').trim();
   const body = (bodyText || '').trim();
+
   let primary = '';
-  let hasMore = false;
+  let subtitle = '';
+
   if (title) {
     primary = title;
-    hasMore = body.length > 0; // body exists alongside title → show ··· glyph
+    if (body) {
+      // First sentence of body, truncated to ~60 chars
+      const firstSentence = body.split(/[.!?]/)[0].trim();
+      subtitle = firstSentence.length > 60
+        ? firstSentence.slice(0, 58) + '…'
+        : firstSentence;
+    }
   } else if (body) {
-    const first = body.split('\n')[0];
-    primary = first;
+    primary = body.split('\n')[0];
   } else {
     return null;
   }
 
+  const W = 512, SCALE = 2;
+  const titleFontSize = 24;
+  const subFontSize = 16;
+  const lineH = 32;
+  const subLineH = 22;
+  const gap = 8; // gap between title block and subtitle
+
   const c = document.createElement('canvas');
-  c.width = 1024; c.height = hasMore ? 200 : 160;
+  c.width = W * SCALE;
   const ctx = c.getContext('2d');
-  ctx.scale(2, 2);
-  ctx.clearRect(0, 0, 512, c.height / 2);
+  ctx.scale(SCALE, SCALE);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.82)';
-  ctx.font = '300 24px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  let display = primary.length > 80 ? primary.slice(0, 78) + '…' : primary;
-  let lines = [], line = '';
-  for (const w of display.split(' ')) {
-    const test = line ? line + ' ' + w : w;
-    if (ctx.measureText(test).width > 460) { lines.push(line); line = w; }
-    else line = test;
+  // Measure title lines
+  ctx.font = '400 ' + titleFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+  let titleLines = [], tLine = '';
+  const titleDisplay = primary.length > 60 ? primary.slice(0, 58) + '…' : primary;
+  for (const w of titleDisplay.split(' ')) {
+    const test = tLine ? tLine + ' ' + w : w;
+    if (ctx.measureText(test).width > W - 20) { titleLines.push(tLine); tLine = w; }
+    else tLine = test;
   }
-  if (line) lines.push(line);
-  if (lines.length > 2) lines = lines.slice(0, 2);
-  const lineH = 30;
-  const blockH = lines.length * lineH;
-  const centerY = hasMore ? 36 : (c.height / 4) - blockH/2 + lineH/2;
-  const startY = centerY;
-  lines.forEach((l, i) => ctx.fillText(l, 256, startY + i * lineH));
+  if (tLine) titleLines.push(tLine);
+  if (titleLines.length > 2) titleLines = titleLines.slice(0, 2);
 
-  if (hasMore) {
-    ctx.fillStyle = 'rgba(255,255,255,0.32)';
-    ctx.font = '300 14px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('···', 256, startY + blockH + 6);
+  // Measure subtitle lines
+  let subLines = [];
+  if (subtitle) {
+    ctx.font = '300 ' + subFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+    let sLine = '';
+    for (const w of subtitle.split(' ')) {
+      const test = sLine ? sLine + ' ' + w : w;
+      if (ctx.measureText(test).width > W - 20) { subLines.push(sLine); sLine = w; }
+      else sLine = test;
+    }
+    if (sLine) subLines.push(sLine);
+    if (subLines.length > 2) subLines = subLines.slice(0, 2);
+  }
+
+  const titleH = titleLines.length * lineH;
+  const subH = subLines.length > 0 ? gap + subLines.length * subLineH : 0;
+  const totalH = titleH + subH + 16; // 8px padding top+bottom
+
+  c.height = totalH * SCALE;
+  ctx.scale(SCALE, SCALE); // re-apply after height set
+  ctx.clearRect(0, 0, W, totalH);
+
+  // Draw title
+  ctx.fillStyle = 'rgba(255,255,255,0.90)';
+  ctx.font = '400 ' + titleFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const titleY = 8;
+  titleLines.forEach((l, i) => ctx.fillText(l, W / 2, titleY + i * lineH));
+
+  // Draw subtitle
+  if (subLines.length > 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '300 ' + subFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+    const subY = titleY + titleH + gap;
+    subLines.forEach((l, i) => ctx.fillText(l, W / 2, subY + i * subLineH));
   }
 
   const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
   const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.88, depthTest: false });
   const sprite = new THREE.Sprite(mat);
-  // Texture aspect: 1024 / c.height → sprite scale y = 3 * (c.height / 1024 * ~2)
-  // Keep label width visually ~3 world units; height follows canvas aspect.
-  const aspectScale = (c.height / 1024) * 3;
-  sprite.scale.set(3, aspectScale, 1);
-  sprite.position.y = -SPHERE_RADIUS - 0.48;
-  sprite.userData.hasMore = hasMore;
+
+  // Width fixed at 3 world units; height proportional to canvas aspect
+  const worldW = 3;
+  const worldH = worldW * (c.height / c.width);
+  sprite.scale.set(worldW, worldH, 1);
+  sprite.position.y = -SPHERE_RADIUS - 0.3 - worldH / 2;
   return sprite;
 }
 
@@ -1149,6 +1189,7 @@ function createThought(x, y, z, text, color, body) {
   // Live-update menu header if open
   const menu = document.getElementById('menu-drawer');
   if (menu && menu.classList.contains('open')) updateMenuHeader();
+  if (zGridVisible) buildZGrid();
   needsRender = true;
   return t;
 }
@@ -1183,7 +1224,9 @@ function deleteThought(id) {
 
 function moveThought(id, x, y, z) {
   const t = thoughtMap.get(id);
-  if (t) { t.position=[x,y,z]; t.touched=Date.now(); }
+  if (t) { t.position=[x,y,z]; t.touched=Date.now(); 
+  if (zGridVisible) buildZGrid();
+}
 }
 
 function addConnection(fromId, toId, label, color, directed) {
@@ -1406,6 +1449,7 @@ function closeEditor(doSave) {
   }
   editingId = null; editingColor = null;
   editorEl.classList.remove('open'); controls.enabled = true;
+  editorClosedAt = performance.now();
 }
 
 document.getElementById('save-btn').addEventListener('click', ()=>closeEditor(true));
@@ -1667,6 +1711,7 @@ function onPointerMove(e) {
 
 function onPointerUp(e) {
   if (blockNextPointerUp) { blockNextPointerUp = false; return; }
+  if (performance.now() - editorClosedAt < 150) return; // swallow stray up after editor close
   if (isOverlayOpen()) return;
   if (multiTouchActive) { multiTouchActive = false; draggedMesh=null; isDragging=false; holdTriggered=false; controls.enabled=true; return; }
   clearTimeout(holdTimer); clearTimeout(lassoHoldTimer);
@@ -1729,13 +1774,7 @@ canvas.addEventListener('touchmove', (e) => { e.preventDefault(); onPointerMove(
 canvas.addEventListener('touchend', onPointerUp);
 canvas.addEventListener('touchcancel', ()=>{ clearHold(); clearTimeout(lassoHoldTimer); lassoActive=false; lassoRect.style.display='none'; draggedMesh=null; isDragging=false; holdTriggered=false; multiTouchActive=false; controls.enabled=true; });
 canvas.addEventListener('mousedown', onPointerDown);
-// Block thought-creation when clicking anywhere outside open editor
-window.addEventListener('mousedown', (e) => {
-  if (!editorEl.classList.contains('open')) return;
-  const edRect = editorEl.getBoundingClientRect();
-  const outside = e.clientX < edRect.left || e.clientX > edRect.right || e.clientY < edRect.top || e.clientY > edRect.bottom;
-  if (outside) blockNextPointerUp = true;
-}, true); // capture phase — fires before canvas mousedown
+// click-outside handled via editorClosedAt timestamp in onPointerUp
 window.addEventListener('mousemove', onPointerMove);
 window.addEventListener('mouseup', onPointerUp);
 
@@ -2908,9 +2947,9 @@ function buildZGrid() {
 
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     const mat = new THREE.LineBasicMaterial({
-      color: 0x334d66,
+      color: 0xffffff,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.12,
       depthTest: true
     });
     const segs = new THREE.LineSegments(geo, mat);
@@ -2921,7 +2960,7 @@ function buildZGrid() {
     const cy = (minY + maxY) / 2;
     const bc = document.createElement('canvas'); bc.width = 120; bc.height = 36;
     const bctx = bc.getContext('2d');
-    bctx.fillStyle = 'rgba(100,180,255,0.8)';
+    bctx.fillStyle = 'rgba(255,255,255,0.6)';
     bctx.font = 'bold 20px system-ui'; bctx.textAlign = 'left'; bctx.textBaseline = 'middle';
     bctx.fillText('z' + (z >= 0 ? '+' : '') + z.toFixed(0) + ' ·' + count, 4, 18);
     const bt = new THREE.CanvasTexture(bc);
