@@ -399,6 +399,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <div id="ed-color-palette"></div>
   <div id="editor-actions">
     <button id="del-btn">delete</button>
+    <button id="collapse-btn">↓ collapse</button>
     <button id="cancel-btn">cancel</button>
     <button class="save" id="save-btn">done</button>
   </div>
@@ -449,7 +450,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-bulk">+ 100 test</button>
   <div class="sep"></div>
   <button id="m-clear" class="danger">clear all</button>
-  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v21</div>
+  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v22</div>
 </div>
 
 <!-- Starter Gallery (full-screen) -->
@@ -496,7 +497,7 @@ import { get, set, del } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 21,
+  version: 22,
   thoughts: [],
   connections: [],
   camera: null,
@@ -667,7 +668,8 @@ function addThoughtMesh(t) {
   const mesh = new THREE.Mesh(sphereGeo, mat);
   mesh.position.set(t.position[0], t.position[1], t.position[2]);
   const size = t.size || 1.0;
-  mesh.userData = { id:t.id, targetEmissive:0.15, targetOpacity:0.9, breath:Math.random()*Math.PI*2, baseSize:size, bounceStart:0 };
+  const _initOp = t.collapsedUnder ? 0 : 0.9;
+  mesh.userData = { id:t.id, targetEmissive:0.15, targetOpacity:_initOp, targetLabelOpacity:_initOp > 0.5 ? 0.88 : 0, breath:Math.random()*Math.PI*2, baseSize:size, bounceStart:0, collapsedCount:0 };
   mesh.scale.setScalar(size);
   const l = createLabel(t.text || '', t.body || '');
   if (l) { l.name = 'label'; mesh.add(l); }
@@ -718,6 +720,8 @@ function rebuildConnections() {
     if (drawn.has(key)) continue; drawn.add(key);
     const mA = getMesh(c.from), mB = getMesh(c.to);
     if (!mA || !mB) continue;
+    const tA = thoughtMap.get(c.from), tB = thoughtMap.get(c.to);
+    if ((tA && tA.collapsedUnder) || (tB && tB.collapsedUnder)) continue;
     const density = pairs[key]||1;
     const connColor = c.color || '#6ea8fe';
     const baseOpacity = Math.min(0.35 + density*0.1, 0.75);
@@ -1054,6 +1058,7 @@ async function load() {
     state.connections = state.connections.filter(c=>validIds.has(c.from)&&validIds.has(c.to));
     for (const t of state.thoughts) { if(!t.size)t.size=1.0; if(!t.props)t.props={}; if(!t.body)t.body=''; }
     for (const c of state.connections) { if(!c.color)c.color='#6ea8fe'; if(c.directed===undefined)c.directed=false; if(c._reversed===undefined)c._reversed=false; }
+    for (const t of state.thoughts) { if(!t.collapsedUnder) t.collapsedUnder = null; }
     for (const t of state.thoughts) addThoughtMesh(t);
     rebuildMaps(); rebuildConnections();
     updateCaptureToggle(); updateRichModeUI();
@@ -1066,6 +1071,51 @@ async function load() {
 // ═══════════════════════════════════════════
 
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function collapseThought(id) {
+  const conns = state.connections.filter(c => c.from === id || c.to === id);
+  const neighborIds = conns.map(c => c.from === id ? c.to : c.from).filter(nid => nid !== id);
+  let collapsed = 0;
+  for (const nid of neighborIds) {
+    const t = thoughtMap.get(nid);
+    if (!t) continue;
+    if (t.collapsedUnder) continue; // already collapsed under something else
+    t.collapsedUnder = id;
+    const mesh = getMesh(nid);
+    if (mesh) { mesh.userData.targetOpacity = 0; mesh.userData.targetLabelOpacity = 0; }
+    collapsed++;
+  }
+  // update badge on the parent node
+  updateCollapseBadge(id);
+  rebuildConnections();
+  needsRender = true;
+  return collapsed;
+}
+
+function expandThought(id) {
+  for (const t of state.thoughts) {
+    if (t.collapsedUnder === id) {
+      t.collapsedUnder = null;
+      const mesh = getMesh(t.id);
+      if (mesh) { mesh.userData.targetOpacity = 0.9; mesh.userData.targetLabelOpacity = 0.88; }
+    }
+  }
+  updateCollapseBadge(id);
+  rebuildConnections();
+  needsRender = true;
+}
+
+function updateCollapseBadge(id) {
+  const count = state.thoughts.filter(t => t.collapsedUnder === id).length;
+  const mesh = getMesh(id);
+  if (!mesh) return;
+  // store count in userData for the animate loop to render
+  mesh.userData.collapsedCount = count;
+}
+
+function isCollapsed(id) {
+  return state.thoughts.some(t => t.collapsedUnder === id);
+}
 
 function createThought(x, y, z, text, color, body) {
   const t = {
@@ -1126,7 +1176,7 @@ function moveThought(id, x, y, z) {
 
 function addConnection(fromId, toId, label, color, directed) {
   if (fromId === toId) return;
-  const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||'#6ea8fe', directed: directed||false };
+  const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||(state.boardAccent||'#6ea8fe'), directed: directed||false };
   state.connections.push(conn);
   rebuildConnections(); save();
   // Joy layer 2: soft glow pulse on the target when a connection lands.
@@ -1309,6 +1359,8 @@ function openEditor(id) {
   renderEditorColors();
   updateRichModeUI();
   editorEl.classList.add('open');
+  const collapseBtn = document.getElementById('collapse-btn');
+  if (collapseBtn) collapseBtn.textContent = isCollapsed(id) ? '↑ expand' : '↓ collapse';
   controls.enabled = false;
   edBody.style.height = 'auto';
 
@@ -1353,6 +1405,17 @@ document.getElementById('cancel-btn').addEventListener('click', () => {
   closeEditor(false);
 });
 document.getElementById('del-btn').addEventListener('click', ()=>{ if(editingId) deleteThought(editingId); closeEditor(false); });
+document.getElementById('collapse-btn').addEventListener('click', ()=>{
+  if (!editingId) return;
+  if (isCollapsed(editingId)) {
+    expandThought(editingId);
+    document.getElementById('collapse-btn').textContent = '↓ collapse';
+  } else {
+    collapseThought(editingId);
+    document.getElementById('collapse-btn').textContent = '↑ expand';
+  }
+  save();
+});
 // Editor keyboard + input handlers
 function setupEditorListeners() {
   const edBody = document.getElementById('ed-body');
@@ -1457,7 +1520,11 @@ function ndcFromEvent(e) {
 function hitThought(e) {
   ndcFromEvent(e);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(thoughtGroup.children, false);
+  const visible = thoughtGroup.children.filter(m => {
+    const t = thoughtMap.get(m.userData.id);
+    return !t || !t.collapsedUnder;
+  });
+  const hits = raycaster.intersectObjects(visible, false);
   return hits.length ? hits[0].object : null;
 }
 
@@ -1507,11 +1574,12 @@ function onPointerDown(e) {
     const wp = worldPosFromScreen(e);
     dragOffset.copy(draggedMesh.position).sub(wp);
     holdTimer = setTimeout(()=>{
-      if (!pointerMoved) {
+      if (!isDragging) {
         holdTriggered = true;
         connectSource = draggedMesh.userData.id;
         draggedMesh.material.emissiveIntensity = 0.6;
         pendingLineMesh.visible = true;
+        pointerMoved = false;
         if (navigator.vibrate) navigator.vibrate(30);
       }
     }, HOLD_MS);
@@ -1582,7 +1650,7 @@ function onPointerUp(e) {
     } else if (!hit && pointerMoved) {
       const wp = worldPosFromScreen(e);
       const newT = createThought(wp.x, wp.y, wp.z);
-      const conn = { id:uid(), from:connectSource, to:newT.id, created:Date.now(), label:null, color:'#6ea8fe' };
+      const conn = { id:uid(), from:connectSource, to:newT.id, created:Date.now(), label:null, color:state.boardAccent||'#6ea8fe' };
       state.connections.push(conn);
       rebuildConnections(); save(); needsRender = true;
       setTimeout(() => openEditor(newT.id), 80);
@@ -1633,7 +1701,10 @@ window.addEventListener('mouseup', onPointerUp);
 window.addEventListener('mousemove', (e) => {
   if (isDragging || holdTriggered || connectSource || isOverlayOpen()) {
     if (!connectSource) {
-      for (const child of thoughtGroup.children) child.userData.targetEmissive = 0.15;
+      for (const child of thoughtGroup.children) {
+        child.userData.targetEmissive = 0.15;
+        child.userData.targetLabelOpacity = 0.88;
+      }
       for (const child of lineGroup.children) {
         if (!child.userData.isConnLabel) child.material.opacity = child.userData.baseOpacity || 0.35;
       }
@@ -1643,13 +1714,18 @@ window.addEventListener('mousemove', (e) => {
   const hit = hitThought(e);
   for (const child of thoughtGroup.children) {
     const tId = child.userData.id;
-    if (!hit) child.userData.targetEmissive = 0.15;
-    else if (tId === hit.userData.id) child.userData.targetEmissive = 0.75;
-    else {
+    if (!hit) {
+      child.userData.targetEmissive = 0.15;
+      child.userData.targetLabelOpacity = 0.88;
+    } else if (tId === hit.userData.id) {
+      child.userData.targetEmissive = 0.75;
+      child.userData.targetLabelOpacity = 1.0;
+    } else {
       const isConnected = state.connections.some(c =>
         (c.from === hit.userData.id && c.to === tId) || (c.to === hit.userData.id && c.from === tId)
       );
       child.userData.targetEmissive = isConnected ? 0.5 : 0.05;
+      child.userData.targetLabelOpacity = isConnected ? 0.88 : 0.08;
     }
   }
   for (const child of lineGroup.children) {
@@ -1726,7 +1802,7 @@ document.getElementById('m-import').addEventListener('click', () => {
 });
 
 document.getElementById('m-reset-view').addEventListener('click', () => {
-  camera.position.set(0,0,18); controls.target.set(0,0,0); save(); closeMenu();
+  camera.position.set(0,0,state.initialCamDist||18); controls.target.set(0,0,0); controls.update(); needsRender=true; save(); closeMenu();
 });
 
 function updateCaptureToggle() {
@@ -2069,18 +2145,18 @@ const STARTER_BOARDS = [
   {
     id: 'atem-now',
     // VERSION TAG: update name + ATEM_HISTORY each session
-    name: 'atem, right now (v20)',
+    name: 'atem, right now (v22)',
     desc: 'Living map of what this tool is. Green = shipped. Amber = speculative. Red = known bug. Updated every session.',
     accent: '#7ed4a4',
     tags: ['meta', 'reference'],
     thoughts: [
       // ── CORE — front, z=3 ──────────────────────────────────────────
-      {id:'an1',  text:'atem v21',               position:[0,0,3],       color:'#7ed4a4', size:1.6},
+      {id:'an1',  text:'atem v22',               position:[0,0,3],       color:'#7ed4a4', size:1.6, body:'Green = shipped. Amber = speculative. Red = known bug. This board updates every session.'},
 
       // ── THREE PRIMITIVES — z=2 ─────────────────────────────────────
-      {id:'an2',  text:'Space',                  position:[-5,2,2],      color:'#7ed4a4', size:1.25},
-      {id:'an3',  text:'Thought',                position:[0,4,2],       color:'#34d399', size:1.25},
-      {id:'an4',  text:'Connection',             position:[5,2,2],       color:'#67e8f9', size:1.25},
+      {id:'an2',  text:'Space',                  position:[-5,2,2],      color:'#7ed4a4', size:1.25, body:'The infinite 3D environment. Camera orbits, pans, zooms. Z-axis is never decorative — depth means distance from the idea.'},
+      {id:'an3',  text:'Thought',                position:[0,4,2],       color:'#34d399', size:1.25, body:'A sphere with a title, optional body, color, and size. The atom. Tap empty space to create one.'},
+      {id:'an4',  text:'Connection',             position:[5,2,2],       color:'#67e8f9', size:1.25, body:'A line between two thoughts. Can be directed (→ or ←), labeled, colored. Hold 350ms on a thought then drag to draw one.'},
 
       // ── THOUGHT FEATURES — left, z=1 to 0 ─────────────────────────
       {id:'an5',  text:'Title + body',           position:[-7,0.5,1],    color:'#6ea8fe', size:1.0},
@@ -2132,16 +2208,16 @@ const STARTER_BOARDS = [
       {id:'an27', text:'Mobile first',           position:[0,3.5,-4],    color:'#b8a9f5', size:0.85},
 
       // ── KNOWN BUGS — red, z=-3 ────────────────────────────────────
-      {id:'an40', text:'BUG: Supabase key exposed (RLS off)', position:[-5,-3,-3], color:'#f87171', size:0.9},
-      {id:'an41', text:'BUG: No state migration hook (v→v)', position:[0,-4.5,-3], color:'#f87171', size:0.85},
-      {id:'an42', text:'BUG: Label overlap at zoom-out',     position:[5,-3,-3],   color:'#f87171', size:0.85},
+      {id:'an40', text:'BUG: Supabase key exposed (RLS off)', position:[-5,-3,-3], color:'#f87171', size:0.9, body:'Anon key is hardcoded in index.html. RLS not enabled. Any board-1 / board-2 ID is publicly readable and writable. Do not share the live URL until Phase 2 security lands.'},
+      {id:'an41', text:'BUG: No state migration hook (v→v)', position:[0,-4.5,-3], color:'#f87171', size:0.85, body:'state.version bumps but there is no migrations[] array. A future schema change could silently corrupt old boards on load.'},
+      {id:'an42', text:'BUG: Label overlap at zoom-out',     position:[5,-3,-3],   color:'#f87171', size:0.85, body:'On dense boards like this one, labels from nearby nodes collide when zoomed out. Min screen-size fade helps but does not fully solve it.'},
 
       // ── SPECULATIVE — amber, z=-5 ─────────────────────────────────
-      {id:'an43', text:'SPEC: Per-thought props inspector',  position:[-6,0,-5],   color:'#f5c97a', size:0.8},
-      {id:'an44', text:'SPEC: LLM layer (Stage 2)',          position:[-3,-2,-5],  color:'#f5c97a', size:0.8},
-      {id:'an45', text:'SPEC: Timeline / version history',   position:[3,-2,-5],   color:'#f5c97a', size:0.8},
-      {id:'an46', text:'SPEC: Multi-user presence',          position:[6,0,-5],    color:'#f5c97a', size:0.8},
-      {id:'an47', text:'SPEC: Twitter clip capture',         position:[0,1.5,-5],  color:'#f5c97a', size:0.85},
+      {id:'an43', text:'SPEC: Per-thought props inspector',  position:[-6,0,-5],   color:'#f5c97a', size:0.8, body:'props:{} exists on every thought but nothing reads it. When a real use case arrives (timestamps, sources, quotes) — an inspector sheet for arbitrary key/value.'},
+      {id:'an44', text:'SPEC: LLM layer (Stage 2)',          position:[-3,-2,-5],  color:'#f5c97a', size:0.8, body:'Paste a decision or question. Claude returns suggested thoughts + connections the user can accept or reject. The point where atem stops being a canvas and becomes a thinking partner.'},
+      {id:'an45', text:'SPEC: Timeline / version history',   position:[3,-2,-5],   color:'#f5c97a', size:0.8, body:'ATEM_HISTORY is the seed. Full timeline means scrubbing board state back in time — see what you thought last week vs now. Pairs with semantic zoom.'},
+      {id:'an46', text:'SPEC: Multi-user presence',          position:[6,0,-5],    color:'#f5c97a', size:0.8, body:'Supabase Realtime channels per board. Presence cursor = other user\'s camera target. Blocked until RLS lands — dangerous without it.'},
+      {id:'an47', text:'SPEC: Twitter clip capture',         position:[0,1.5,-5],  color:'#f5c97a', size:0.85, body:'30s MediaRecorder on canvas.captureStream(60). One menu item, one webm download. The wedge: atem helped me think through a breakup. Here\'s what it looks like.'},
     ],
     connections: [
       // ── primitives radiate from core ──────────────────────────────
@@ -2256,6 +2332,21 @@ const ATEM_HISTORY = [
       {type:'added',   id:'an1',  text:'isStarterBoard flag — loading a starter from starter skips confirm'},
       {type:'added',   id:'an47', text:'SPEC: Twitter clip capture pipeline (in BACKLOG)'},
       {type:'added',   id:'an45', text:'This board — atem right now (v20) + ATEM_HISTORY'},
+    ]
+  },
+  {
+    version: 22,
+    date: '2025-04',
+    changes: [
+      {type:'fixed',   id:'an12', text:'Hold-to-connect desktop — !isDragging, drift no longer kills gesture'},
+      {type:'fixed',   id:'an12', text:'Pending line visible during drag — needsRender=true in connect-drag branch'},
+      {type:'added',   id:'an3',  text:'targetLabelOpacity — label sprites fade smoothly on hover, unconnected dims to 0.08'},
+      {type:'added',   id:'an42', text:'Min screen-size label fade — below 8px projected radius label fades out'},
+      {type:'fixed',   id:'an5',  text:'Starter board body text preserved — was hardcoded to empty string on load'},
+      {type:'added',   id:'an1',  text:'Body text on 12 atem-now nodes — primitives, bugs, speculative'},
+      {type:'added',   id:'an3',  text:'Collapse/expand — editor button hides connected neighbors, badge, connections hide'},
+      {type:'fixed',   id:'an2',  text:'m-reset-view uses state.initialCamDist not hardcoded z=18'},
+      {type:'fixed',   id:'an4',  text:'User-drawn connections default to state.boardAccent not hardcoded #6ea8fe'},
     ]
   },
 ];
@@ -2416,10 +2507,10 @@ function loadStarterBoard(board) {
   state.thoughts = board.thoughts.map(t => ({
     ...t,
     position: [...t.position],
-    body: '',
+    body: t.body || '',
     created: now,
     touched: now,
-    props: {}
+    props: t.props || {}
   }));
 
   // Bug 2: 5-tuple destructure [from, to, label, directed, color]
@@ -2446,12 +2537,14 @@ function loadStarterBoard(board) {
     if (r > maxR) maxR = r;
   }
   const camDist = Math.max(22, maxR * 1.9);
+  state.initialCamDist = camDist;
   camera.position.set(0, 0, camDist);
   controls.target.set(0, 0, 0);
   needsRender = true;
 
   // Bug 8: update board slot registry (name, count, updated) — persist metadata
   state.boardName = board.name;
+  state.boardAccent = board.accent || '#6ea8fe';
   state.isStarterBoard = true;
   save();
   getBoardRegistry().then(async reg => {
@@ -2560,10 +2653,43 @@ function animate() {
     const label = mesh.getObjectByName('label');
     if (label) {
       const inView = frustum.containsPoint(mesh.position);
-      label.visible = inView && ud.targetOpacity > 0.5;
+      // Min screen-size fade: project thought to screen, hide label if too small
+      const _sp = mesh.position.clone().project(camera);
+      const _screenR = (mesh.scale.x / mesh.position.distanceTo(camera.position)) * window.innerHeight * 0.5;
+      const _sizeOk = _screenR > 8; // pixels — below this the label is unreadable
+      const _targetLO = (inView && ud.targetOpacity > 0.5 && _sizeOk) ? ud.targetLabelOpacity : 0;
+      const _curLO = label.material.opacity;
+      label.material.opacity += (_targetLO - _curLO) * 0.12;
+      label.visible = inView && label.material.opacity > 0.02;
+      if (Math.abs(_curLO - _targetLO) > 0.01) hasAnim = true;
     }
 
     if (Math.abs(ce-te) > 0.01 || Math.abs(co-ud.targetOpacity) > 0.01) hasAnim = true;
+
+    // Collapse badge — small ↓N sprite above the sphere when it has hidden children
+    const count = ud.collapsedCount || 0;
+    let badge = mesh.getObjectByName('collapse-badge');
+    if (count > 0) {
+      if (!badge || badge.userData.forCount !== count) {
+        if (badge) mesh.remove(badge);
+        const bc = document.createElement('canvas'); bc.width = 128; bc.height = 64;
+        const bctx = bc.getContext('2d');
+        bctx.fillStyle = 'rgba(0,0,0,0.75)'; bctx.roundRect(4,4,120,56,12); bctx.fill();
+        bctx.fillStyle = '#fff'; bctx.font = 'bold 32px system-ui'; bctx.textAlign = 'center'; bctx.textBaseline = 'middle';
+        bctx.fillText('↓' + count, 64, 34);
+        const bt = new THREE.CanvasTexture(bc);
+        const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.9, depthTest:false });
+        badge = new THREE.Sprite(bm);
+        badge.name = 'collapse-badge';
+        badge.userData.forCount = count;
+        badge.scale.set(1.2, 0.6, 1);
+        badge.position.set(0, (mesh.scale.x || 1) + 0.5, 0);
+        mesh.add(badge);
+      }
+      badge.visible = ud.targetOpacity > 0.1;
+    } else if (badge) {
+      mesh.remove(badge);
+    }
   }
 
   if (lineGroup.children.length > 0) updateConnectionPositions();
@@ -2649,7 +2775,7 @@ window.addEventListener('resize', () => {
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v21 — dt clamp, pending line render fix, 3-state direction, isStarterBoard, atem-now board + ATEM_HISTORY');
+console.log('atem v22 — dt clamp, pending line render fix, 3-state direction, isStarterBoard, atem-now board + ATEM_HISTORY');
 </script>
 </body>
 </html>
