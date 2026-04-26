@@ -512,6 +512,7 @@ let state = {
 let editingId = null, editingColor = null;
 let editingConnId = null;
 let connectSource = null, holdTimer = null, collapseHoldTimer = null;
+let blockNextPointerUp = false;
 let multiTouchActive = false;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
@@ -1580,7 +1581,8 @@ function onPointerDown(e) {
     const cy = e.clientY ?? e.touches?.[0]?.clientY;
     if (cx !== undefined && (cx < edRect.left || cx > edRect.right || cy < edRect.top || cy > edRect.bottom)) {
       closeEditor(true);
-      return; // consume the event — don't create a new thought
+      blockNextPointerUp = true;
+      return;
     }
     return; // tap inside editor — let it handle naturally
   }
@@ -1664,6 +1666,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
+  if (blockNextPointerUp) { blockNextPointerUp = false; return; }
   if (isOverlayOpen()) return;
   if (multiTouchActive) { multiTouchActive = false; draggedMesh=null; isDragging=false; holdTriggered=false; controls.enabled=true; return; }
   clearTimeout(holdTimer); clearTimeout(lassoHoldTimer);
@@ -1738,7 +1741,8 @@ window.addEventListener('mousemove', (e) => {
         child.userData.targetLabelOpacity = 0.88;
       }
       for (const child of lineGroup.children) {
-        if (!child.userData.isConnLabel) child.material.opacity = child.userData.baseOpacity || 0.35;
+        if (child.userData.isConnLabel) { child.material.opacity = 0.7; continue; }
+        child.material.opacity = child.userData.baseOpacity || 0.35;
       }
     }
     return;
@@ -1761,8 +1765,16 @@ window.addEventListener('mousemove', (e) => {
     }
   }
   for (const child of lineGroup.children) {
-    if (child.userData.isConnLabel) continue;
     const base = child.userData.baseOpacity || 0.35;
+    if (child.userData.isConnLabel) {
+      // dim connection labels with their parent line
+      if (!hit) child.material.opacity = 0.7;
+      else {
+        const isRelated = child.userData.from === hit.userData.id || child.userData.to === hit.userData.id;
+        child.material.opacity = isRelated ? 0.95 : 0.02;
+      }
+      continue;
+    }
     if (!hit) child.material.opacity = base;
     else {
       const isRelated = child.userData.from === hit.userData.id || child.userData.to === hit.userData.id;
@@ -2758,70 +2770,61 @@ function buildZGrid() {
   while (gridGroup.children.length) gridGroup.remove(gridGroup.children[0]);
   if (!zGridVisible) return;
 
-  // Collect unique z-levels that have at least one thought — round to 1dp
-  const zLevels = [...new Set(state.thoughts.map(t => Math.round(t.position[2] * 2) / 2))];
+  // Unique z-levels — group thoughts within 0.75 units of each other
+  const rawZ = state.thoughts.map(t => t.position[2]).sort((a,b)=>a-b);
+  const zLevels = [];
+  for (const z of rawZ) {
+    if (!zLevels.length || Math.abs(z - zLevels[zLevels.length-1]) > 0.75) zLevels.push(z);
+  }
   if (!zLevels.length) return;
 
-  // Board bounds for grid size
+  // Board bounds — generous padding
   const xs = state.thoughts.map(t => t.position[0]);
   const ys = state.thoughts.map(t => t.position[1]);
-  const minX = Math.min(...xs) - 4, maxX = Math.max(...xs) + 4;
-  const minY = Math.min(...ys) - 4, maxY = Math.max(...ys) + 4;
-  const gridW = maxX - minX, gridH = maxY - minY;
+  const pad = 6;
+  const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad;
+  const minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
+
+  // Grid step — sparse. One line every 4 units. 
+  const step = 4;
 
   for (const z of zLevels) {
-    // Count thoughts at this z-level
-    const count = state.thoughts.filter(t => Math.abs(t.position[2] - z) < 0.5).length;
+    const count = state.thoughts.filter(t => Math.abs(t.position[2] - z) < 0.75).length;
+    const pts = [];
 
-    // Grid lines: horizontal + vertical within bounds
-    const lines = [];
-    const steps = Math.ceil(Math.max(gridW, gridH) / 2);
-    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-
-    for (let i = -steps; i <= steps; i++) {
-      const x = cx + i * 2;
-      const y = cy + i * 2;
-      if (x >= minX - 1 && x <= maxX + 1) {
-        lines.push(new THREE.Vector3(x, minY, z), new THREE.Vector3(x, maxY, z));
-      }
-      if (y >= minY - 1 && y <= maxY + 1) {
-        lines.push(new THREE.Vector3(minX, y, z), new THREE.Vector3(maxX, y, z));
-      }
+    // Vertical lines (along y)
+    for (let x = Math.ceil(minX/step)*step; x <= maxX; x += step) {
+      pts.push(new THREE.Vector3(x, minY, z), new THREE.Vector3(x, maxY, z));
+    }
+    // Horizontal lines (along x)
+    for (let y = Math.ceil(minY/step)*step; y <= maxY; y += step) {
+      pts.push(new THREE.Vector3(minX, y, z), new THREE.Vector3(maxX, y, z));
     }
 
-    const geo = new THREE.BufferGeometry().setFromPoints(lines);
-    geo.setIndex([...Array(lines.length).keys()]); // line segments
-    // Use LinePieces-style: pair up points as segments
-    const segGeo = new THREE.BufferGeometry();
-    segGeo.setAttribute('position', geo.attributes.position);
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
     const mat = new THREE.LineBasicMaterial({
-      color: 0x334455,
+      color: 0x1a2a3a,
       transparent: true,
-      opacity: 0.25 + Math.min(count * 0.03, 0.2),
+      opacity: 0.18,
       depthTest: true
     });
-    // Build as line segments (pairs)
-    const pts = [];
-    for (let i = 0; i < lines.length; i += 2) {
-      pts.push(lines[i], lines[i+1]);
-    }
-    const segGeo2 = new THREE.BufferGeometry().setFromPoints(pts);
-    const segs = new THREE.LineSegments(segGeo2, mat);
+    const segs = new THREE.LineSegments(geo, mat);
     segs.renderOrder = -1;
     gridGroup.add(segs);
 
-    // Z-level label: small sprite showing the z value
-    const bc = document.createElement('canvas'); bc.width = 160; bc.height = 48;
+    // Minimal z-tag: just a tiny text sprite at the left edge, mid-height
+    const cy = (minY + maxY) / 2;
+    const bc = document.createElement('canvas'); bc.width = 120; bc.height = 36;
     const bctx = bc.getContext('2d');
-    bctx.fillStyle = 'rgba(30,60,80,0.7)'; bctx.roundRect(2,2,156,44,8); bctx.fill();
-    bctx.fillStyle = 'rgba(100,180,255,0.8)'; bctx.font = '22px system-ui'; bctx.textAlign = 'left'; bctx.textBaseline = 'middle';
-    bctx.fillText('z = ' + z.toFixed(1) + '  (' + count + ')', 12, 26);
+    bctx.fillStyle = 'rgba(50,130,180,0.5)';
+    bctx.font = 'bold 20px system-ui'; bctx.textAlign = 'left'; bctx.textBaseline = 'middle';
+    bctx.fillText('z' + (z >= 0 ? '+' : '') + z.toFixed(0) + ' ·' + count, 4, 18);
     const bt = new THREE.CanvasTexture(bc);
-    const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.7, depthTest:false });
-    const badge = new THREE.Sprite(bm);
-    badge.scale.set(3, 0.9, 1);
-    badge.position.set(minX - 1, maxY + 1, z);
-    gridGroup.add(badge);
+    const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.5, depthTest:false });
+    const tag = new THREE.Sprite(bm);
+    tag.scale.set(2.5, 0.75, 1);
+    tag.position.set(minX - 0.5, cy, z);
+    gridGroup.add(tag);
   }
   needsRender = true;
 }
@@ -2838,6 +2841,35 @@ function toggleZGrid() {
 
 (async () => {
   await load();
+
+  // Merge starter board body/size fields that may be missing from IDB cache
+  // (IDB was saved before body text was added to the constant)
+  if (state.thoughts.length > 0) {
+    const starterMatch = STARTER_BOARDS.find(b => b.id === state.boardId);
+    if (starterMatch) {
+      let merged = 0;
+      for (const t of state.thoughts) {
+        const src = starterMatch.thoughts.find(s => s.id === t.id);
+        if (src) {
+          if (!t.body && src.body) { t.body = src.body; merged++; }
+        }
+      }
+      if (merged > 0) {
+        // rebuild labels to show ··· glyphs and updated body
+        for (const mesh of thoughtGroup.children) {
+          const t = thoughtMap.get(mesh.userData.id);
+          if (t) {
+            const old = mesh.getObjectByName('label');
+            if (old) mesh.remove(old);
+            const l = createLabel(t.text || '', t.body || '');
+            if (l) { l.name = 'label'; mesh.add(l); }
+          }
+        }
+        await save();
+      }
+    }
+  }
+
   animate();
 
   if (state.thoughts.length === 0) {
