@@ -442,6 +442,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-import">import</button>
   <div class="sep">view</div>
   <button id="m-reset-view">reset camera</button>
+  <button id="m-zgrid">z-planes <span class="pill" id="m-zgrid-dot"></span></button>
   <button id="m-toggle-fps">fps <span class="pill" id="m-fps-dot"></span></button>
   <button id="m-open-capture">open to capture <span class="pill" id="m-capture-dot"></span></button>
   <div class="sep">dev</div>
@@ -510,7 +511,7 @@ let state = {
 
 let editingId = null, editingColor = null;
 let editingConnId = null;
-let connectSource = null, holdTimer = null;
+let connectSource = null, holdTimer = null, collapseHoldTimer = null;
 let multiTouchActive = false;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
@@ -578,6 +579,8 @@ scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xffffff,size:0.0
 
 const thoughtGroup = new THREE.Group(); scene.add(thoughtGroup);
 const lineGroup = new THREE.Group(); scene.add(lineGroup);
+const gridGroup = new THREE.Group(); scene.add(gridGroup);
+let zGridVisible = false;
 
 // O(1) lookup
 const thoughtMap = new Map();
@@ -1073,23 +1076,31 @@ async function load() {
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
 function collapseThought(id) {
-  const conns = state.connections.filter(c => c.from === id || c.to === id);
-  const neighborIds = conns.map(c => c.from === id ? c.to : c.from).filter(nid => nid !== id);
-  let collapsed = 0;
-  for (const nid of neighborIds) {
+  // BFS — collect entire reachable subgraph, skip the root itself
+  const visited = new Set([id]);
+  const queue = [id];
+  while (queue.length) {
+    const cur = queue.shift();
+    for (const c of state.connections) {
+      const neighbor = c.from === cur ? c.to : c.to === cur ? c.from : null;
+      if (neighbor && !visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push(neighbor);
+      }
+    }
+  }
+  visited.delete(id); // don't collapse the root
+  for (const nid of visited) {
     const t = thoughtMap.get(nid);
     if (!t) continue;
-    if (t.collapsedUnder) continue; // already collapsed under something else
     t.collapsedUnder = id;
     const mesh = getMesh(nid);
     if (mesh) { mesh.userData.targetOpacity = 0; mesh.userData.targetLabelOpacity = 0; }
-    collapsed++;
   }
-  // update badge on the parent node
   updateCollapseBadge(id);
   rebuildConnections();
   needsRender = true;
-  return collapsed;
+  return visited.size;
 }
 
 function expandThought(id) {
@@ -1435,10 +1446,10 @@ function setupEditorListeners() {
   if (edTitle) {
     edTitle.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
-      // Enter in title field: jump to body (not save). Thinking continues.
-      if (e.key === 'Enter') { edBody.focus(); e.preventDefault(); }
-      // Cmd/Ctrl+Enter from title also saves
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { closeEditor(true); e.preventDefault(); }
+      // Enter in title = save (click outside is now the natural flow, Enter = done)
+      // Shift+Enter jumps to body for adding detail
+      if (e.key === 'Enter' && !e.shiftKey) { closeEditor(true); e.preventDefault(); }
+      if (e.key === 'Enter' && e.shiftKey) { edBody.focus(); e.preventDefault(); }
     });
   }
 }
@@ -1562,6 +1573,17 @@ function isOverlayOpen() {
 }
 
 function onPointerDown(e) {
+  // If editor is open and tap is outside the editor panel — treat as "done"
+  if (editorEl.classList.contains('open')) {
+    const edRect = editorEl.getBoundingClientRect();
+    const cx = e.clientX ?? e.touches?.[0]?.clientX;
+    const cy = e.clientY ?? e.touches?.[0]?.clientY;
+    if (cx !== undefined && (cx < edRect.left || cx > edRect.right || cy < edRect.top || cy > edRect.bottom)) {
+      closeEditor(true);
+      return; // consume the event — don't create a new thought
+    }
+    return; // tap inside editor — let it handle naturally
+  }
   if (isOverlayOpen()) return;
   if (e.target !== canvas) return;
   if (e.touches && e.touches.length > 1) { clearHold(); multiTouchActive = true; return; }
@@ -1583,6 +1605,16 @@ function onPointerDown(e) {
         if (navigator.vibrate) navigator.vibrate(30);
       }
     }, HOLD_MS);
+    // 5s deep-hold = collapse/expand entire subgraph
+    collapseHoldTimer = setTimeout(()=>{
+      if (!isDragging && !holdTriggered && draggedMesh) {
+        const tid = draggedMesh.userData.id;
+        if (isCollapsed(tid)) { expandThought(tid); }
+        else { collapseThought(tid); }
+        if (navigator.vibrate) navigator.vibrate([40,30,40]);
+        save(); needsRender = true;
+      }
+    }, 5000);
     controls.enabled = false;
   } else {
     draggedMesh = null;
@@ -1681,7 +1713,7 @@ function onPointerUp(e) {
 }
 
 function clearHold() {
-  clearTimeout(holdTimer); holdTriggered = false;
+  clearTimeout(holdTimer); clearTimeout(collapseHoldTimer); holdTriggered = false;
   if (connectSource) { const src = getMesh(connectSource); if (src) src.userData.targetEmissive = 0.15; connectSource = null; pendingLineMesh.visible = false; }
 }
 
@@ -1800,6 +1832,8 @@ document.getElementById('m-import').addEventListener('click', () => {
   };
   input.click(); closeMenu();
 });
+
+document.getElementById('m-zgrid').addEventListener('click', () => { toggleZGrid(); });
 
 document.getElementById('m-reset-view').addEventListener('click', () => {
   camera.position.set(0,0,state.initialCamDist||18); controls.target.set(0,0,0); controls.update(); needsRender=true; save(); closeMenu();
@@ -2181,17 +2215,20 @@ const STARTER_BOARDS = [
       {id:'an32', text:'Lasso multi-select',     position:[-6,8,0],      color:'#f5c97a', size:0.85},
 
       // ── INTERACTIONS — bottom, z=-1 ────────────────────────────────
-      {id:'an16', text:'Tap empty → thought',    position:[-6,-5.5,-1],  color:'#fb923c', size:1.0},
-      {id:'an17', text:'Hold → connect',         position:[0,-7,-1],     color:'#f472b6', size:1.0},
-      {id:'an18', text:'Drag to empty → new + connected', position:[6,-5.5,-1], color:'#6ea8fe', size:0.85},
+      {id:'an16', text:'Tap empty → thought',    position:[-6,-5.5,-1],  color:'#fb923c', size:1.0, body:'The primary creation gesture. Tap anywhere on the canvas — not on a thought, not on a line — and a new thought appears at that point in 3D space.'},
+      {id:'an17', text:'Hold → connect',         position:[0,-7,-1],     color:'#f472b6', size:1.0, body:'Hold 350ms on any thought. It glows and vibrates. Then drag — a line follows your finger. Drop on another thought to connect. Drop on empty space to create a new connected thought.'},
+      {id:'an48', text:'5s hold → collapse subgraph', position:[3,-9,-1.5],  color:'#f472b6', size:0.85, body:'Hold a thought for 5 seconds to collapse its entire connected subgraph. All reachable nodes hide, a ↓N badge shows count. Same hold to expand. No void — the root stays.'},
+      {id:'an49', text:'Click outside → save',   position:[-6,-9,-1.5], color:'#fb923c', size:0.85, body:'Tap anywhere outside the editor to save and close. Empty note is auto-deleted. Enter in title saves. Shift+Enter moves to body. No more accidental new thoughts on close.'},
+      {id:'an50', text:'Z-planes grid',          position:[0,-11,-2],   color:'#67e8f9', size:0.85, body:'Menu toggle: draws faint grid planes at every z-level that has at least one thought. Stays visible as you orbit. Shows z = value and thought count per plane. Use it to audit your depth layout.'},
+      {id:'an18', text:'Drag to empty → new + connected', position:[6,-5.5,-1], color:'#6ea8fe', size:0.85, body:'The fastest way to extend your thinking. Hold a thought, drag to empty space, release — new thought created and connected in one gesture. Editor opens immediately.'},
       {id:'an33', text:'Tap thought → editor',   position:[-3,-9,-1.5],  color:'#fb923c', size:0.85},
       {id:'an34', text:'Tap line → conn editor', position:[3,-9,-1.5],   color:'#67e8f9', size:0.85},
 
       // ── PERSISTENCE — back-left, z=-2 ─────────────────────────────
-      {id:'an19', text:'IndexedDB (primary)',     position:[-8,4,-2],     color:'#a78bfa', size:0.95},
+      {id:'an19', text:'IndexedDB (primary)',     position:[-8,4,-2],     color:'#a78bfa', size:0.95, body:'All board state saved to IndexedDB on every create, delete, and move. Survives tab close, browser restart. Same-origin tabs share the same IDB — open two tabs, they hold the same state.'},
       {id:'an35', text:'localStorage (backup)',  position:[-11,2,-2],    color:'#a78bfa', size:0.8},
       {id:'an20', text:'5 board slots',          position:[-8,0,-2],     color:'#a78bfa', size:0.9},
-      {id:'an21', text:'Supabase sync (debounced 3s)', position:[-8,-3,-2], color:'#a78bfa', size:0.85},
+      {id:'an21', text:'Supabase sync (debounced 3s)', position:[-8,-3,-2], color:'#a78bfa', size:0.85, body:'Boards sync to Supabase 3 seconds after the last change. Debounced — rapid edits produce one write not hundreds. WARNING: RLS not enabled yet. Personal use only.'},
       {id:'an22', text:'Export JSON',            position:[-11,-1,-2],   color:'#67e8f9', size:0.85},
       {id:'an36', text:'Import JSON',            position:[-11,-4,-2],   color:'#67e8f9', size:0.85},
 
@@ -2202,10 +2239,10 @@ const STARTER_BOARDS = [
       {id:'an39', text:'Idle chip (10s)',         position:[11,-1,-2],    color:'#34d399', size:0.8},
 
       // ── PHILOSOPHY — deep back, z=-4 ──────────────────────────────
-      {id:'an24', text:'No modifiers. No popups.', position:[-5,1,-4],   color:'#b8a9f5', size:0.85},
-      {id:'an25', text:'Z-axis always',          position:[5,1,-4],      color:'#b8a9f5', size:0.85},
-      {id:'an26', text:'Single file. No build.', position:[0,-2.5,-4],   color:'#b8a9f5', size:0.85},
-      {id:'an27', text:'Mobile first',           position:[0,3.5,-4],    color:'#b8a9f5', size:0.85},
+      {id:'an24', text:'No modifiers. No popups.', position:[-5,1,-4],   color:'#b8a9f5', size:0.85, body:'Every interaction is a single direct gesture. No right-click menus. No shift-click. No modal dialogs. If it needs a modifier key to discover, it does not exist in atem.'},
+      {id:'an25', text:'Z-axis always',          position:[5,1,-4],      color:'#b8a9f5', size:0.85, body:'Depth is not decoration. Every layout decision must use z. Flat boards are architectural failure — they waste the medium. The z-axis is where urgency, recency, and abstraction live.'},
+      {id:'an26', text:'Single file. No build.', position:[0,-2.5,-4],   color:'#b8a9f5', size:0.85, body:'index.html is the entire app. No npm, no webpack, no framework. Drop it anywhere and it runs. This constraint keeps the codebase honest and the build instant.'},
+      {id:'an27', text:'Mobile first',           position:[0,3.5,-4],    color:'#b8a9f5', size:0.85, body:'Designed for the thumb on an iPhone 16. Touch targets, hold gestures, pinch zoom, iOS keyboard handling. Desktop is a bonus, not the primary surface.'},
 
       // ── KNOWN BUGS — red, z=-3 ────────────────────────────────────
       {id:'an40', text:'BUG: Supabase key exposed (RLS off)', position:[-5,-3,-3], color:'#f87171', size:0.9, body:'Anon key is hardcoded in index.html. RLS not enabled. Any board-1 / board-2 ID is publicly readable and writable. Do not share the live URL until Phase 2 security lands.'},
@@ -2273,6 +2310,12 @@ const STARTER_BOARDS = [
 
       // ── Philosophy informs core ───────────────────────────────────
       ['an24','an1','shapes',true,'#b8a9f5'],
+      // new v22 features
+      ['an48','an17','extends',true,'#f472b6'],
+      ['an49','an16','replaces',true,'#fb923c'],
+      ['an49','an33','replaces',true,'#fb923c'],
+      ['an50','an2','reveals',true,'#67e8f9'],
+      ['an48','an3','collapses',true,'#f472b6'],
       ['an25','an1','shapes',true,'#b8a9f5'],
       ['an26','an1','shapes',true,'#b8a9f5'],
       ['an27','an1','shapes',true,'#b8a9f5'],
@@ -2708,6 +2751,88 @@ window.addEventListener('resize', () => {
 });
 
 // ═══════════════════════════════════════════
+// Z-GRID
+// ═══════════════════════════════════════════
+
+function buildZGrid() {
+  while (gridGroup.children.length) gridGroup.remove(gridGroup.children[0]);
+  if (!zGridVisible) return;
+
+  // Collect unique z-levels that have at least one thought — round to 1dp
+  const zLevels = [...new Set(state.thoughts.map(t => Math.round(t.position[2] * 2) / 2))];
+  if (!zLevels.length) return;
+
+  // Board bounds for grid size
+  const xs = state.thoughts.map(t => t.position[0]);
+  const ys = state.thoughts.map(t => t.position[1]);
+  const minX = Math.min(...xs) - 4, maxX = Math.max(...xs) + 4;
+  const minY = Math.min(...ys) - 4, maxY = Math.max(...ys) + 4;
+  const gridW = maxX - minX, gridH = maxY - minY;
+
+  for (const z of zLevels) {
+    // Count thoughts at this z-level
+    const count = state.thoughts.filter(t => Math.abs(t.position[2] - z) < 0.5).length;
+
+    // Grid lines: horizontal + vertical within bounds
+    const lines = [];
+    const steps = Math.ceil(Math.max(gridW, gridH) / 2);
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+
+    for (let i = -steps; i <= steps; i++) {
+      const x = cx + i * 2;
+      const y = cy + i * 2;
+      if (x >= minX - 1 && x <= maxX + 1) {
+        lines.push(new THREE.Vector3(x, minY, z), new THREE.Vector3(x, maxY, z));
+      }
+      if (y >= minY - 1 && y <= maxY + 1) {
+        lines.push(new THREE.Vector3(minX, y, z), new THREE.Vector3(maxX, y, z));
+      }
+    }
+
+    const geo = new THREE.BufferGeometry().setFromPoints(lines);
+    geo.setIndex([...Array(lines.length).keys()]); // line segments
+    // Use LinePieces-style: pair up points as segments
+    const segGeo = new THREE.BufferGeometry();
+    segGeo.setAttribute('position', geo.attributes.position);
+    const mat = new THREE.LineBasicMaterial({
+      color: 0x334455,
+      transparent: true,
+      opacity: 0.25 + Math.min(count * 0.03, 0.2),
+      depthTest: true
+    });
+    // Build as line segments (pairs)
+    const pts = [];
+    for (let i = 0; i < lines.length; i += 2) {
+      pts.push(lines[i], lines[i+1]);
+    }
+    const segGeo2 = new THREE.BufferGeometry().setFromPoints(pts);
+    const segs = new THREE.LineSegments(segGeo2, mat);
+    segs.renderOrder = -1;
+    gridGroup.add(segs);
+
+    // Z-level label: small sprite showing the z value
+    const bc = document.createElement('canvas'); bc.width = 160; bc.height = 48;
+    const bctx = bc.getContext('2d');
+    bctx.fillStyle = 'rgba(30,60,80,0.7)'; bctx.roundRect(2,2,156,44,8); bctx.fill();
+    bctx.fillStyle = 'rgba(100,180,255,0.8)'; bctx.font = '22px system-ui'; bctx.textAlign = 'left'; bctx.textBaseline = 'middle';
+    bctx.fillText('z = ' + z.toFixed(1) + '  (' + count + ')', 12, 26);
+    const bt = new THREE.CanvasTexture(bc);
+    const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.7, depthTest:false });
+    const badge = new THREE.Sprite(bm);
+    badge.scale.set(3, 0.9, 1);
+    badge.position.set(minX - 1, maxY + 1, z);
+    gridGroup.add(badge);
+  }
+  needsRender = true;
+}
+
+function toggleZGrid() {
+  zGridVisible = !zGridVisible;
+  document.getElementById('m-zgrid-dot').classList.toggle('on', zGridVisible);
+  buildZGrid();
+}
+
+// ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 
@@ -2764,6 +2889,7 @@ window.addEventListener('resize', () => {
     rebuildConnections();
     state.isStarterBoard = true;
     await save();
+    if (zGridVisible) buildZGrid();
     hideHint();
     // Bug 10 rationale applied here too — the bible spreads to ±11
     camera.position.set(0, 0, 24);
