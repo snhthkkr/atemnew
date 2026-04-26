@@ -21,6 +21,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   position:fixed;display:none;z-index:100;
   left:50%;top:50%;transform:translate(-50%,-50%);
   width:min(340px,88vw);
+  max-height:calc(100vh - 80px);
+  max-height:calc(100dvh - 80px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
   background:rgba(10,10,15,0.95);
   border:1px solid rgba(255,255,255,0.12);
   border-radius:16px;padding:16px;
@@ -143,6 +146,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 #menu-drawer.open{transform:translateX(0)}
+#menu-drawer .menu-header{
+  padding:4px 16px 14px;margin-bottom:4px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+#menu-drawer .menu-header .mh-label{
+  font-size:9px;color:rgba(255,255,255,0.25);
+  letter-spacing:0.14em;text-transform:uppercase;
+  margin-bottom:4px;
+}
+#menu-drawer .menu-header .mh-name{
+  font-size:15px;color:rgba(255,255,255,0.85);
+  font-weight:500;letter-spacing:0.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#menu-drawer .menu-header .mh-count{
+  font-size:11px;color:rgba(255,255,255,0.35);
+  margin-top:2px;font-variant-numeric:tabular-nums;
+}
 #menu-drawer .sep{
   margin:6px 16px;font-size:10px;color:rgba(255,255,255,0.15);
   letter-spacing:0.12em;text-transform:uppercase;padding-top:8px;
@@ -155,8 +176,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 #menu-drawer button:active{background:rgba(255,255,255,0.05)}
 #menu-drawer .danger{color:rgba(255,100,100,0.55)}
-#menu-drawer .toggle{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);margin-left:auto;flex-shrink:0}
-#menu-drawer .toggle.on{background:rgba(110,168,254,0.8)}
+/* iOS-style pill toggle (replaces old 7px dot) */
+#menu-drawer .pill{
+  width:30px;height:18px;border-radius:999px;
+  background:rgba(255,255,255,0.12);margin-left:auto;flex-shrink:0;
+  position:relative;transition:background 0.18s ease;
+}
+#menu-drawer .pill::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:14px;height:14px;border-radius:50%;
+  background:rgba(255,255,255,0.92);
+  transition:transform 0.18s cubic-bezier(0.32,0.72,0,1);
+}
+#menu-drawer .pill.on{background:rgba(110,168,254,0.9)}
+#menu-drawer .pill.on::after{transform:translateX(12px)}
 
 /* ─── Lasso ─── */
 #lasso-rect{position:fixed;display:none;z-index:70;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.03);pointer-events:none;border-radius:2px}
@@ -292,27 +325,28 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 }
 .bcard-rename:active{color:rgba(255,255,255,0.6)}
 
-/* ─── Rich Editor (body-first, title optional) ─── */
+/* ─── Rich Editor (title-above-body, always on) ─── */
 #ed-body{
   -webkit-user-select:text;user-select:text;
   width:100%;min-height:72px;max-height:200px;
   background:transparent;border:none;outline:none;
   color:#fff;font-size:16px;line-height:1.6;
   font-family:inherit;resize:none;
+  padding-top:10px;
 }
 #ed-body::placeholder{color:rgba(255,255,255,0.22)}
 #ed-title-row{
-  padding-top:10px;
-  border-top:1px solid rgba(255,255,255,0.07);
-  margin-top:8px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,0.07);
 }
 #ed-title{
   -webkit-user-select:text;user-select:text;
   width:100%;background:transparent;border:none;outline:none;
-  color:rgba(255,255,255,0.55);font-size:13px;
-  font-family:inherit;padding:0;letter-spacing:0.02em;
+  color:rgba(255,255,255,0.72);font-size:13px;
+  font-family:inherit;padding:0 40px 0 0;letter-spacing:0.02em;
+  font-weight:500;
 }
-#ed-title::placeholder{color:rgba(255,255,255,0.18)}
+#ed-title::placeholder{color:rgba(255,255,255,0.2);font-weight:400}
 #fps{
   position:fixed;top:max(16px,env(safe-area-inset-top,0px));right:16px;
   font-size:10px;color:rgba(255,255,255,0.2);
@@ -333,20 +367,34 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   opacity:0;transition:all 0.3s ease;z-index:200;pointer-events:none;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ─── Idle chip: surfaces gallery without forcing it ─── */
+#idle-chip{
+  position:fixed;left:50%;bottom:max(28px,env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%) translateY(8px);
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:999px;padding:9px 16px;color:rgba(255,255,255,0.55);font-size:12px;
+  letter-spacing:0.02em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;transition:opacity 0.6s ease, transform 0.6s ease;
+  z-index:90;pointer-events:none;cursor:pointer;
+}
+#idle-chip.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#idle-chip:active{background:rgba(255,255,255,0.1)}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="hint">tap anywhere</div>
+<div id="idle-chip">start from a template →</div>
 
 <!-- Editor -->
 <div id="editor">
-  <!-- Body always first — this is what you type into -->
-  <textarea id="ed-body" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
-  <!-- Title optional, below body in rich mode -->
-  <div id="ed-title-row" style="display:none">
+  <!-- Title: always visible, small, optional. No more mode toggle. -->
+  <div id="ed-title-row">
     <input id="ed-title" type="text" placeholder="title (optional)" autocomplete="off" autocorrect="on" spellcheck="true">
   </div>
+  <!-- Body: the thing you actually type into -->
+  <textarea id="ed-body" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
   <button id="ed-color-btn" title="change color"></button>
   <div id="ed-color-palette"></div>
   <div id="editor-actions">
@@ -379,6 +427,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 </button>
 <div id="menu-scrim"></div>
 <div id="menu-drawer">
+  <div class="menu-header">
+    <div class="mh-label">current board</div>
+    <div class="mh-name" id="m-header-name">Board 1</div>
+    <div class="mh-count" id="m-header-count">0 thoughts</div>
+  </div>
   <div class="sep">boards</div>
   <button id="m-boards">switch board</button>
   <div class="sep">start</div>
@@ -387,17 +440,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
   <button id="m-export">export</button>
   <button id="m-import">import</button>
   <div class="sep">view</div>
-  <button id="m-richmode">title field <span class="toggle" id="m-rich-dot"></span></button>
   <button id="m-reset-view">reset camera</button>
-  <button id="m-toggle-fps">fps <span class="toggle" id="m-fps-dot"></span></button>
-  <button id="m-open-capture">open to capture <span class="toggle" id="m-capture-dot"></span></button>
+  <button id="m-toggle-fps">fps <span class="pill" id="m-fps-dot"></span></button>
+  <button id="m-open-capture">open to capture <span class="pill" id="m-capture-dot"></span></button>
   <div class="sep">dev</div>
   <button id="m-dump">dump state</button>
   <button id="m-orphans">highlight orphans</button>
   <button id="m-bulk">+ 100 test</button>
   <div class="sep"></div>
   <button id="m-clear" class="danger">clear all</button>
-  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v18</div>
+  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v20</div>
 </div>
 
 <!-- Starter Gallery (full-screen) -->
@@ -436,7 +488,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-ap
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { get, set } from 'idb-keyval';
+import { get, set, del } from 'idb-keyval';
 
 // ═══════════════════════════════════════════
 // STATE
@@ -444,12 +496,12 @@ import { get, set } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 18,
+  version: 20,
   thoughts: [],
   connections: [],
   camera: null,
   openToCapture: false,
-  richMode: false,
+  richMode: true,
   boardId: 'board-1',
   boardName: 'Board 1',
 };
@@ -500,7 +552,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x000000, 0.035);
+scene.fog = new THREE.FogExp2(0x000000, 0.022);
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 200);
 camera.position.set(0, 0, 18);
@@ -549,69 +601,63 @@ function makeThoughtMaterial(color) {
   });
 }
 
-function getLabelText(t) {
-  if (t && t.text) return t.text;
-  if (t && t.body) {
-    const first = t.body.split('\n')[0];
-    return first.length > 50 ? first.slice(0, 48) + '…' : first;
-  }
-  return '';
-}
-
+// Unified label — one primary line (title if set, else first line of body).
+// If title is the primary AND body also exists, draw a small '···' glyph beneath
+// to signal "more inside". One label, one canvas, no awkward two-height layouts.
 function createLabel(text, bodyText) {
-  const hasBody = !!(bodyText && bodyText.trim().length > 0);
-  const hasTitle = !!(text && text.trim().length > 0);
+  const title = (text || '').trim();
+  const body = (bodyText || '').trim();
+  let primary = '';
+  let hasMore = false;
+  if (title) {
+    primary = title;
+    hasMore = body.length > 0; // body exists alongside title → show ··· glyph
+  } else if (body) {
+    const first = body.split('\n')[0];
+    primary = first;
+  } else {
+    return null;
+  }
+
   const c = document.createElement('canvas');
-  c.width = 1024; c.height = hasBody ? 320 : 256;
+  c.width = 1024; c.height = hasMore ? 200 : 160;
   const ctx = c.getContext('2d');
   ctx.scale(2, 2);
   ctx.clearRect(0, 0, 512, c.height / 2);
 
-  let titleLines = [];
-  if (hasTitle) {
-    ctx.fillStyle = 'rgba(255,255,255,0.82)';
-    ctx.font = '300 24px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    let display = text.length > 60 ? text.slice(0, 58) + '…' : text;
-    let line = '';
-    for (const w of display.split(' ')) {
-      const test = line ? line + ' ' + w : w;
-      if (ctx.measureText(test).width > 460) { titleLines.push(line); line = w; }
-      else line = test;
-    }
-    if (line) titleLines.push(line);
-    if (titleLines.length > 3) titleLines = titleLines.slice(0, 3);
-    const lineH = 30;
-    const startY = hasBody ? 38 : (c.height / 4) - ((titleLines.length - 1) * lineH) / 2;
-    titleLines.forEach((l, i) => ctx.fillText(l, 256, startY + i * lineH));
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.font = '300 24px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  let display = primary.length > 80 ? primary.slice(0, 78) + '…' : primary;
+  let lines = [], line = '';
+  for (const w of display.split(' ')) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > 460) { lines.push(line); line = w; }
+    else line = test;
   }
+  if (line) lines.push(line);
+  if (lines.length > 2) lines = lines.slice(0, 2);
+  const lineH = 30;
+  const blockH = lines.length * lineH;
+  const centerY = hasMore ? 36 : (c.height / 4) - blockH/2 + lineH/2;
+  const startY = centerY;
+  lines.forEach((l, i) => ctx.fillText(l, 256, startY + i * lineH));
 
-  if (hasBody) {
-    ctx.fillStyle = hasTitle ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.72)';
-    ctx.font = hasTitle ? '300 17px -apple-system, BlinkMacSystemFont, sans-serif'
-                        : '300 22px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const bodyPreview = bodyText.length > 100 ? bodyText.slice(0, 98) + '…' : bodyText;
-    let blines = [], bline = '';
-    for (const w of bodyPreview.replace(/\n/g, ' ').split(' ')) {
-      const test = bline ? bline + ' ' + w : w;
-      if (ctx.measureText(test).width > 450) { blines.push(bline); bline = w; }
-      else bline = test;
-    }
-    if (bline) blines.push(bline);
-    if (blines.length > 3) blines = blines.slice(0, 3);
-    const bLineH = hasTitle ? 22 : 28;
-    const titleBlockH = titleLines.length * 30;
-    const bstartY = hasTitle ? 38 + titleBlockH + 10 : (c.height / 4) - ((blines.length - 1) * bLineH) / 2;
-    blines.forEach((l, i) => ctx.fillText(l, 256, bstartY + i * bLineH));
+  if (hasMore) {
+    ctx.fillStyle = 'rgba(255,255,255,0.32)';
+    ctx.font = '300 14px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('···', 256, startY + blockH + 6);
   }
 
   const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
-  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85, depthTest: false });
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.88, depthTest: false });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(3, hasBody ? 0.95 : 0.75, 1);
-  sprite.position.y = -SPHERE_RADIUS - (hasBody ? 0.62 : 0.5);
-  sprite.userData.hasBody = hasBody;
+  // Texture aspect: 1024 / c.height → sprite scale y = 3 * (c.height / 1024 * ~2)
+  // Keep label width visually ~3 world units; height follows canvas aspect.
+  const aspectScale = (c.height / 1024) * 3;
+  sprite.scale.set(3, aspectScale, 1);
+  sprite.position.y = -SPHERE_RADIUS - 0.48;
+  sprite.userData.hasMore = hasMore;
   return sprite;
 }
 
@@ -619,14 +665,11 @@ function addThoughtMesh(t) {
   const mat = makeThoughtMaterial(t.color);
   const mesh = new THREE.Mesh(sphereGeo, mat);
   mesh.position.set(t.position[0], t.position[1], t.position[2]);
-  mesh.userData = { id:t.id, targetEmissive:0.15, targetOpacity:0.9, breath:Math.random()*Math.PI*2 };
   const size = t.size || 1.0;
+  mesh.userData = { id:t.id, targetEmissive:0.15, targetOpacity:0.9, breath:Math.random()*Math.PI*2, baseSize:size, bounceStart:0 };
   mesh.scale.setScalar(size);
-  const labelText = getLabelText(t);
-  if (labelText) {
-    const l = createLabel(t.text || '', t.body || '');
-    l.name = 'label'; mesh.add(l);
-  }
+  const l = createLabel(t.text || '', t.body || '');
+  if (l) { l.name = 'label'; mesh.add(l); }
   thoughtGroup.add(mesh);
   meshMap.set(t.id, mesh);
   return mesh;
@@ -635,11 +678,8 @@ function addThoughtMesh(t) {
 function updateLabel(mesh, text, body) {
   const old = mesh.getObjectByName('label');
   if (old) mesh.remove(old);
-  const labelText = text || (body ? body.split('\n')[0] : '');
-  if (labelText) {
-    const l = createLabel(text || '', body || '');
-    l.name = 'label'; mesh.add(l);
-  }
+  const l = createLabel(text || '', body || '');
+  if (l) { l.name = 'label'; mesh.add(l); }
 }
 
 function getMesh(id) { return meshMap.get(id); }
@@ -693,15 +733,20 @@ function rebuildConnections() {
       const len = dir.length();
       if (len > 0.1) {
         const norm = dir.clone().normalize();
+
+        // Bug 3: scale arm length with connection length (short connections don't get giant arrows)
+        const armLen = Math.min(Math.max(len * 0.12, 0.25), 0.6);
+        const spread = armLen * 0.55;
+
         const arrowTip = mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.08));
-        const arrowBase = arrowTip.clone().sub(norm.clone().multiplyScalar(0.45));
+        const arrowBase = arrowTip.clone().sub(norm.clone().multiplyScalar(armLen));
 
-        // Two perpendicular axes for fork spread
-        const up = new THREE.Vector3(0, 1, 0);
-        let perp = new THREE.Vector3().crossVectors(norm, up).normalize();
-        if (perp.length() < 0.1) perp = new THREE.Vector3().crossVectors(norm, new THREE.Vector3(1, 0, 0)).normalize();
+        // Bug 3: camera-right basis so near-vertical arrows don't collapse
+        const camDir = camera.getWorldDirection(new THREE.Vector3());
+        let perp = new THREE.Vector3().crossVectors(camDir, norm).normalize();
+        if (perp.length() < 0.1) perp = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), norm).normalize();
+        if (perp.length() < 0.1) perp = new THREE.Vector3().crossVectors(new THREE.Vector3(1, 0, 0), norm).normalize();
 
-        const spread = 0.18;
         const forkL = arrowBase.clone().add(perp.clone().multiplyScalar(spread));
         const forkR = arrowBase.clone().sub(perp.clone().multiplyScalar(spread));
 
@@ -731,7 +776,22 @@ function rebuildConnections() {
   needsRender = true;
 }
 
+// Scratch vectors reused every frame to avoid GC churn in the hot path
+const _camDir = new THREE.Vector3();
+const _dir = new THREE.Vector3();
+const _norm = new THREE.Vector3();
+const _perp = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
+const _right = new THREE.Vector3(1, 0, 0);
+const _arrowTip = new THREE.Vector3();
+const _arrowBase = new THREE.Vector3();
+const _forkPt = new THREE.Vector3();
+const _scratch = new THREE.Vector3();
+
 function updateConnectionPositions() {
+  // Hoist camDir: computed once per frame instead of per-arrow.
+  // On boards with many directed connections this saves ~N allocations/frame.
+  let camDirComputed = false;
   for (const child of lineGroup.children) {
     if (child.userData.isConnLabel) {
       const parts = child.userData.connKey.split('|');
@@ -748,22 +808,28 @@ function updateConnectionPositions() {
     if (child.userData.isArrow) {
       const mA = getMesh(child.userData.from), mB = getMesh(child.userData.to);
       if (mA && mB) {
-        const dir = new THREE.Vector3().subVectors(mB.position, mA.position);
-        const len = dir.length();
+        _dir.subVectors(mB.position, mA.position);
+        const len = _dir.length();
         if (len > 0.1) {
-          const norm = dir.clone().normalize();
-          const arrowTip = mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.08));
-          const arrowBase = arrowTip.clone().sub(norm.clone().multiplyScalar(0.45));
-          const up = new THREE.Vector3(0, 1, 0);
-          let perp = new THREE.Vector3().crossVectors(norm, up).normalize();
-          if (perp.length() < 0.1) perp = new THREE.Vector3().crossVectors(norm, new THREE.Vector3(1, 0, 0)).normalize();
-          const spread = 0.18;
-          const forkPt = child.userData.isLeft
-            ? arrowBase.clone().add(perp.clone().multiplyScalar(spread))
-            : arrowBase.clone().sub(perp.clone().multiplyScalar(spread));
+          _norm.copy(_dir).normalize();
+          // Bug 3: arm length scales with connection length
+          const armLen = Math.min(Math.max(len * 0.12, 0.25), 0.6);
+          const spread = armLen * 0.55;
+          _arrowTip.copy(mB.position).sub(_scratch.copy(_norm).multiplyScalar(SPHERE_RADIUS + 0.08));
+          _arrowBase.copy(_arrowTip).sub(_scratch.copy(_norm).multiplyScalar(armLen));
+          // Bug 3: camera-right basis — computed once per frame, not per arrow
+          if (!camDirComputed) { camera.getWorldDirection(_camDir); camDirComputed = true; }
+          _perp.crossVectors(_camDir, _norm).normalize();
+          if (_perp.length() < 0.1) _perp.crossVectors(_up, _norm).normalize();
+          if (_perp.length() < 0.1) _perp.crossVectors(_right, _norm).normalize();
+          if (child.userData.isLeft) {
+            _forkPt.copy(_arrowBase).add(_scratch.copy(_perp).multiplyScalar(spread));
+          } else {
+            _forkPt.copy(_arrowBase).sub(_scratch.copy(_perp).multiplyScalar(spread));
+          }
           const pos = child.geometry.attributes.position;
-          pos.setXYZ(0, arrowTip.x, arrowTip.y, arrowTip.z);
-          pos.setXYZ(1, forkPt.x, forkPt.y, forkPt.z);
+          pos.setXYZ(0, _arrowTip.x, _arrowTip.y, _arrowTip.z);
+          pos.setXYZ(1, _forkPt.x, _forkPt.y, _forkPt.z);
           pos.needsUpdate = true;
         }
       }
@@ -791,6 +857,21 @@ pendingLineMesh = (() => {
 
 const SUPABASE_URL = 'https://wfjxnbuisodojrzdlqji.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmanhuYnVpc29kb2pyemRscWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODU1NTQsImV4cCI6MjA5MjM2MTU1NH0.a6vPNXcuTorU40nrpDOC4_Y2vNE4mjnq2hlM8bRKaS4';
+
+// Bug 6: debounce sync — 1 POST per 3s max. State ref is stable (fields mutated,
+// not object replaced), so pending payload naturally resolves to latest state.
+let supabaseSyncTimer = null;
+let supabasePending = null;
+function scheduleSupabaseSync(boardId, data) {
+  supabasePending = { boardId, data };
+  if (supabaseSyncTimer) return; // already in flight window
+  supabaseSyncTimer = setTimeout(() => {
+    const p = supabasePending;
+    supabaseSyncTimer = null;
+    supabasePending = null;
+    if (p) syncToSupabase(p.boardId, p.data).catch(() => {});
+  }, 3000);
+}
 
 async function syncToSupabase(boardId, data) {
   if (!SUPABASE_URL || !SUPABASE_KEY) return;
@@ -848,8 +929,8 @@ async function save() {
   if (idx >= 0) registry[idx] = entry; else registry.push(entry);
   try { await set('atem-boards', registry); } catch(e) {}
 
-  // Supabase sync (non-blocking)
-  syncToSupabase(state.boardId, state).catch(() => {});
+  // Supabase sync (debounced, non-blocking)
+  scheduleSupabaseSync(state.boardId, state);
 }
 
 async function getBoardRegistry() {
@@ -868,6 +949,9 @@ async function getBoardRegistry() {
 }
 
 async function loadBoard(boardId) {
+  // Close any open editors first — editingId would point to a thought that's about to be cleared.
+  if (editingId) closeEditor(true);
+  if (editingConnId) closeConnEditor();
   // Save current board first
   if (state.thoughts.length > 0 || state.connections.length > 0) await save();
 
@@ -994,7 +1078,13 @@ function createThought(x, y, z, text, color, body) {
   };
   state.thoughts.push(t);
   thoughtMap.set(t.id, t);
-  addThoughtMesh(t); save(); hideHint();
+  addThoughtMesh(t); save(); hideHint(); hideIdleChip();
+  // Joy layer 1: bounce on create — damped oscillation 1.0 → 1.15 → 1.0 over ~300ms
+  const mesh = getMesh(t.id);
+  if (mesh) { mesh.userData.bounceStart = performance.now(); mesh.userData.baseSize = t.size; }
+  // Live-update menu header if open
+  const menu = document.getElementById('menu-drawer');
+  if (menu && menu.classList.contains('open')) updateMenuHeader();
   needsRender = true;
   return t;
 }
@@ -1010,7 +1100,7 @@ function updateThought(id, text, color, size, body) {
   if (mesh) {
     updateLabel(mesh, t.text, t.body);
     if (color) { mesh.material.color.set(color); mesh.material.emissive.set(color); }
-    if (size !== undefined) mesh.scale.setScalar(size);
+    if (size !== undefined) { mesh.scale.setScalar(size); mesh.userData.baseSize = size; }
   }
   save(); needsRender = true;
 }
@@ -1023,6 +1113,8 @@ function deleteThought(id) {
   thoughtMap.delete(id);
   meshMap.delete(id);
   rebuildConnections(); save(); needsRender = true;
+  const menu = document.getElementById('menu-drawer');
+  if (menu && menu.classList.contains('open')) updateMenuHeader();
 }
 
 function moveThought(id, x, y, z) {
@@ -1035,6 +1127,16 @@ function addConnection(fromId, toId, label, color, directed) {
   const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||'#6ea8fe', directed: directed||false };
   state.connections.push(conn);
   rebuildConnections(); save();
+  // Joy layer 2: soft glow pulse on the target when a connection lands.
+  // Ramps emissive up through animate() damping, then back down.
+  const targetMesh = getMesh(toId);
+  if (targetMesh) {
+    targetMesh.userData.targetEmissive = 0.7;
+    setTimeout(() => {
+      if (targetMesh.userData) targetMesh.userData.targetEmissive = 0.15;
+      needsRender = true;
+    }, 450);
+  }
   needsRender = true;
   if (label === null) return;
   if (!label) openConnEditor(conn.id);
@@ -1170,11 +1272,8 @@ function renderEditorColors() {
 }
 
 function updateRichModeUI() {
-  const dot = document.getElementById('m-rich-dot');
-  if (dot) dot.classList.toggle('on', !!state.richMode);
-  // Title row only visible in rich mode
-  const titleRow = document.getElementById('ed-title-row');
-  if (titleRow) titleRow.style.display = state.richMode ? '' : 'none';
+  // v20: title is always visible. richMode state preserved for backward compat
+  // with saved boards, but the UI no longer gates the title field. No-op.
 }
 
 function openEditor(id) {
@@ -1213,7 +1312,8 @@ function closeEditor(doSave) {
     const edBody = document.getElementById('ed-body');
     const edTitle = document.getElementById('ed-title');
     const body = edBody ? edBody.value.trim() : '';
-    const title = (state.richMode && edTitle) ? edTitle.value.trim() : '';
+    // Bug 4: always read title from DOM — never force-wipe based on a mode flag
+    const title = edTitle ? edTitle.value.trim() : '';
     if (!body && !title) {
       deleteThought(editingId);
     } else {
@@ -1240,8 +1340,9 @@ function setupEditorListeners() {
 
   edBody.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
-    // Enter saves only in classic (no-rich) mode; in rich mode Enter is newline
-    if (e.key === 'Enter' && !e.shiftKey && !state.richMode) { closeEditor(true); e.preventDefault(); }
+    // v20: title is always on. Body Enter = newline (multi-line thinking).
+    // Cmd/Ctrl+Enter = save. Matches rich editor conventions.
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { closeEditor(true); e.preventDefault(); }
   });
   edBody.addEventListener('input', () => {
     edBody.style.height = 'auto';
@@ -1251,7 +1352,10 @@ function setupEditorListeners() {
   if (edTitle) {
     edTitle.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') { closeEditor(false); e.preventDefault(); }
-      if (e.key === 'Enter') { closeEditor(true); e.preventDefault(); }
+      // Enter in title field: jump to body (not save). Thinking continues.
+      if (e.key === 'Enter') { edBody.focus(); e.preventDefault(); }
+      // Cmd/Ctrl+Enter from title also saves
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { closeEditor(true); e.preventDefault(); }
     });
   }
 }
@@ -1545,7 +1649,17 @@ window.addEventListener('mousemove', (e) => {
 
 const menuDrawer = document.getElementById('menu-drawer');
 const menuScrim = document.getElementById('menu-scrim');
-function openMenu() { menuDrawer.classList.add('open'); menuScrim.classList.add('open'); }
+function updateMenuHeader() {
+  const nameEl = document.getElementById('m-header-name');
+  const countEl = document.getElementById('m-header-count');
+  if (nameEl) nameEl.textContent = state.boardName || state.boardId || 'Board 1';
+  if (countEl) {
+    const n = state.thoughts.length;
+    const c = state.connections.length;
+    countEl.textContent = `${n} thought${n===1?'':'s'} · ${c} connection${c===1?'':'s'}`;
+  }
+}
+function openMenu() { updateMenuHeader(); hideIdleChip(); menuDrawer.classList.add('open'); menuScrim.classList.add('open'); }
 function closeMenu() { menuDrawer.classList.remove('open'); menuScrim.classList.remove('open'); }
 
 document.getElementById('menu-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); openMenu(); }, { passive:false });
@@ -1642,12 +1756,15 @@ document.getElementById('m-bulk').addEventListener('click', () => {
   closeMenu(); toast('+100');
 });
 
-document.getElementById('m-clear').addEventListener('click', () => {
+document.getElementById('m-clear').addEventListener('click', async () => {
   if (!confirm('clear all thoughts?')) return;
   state.thoughts = []; state.connections = [];
   while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
   while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
   thoughtMap.clear(); meshMap.clear();
+  // Bug 7: also purge thumbnail so cleared board doesn't show ghost preview
+  try { await del('atem-thumb-' + state.boardId); } catch(e) {}
+  try { localStorage.removeItem('atem-thumb-' + state.boardId); } catch(e) {}
   save(); closeMenu(); toast('cleared');
 });
 
@@ -1715,9 +1832,9 @@ const STARTER_BOARDS = [
       {id:'d9', text:'The real question underneath', position:[7,0,-1], color:'#f472b6', size:1.0},
     ],
     connections: [
-      ['d1','d2','path 1',true],['d1','d3','path 2',true],
-      ['d1','d4','rooted in',true],['d2','d5','costs',true],['d3','d6','frees',true],
-      ['d7','d1','blocks',true],['d8','d1','cuts through',true],['d9','d4','is actually',true],
+      ['d1','d2','path 1',true,'#fb923c'],['d1','d3','path 2',true,'#6ea8fe'],
+      ['d1','d4','rooted in',true,'#a78bfa'],['d2','d5','costs',true,'#f87171'],['d3','d6','frees',true,'#34d399'],
+      ['d7','d1','blocks',true,'#f87171'],['d8','d1','cuts through',true,'#67e8f9'],['d9','d4','is actually',true,'#f472b6'],
     ]
   },
   {
@@ -1738,9 +1855,9 @@ const STARTER_BOARDS = [
       {id:'b9', text:'The version I can\'t defend yet', position:[8,0,-3], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['b1','b2','because',true],['b1','b3','came from',true],['b1','b4','challenged by',false],
-      ['b4','b5','answered by',true],['b6','b1','falsified if',true],['b7','b2','supports',true],
-      ['b1','b8','implies',true],['b9','b1','edges into',true],
+      ['b1','b2','because',true,'#a78bfa'],['b1','b3','came from',true,'#67e8f9'],['b1','b4','challenged by',false,'#f87171'],
+      ['b4','b5','answered by',true,'#34d399'],['b6','b1','falsified if',true,'#fbbf24'],['b7','b2','supports',true,'#34d399'],
+      ['b1','b8','implies',true,'#fb923c'],['b9','b1','edges into',true,'#f472b6'],
     ]
   },
   {
@@ -1750,7 +1867,7 @@ const STARTER_BOARDS = [
     accent: '#fb923c',
     tags: ['reflection', 'learning'],
     thoughts: [
-      {id:'pm1', text:'What failed', position:[0,0,0], color:'#fb923c', size:1.4},
+      {id:'pm1', text:'What failed', position:[0,0,2], color:'#fb923c', size:1.4},
       {id:'pm2', text:'What I thought would happen', position:[-5,2,2], color:'#6ea8fe', size:1.0},
       {id:'pm3', text:'What actually happened', position:[5,2,-2], color:'#f87171', size:1.0},
       {id:'pm4', text:'What I controlled', position:[-5,-2,1], color:'#fbbf24', size:1.0},
@@ -1761,9 +1878,9 @@ const STARTER_BOARDS = [
       {id:'pm9', text:'The thing I\'m not saying', position:[8,0,-4], color:'#f87171', size:0.85},
     ],
     connections: [
-      ['pm2','pm3','became',true],['pm4','pm1','shaped',true],['pm5','pm1','shaped',true],
-      ['pm6','pm1','preceded',true],['pm7','pm4','changes',true],['pm8','pm5','lives in',false],
-      ['pm9','pm1','underlies',true],['pm2','pm1','vs',false],['pm1','pm3','became',true],
+      ['pm2','pm3','became',true,'#f87171'],['pm4','pm1','shaped',true,'#fbbf24'],['pm5','pm1','shaped',true,'#a78bfa'],
+      ['pm6','pm1','preceded',true,'#fb923c'],['pm7','pm4','changes',true,'#34d399'],['pm8','pm5','lives in',false,'#67e8f9'],
+      ['pm9','pm1','underlies',true,'#f87171'],['pm2','pm1','vs',false,'#a78bfa'],
     ]
   },
   {
@@ -1784,9 +1901,9 @@ const STARTER_BOARDS = [
       {id:'cr9', text:'The version I could finish this week', position:[7,0,0], color:'#34d399', size:0.9},
     ],
     connections: [
-      ['cr1','cr2','expressed in',true],['cr1','cr3','feels like',false],['cr4','cr1','nothing like',true],
-      ['cr5','cr2','shapes',true],['cr6','cr1','shaped by',true],['cr7','cr1','underneath',true],
-      ['cr8','cr7','is about',true],['cr9','cr2','starts with',true],
+      ['cr1','cr2','expressed in',true,'#f5c97a'],['cr1','cr3','feels like',false,'#34d399'],['cr4','cr1','nothing like',true,'#f87171'],
+      ['cr5','cr2','shapes',true,'#67e8f9'],['cr6','cr1','shaped by',true,'#a78bfa'],['cr7','cr1','underneath',true,'#a78bfa'],
+      ['cr8','cr7','is about',true,'#f472b6'],['cr9','cr2','starts with',true,'#34d399'],
     ]
   },
   {
@@ -1807,9 +1924,9 @@ const STARTER_BOARDS = [
       {id:'pe9', text:'The conversation we haven\'t had', position:[0,-5,-3], color:'#f472b6', size:0.9},
     ],
     connections: [
-      ['pe2','pe3','vs actual',false],['pe4','pe2','hides in',true],['pe5','pe3','explains',true],
-      ['pe6','pe5','formed',true],['pe7','pe2','because',true],['pe8','pe1','sees',true],
-      ['pe9','pe4','about',true],['pe1','pe2','claims',true],['pe1','pe4','fears',true],
+      ['pe2','pe3','vs actual',false,'#fbbf24'],['pe4','pe2','hides in',true,'#f87171'],['pe5','pe3','explains',true,'#34d399'],
+      ['pe6','pe5','formed',true,'#a78bfa'],['pe7','pe2','because',true,'#f5c97a'],['pe8','pe1','sees',true,'#34d399'],
+      ['pe9','pe4','about',true,'#f472b6'],['pe1','pe2','claims',true,'#6ea8fe'],['pe1','pe4','fears',true,'#f87171'],
     ]
   },
   {
@@ -1819,7 +1936,7 @@ const STARTER_BOARDS = [
     accent: '#34d399',
     tags: ['finance', 'thinking'],
     thoughts: [
-      {id:'tr1', text:'The thesis', position:[0,0,0], color:'#34d399', size:1.4},
+      {id:'tr1', text:'The thesis', position:[0,0,2], color:'#34d399', size:1.4},
       {id:'tr2', text:'Core assumption 1', position:[-5,2,2], color:'#6ea8fe', size:1.0},
       {id:'tr3', text:'Core assumption 2', position:[5,2,2], color:'#6ea8fe', size:1.0},
       {id:'tr4', text:'What makes me wrong', position:[0,4,4], color:'#f87171', size:1.1},
@@ -1830,10 +1947,10 @@ const STARTER_BOARDS = [
       {id:'tr9', text:'Am I trading the thesis or the emotion?', position:[8,0,-4], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['tr1','tr2','rests on',true],['tr1','tr3','rests on',true],
-      ['tr4','tr2','invalidates',true],['tr4','tr3','invalidates',true],
-      ['tr5','tr1','works against',true],['tr6','tr1','disputes',true],
-      ['tr7','tr1','ends',true],['tr8','tr1','confirms',true],['tr9','tr1','questions',true],
+      ['tr1','tr2','rests on',true,'#6ea8fe'],['tr1','tr3','rests on',true,'#6ea8fe'],
+      ['tr4','tr2','invalidates',true,'#f87171'],['tr4','tr3','invalidates',true,'#f87171'],
+      ['tr5','tr1','works against',true,'#fbbf24'],['tr6','tr1','disputes',true,'#a78bfa'],
+      ['tr7','tr1','ends',true,'#fb923c'],['tr8','tr1','confirms',true,'#34d399'],['tr9','tr1','questions',true,'#f472b6'],
     ]
   },
   {
@@ -1854,9 +1971,9 @@ const STARTER_BOARDS = [
       {id:'cv9', text:'The first sentence', position:[7,0,0], color:'#67e8f9', size:0.85},
     ],
     connections: [
-      ['cv1','cv2','begins with',true],['cv2','cv3','becomes',true],['cv4','cv2','hides in',true],
-      ['cv5','cv7','causes',true],['cv6','cv4','reveals',true],['cv7','cv8','leads to',true],
-      ['cv9','cv1','starts',true],['cv3','cv5','triggers',true],
+      ['cv1','cv2','begins with',true,'#6ea8fe'],['cv2','cv3','becomes',true,'#fb923c'],['cv4','cv2','hides in',true,'#34d399'],
+      ['cv5','cv7','causes',true,'#f87171'],['cv6','cv4','reveals',true,'#34d399'],['cv7','cv8','leads to',true,'#fbbf24'],
+      ['cv9','cv1','starts',true,'#67e8f9'],['cv3','cv5','triggers',true,'#f87171'],
     ]
   },
   {
@@ -1877,9 +1994,9 @@ const STARTER_BOARDS = [
       {id:'ih9', text:'Who I\'d be without it', position:[-8,0,-2], color:'#fb923c', size:0.85},
     ],
     connections: [
-      ['ih2','ih1','gave',true],['ih3','ih2','when',true],['ih1','ih4','still?',false],
-      ['ih1','ih5','protects by',true],['ih1','ih6','costs',true],['ih7','ih1','replaces',true],
-      ['ih8','ih7','means',true],['ih9','ih1','without',true],['ih4','ih7','or',true],
+      ['ih2','ih1','gave',true,'#a78bfa'],['ih3','ih2','when',true,'#a78bfa'],['ih1','ih4','still?',false,'#fbbf24'],
+      ['ih1','ih5','protects by',true,'#34d399'],['ih1','ih6','costs',true,'#f87171'],['ih7','ih1','replaces',true,'#67e8f9'],
+      ['ih8','ih7','means',true,'#f472b6'],['ih9','ih1','without',true,'#fb923c'],['ih4','ih7','or',true,'#fbbf24'],
     ]
   },
   {
@@ -1889,7 +2006,7 @@ const STARTER_BOARDS = [
     accent: '#6ea8fe',
     tags: ['learning', 'concepts'],
     thoughts: [
-      {id:'lrn1', text:'The thing I\'m learning', position:[0,0,0], color:'#6ea8fe', size:1.4},
+      {id:'lrn1', text:'The thing I\'m learning', position:[0,0,2], color:'#6ea8fe', size:1.4},
       {id:'lrn2', text:'What I already knew going in', position:[-5,2,-2], color:'#34d399', size:1.0},
       {id:'lrn3', text:'The part that clicked', position:[5,2,2], color:'#34d399', size:1.0},
       {id:'lrn4', text:'The part that still confuses me', position:[5,-2,-1], color:'#fbbf24', size:1.0},
@@ -1900,9 +2017,9 @@ const STARTER_BOARDS = [
       {id:'lrn9', text:'The first thing I\'d teach someone', position:[8,0,-2], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['lrn2','lrn1','builds on',true],['lrn1','lrn3','suddenly',true],['lrn1','lrn4','still unclear',true],
-      ['lrn5','lrn4','explains',true],['lrn3','lrn6','opens to',true],['lrn4','lrn7','deepens',true],
-      ['lrn7','lrn8','ask',true],['lrn3','lrn9','starts with',true],
+      ['lrn2','lrn1','builds on',true,'#34d399'],['lrn1','lrn3','suddenly',true,'#34d399'],['lrn1','lrn4','still unclear',true,'#fbbf24'],
+      ['lrn5','lrn4','explains',true,'#67e8f9'],['lrn3','lrn6','opens to',true,'#a78bfa'],['lrn4','lrn7','deepens',true,'#f87171'],
+      ['lrn7','lrn8','ask',true,'#fb923c'],['lrn3','lrn9','starts with',true,'#f472b6'],
     ]
   },
   {
@@ -1912,7 +2029,7 @@ const STARTER_BOARDS = [
     accent: '#34d399',
     tags: ['purpose', 'work'],
     thoughts: [
-      {id:'wk1', text:'The work', position:[0,0,0], color:'#34d399', size:1.4},
+      {id:'wk1', text:'The work', position:[0,0,2], color:'#34d399', size:1.4},
       {id:'wk2', text:'What I say it\'s about', position:[-5,2,2], color:'#6ea8fe', size:1.0},
       {id:'wk3', text:'What it\'s actually about', position:[5,2,-2], color:'#34d399', size:1.0},
       {id:'wk4', text:'Who I\'m doing it for', position:[0,5,3], color:'#f5c97a', size:1.0},
@@ -1923,9 +2040,9 @@ const STARTER_BOARDS = [
       {id:'wk9', text:'The version that doesn\'t need an audience', position:[9,0,-4], color:'#f472b6', size:0.85},
     ],
     connections: [
-      ['wk1','wk2','described as',true],['wk2','wk3','actually',true],['wk4','wk1','drives',true],
-      ['wk5','wk2','hides in',true],['wk6','wk3','closer to',true],['wk7','wk3','was',true],
-      ['wk8','wk1','aims at',true],['wk9','wk6','is',true],['wk5','wk8','also',false],
+      ['wk1','wk2','described as',true,'#6ea8fe'],['wk2','wk3','actually',true,'#34d399'],['wk4','wk1','drives',true,'#f5c97a'],
+      ['wk5','wk2','hides in',true,'#f87171'],['wk6','wk3','closer to',true,'#a78bfa'],['wk7','wk3','was',true,'#67e8f9'],
+      ['wk8','wk1','aims at',true,'#fb923c'],['wk9','wk6','is',true,'#f472b6'],['wk5','wk8','also',false,'#f87171'],
     ]
   },
 ];
@@ -1957,6 +2074,7 @@ async function getThumbnail(boardId) {
 }
 
 function openBoards() {
+  hideIdleChip();
   // Capture thumbnail of current board before opening
   const thumb = captureThumbnail();
   if (thumb) saveThumbnail(state.boardId, thumb);
@@ -2031,19 +2149,15 @@ boardsOverlay.addEventListener('click', (e) => { if (e.target === boardsOverlay)
 document.getElementById('m-boards').addEventListener('click', () => { closeMenu(); openBoards(); });
 
 // ─── Rich Mode Toggle ───
-
-document.getElementById('m-richmode').addEventListener('click', () => {
-  state.richMode = !state.richMode;
-  updateRichModeUI();
-  save(); closeMenu();
-  toast(state.richMode ? 'title field on' : 'title field off');
-});
+// v20: killed. Title field is now always visible in the editor.
+// state.richMode is left in place for backward compat with saved boards.
 
 // ─── Gallery UI ───
 
 const galleryOverlay = document.getElementById('gallery-overlay');
 
 function openGallery() {
+  hideIdleChip();
   renderGalleryCards();
   galleryOverlay.classList.add('open');
 }
@@ -2076,6 +2190,10 @@ function loadStarterBoard(board) {
   if (state.thoughts.length > 0) {
     if (!confirm(`Load "${board.name}"?\n\nThis replaces your current space. Export first to keep it.`)) return;
   }
+  // Close any open editors — editingId would point to a thought about to be cleared
+  if (editingId) closeEditor(false);
+  if (editingConnId) closeConnEditor();
+  hideIdleChip();
 
   while (thoughtGroup.children.length) thoughtGroup.remove(thoughtGroup.children[0]);
   while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
@@ -2091,14 +2209,13 @@ function loadStarterBoard(board) {
     props: {}
   }));
 
-  state.connections = board.connections.map(([from, to, label, directed]) => {
-    // Use preset color if label matches, otherwise board accent
-    const preset = CONN_PRESETS.find(p => p.label === label);
+  // Bug 2: 5-tuple destructure [from, to, label, directed, color]
+  state.connections = board.connections.map(([from, to, label, directed, color]) => {
     return {
       id: uid(),
       from, to,
       label: label || null,
-      color: preset ? preset.color : board.accent,
+      color: color || board.accent,
       directed: directed || false,
       created: now
     };
@@ -2107,12 +2224,31 @@ function loadStarterBoard(board) {
   for (const t of state.thoughts) addThoughtMesh(t);
   rebuildMaps();
   rebuildConnections();
-  save();
   hideHint();
 
-  camera.position.set(0, 0, 22);
+  // Bug 10: dynamic camera distance — max(22, maxR * 1.9)
+  let maxR = 0;
+  for (const t of state.thoughts) {
+    const r = Math.hypot(t.position[0], t.position[1], t.position[2]);
+    if (r > maxR) maxR = r;
+  }
+  const camDist = Math.max(22, maxR * 1.9);
+  camera.position.set(0, 0, camDist);
   controls.target.set(0, 0, 0);
   needsRender = true;
+
+  // Bug 8: update board slot registry (name, count, updated) — persist metadata
+  state.boardName = board.name;
+  save();
+  getBoardRegistry().then(async reg => {
+    const slot = reg.find(b => b.id === state.boardId);
+    if (slot) {
+      slot.name = board.name;
+      slot.count = state.thoughts.length;
+      slot.updated = Date.now();
+      try { await set('atem-boards', reg); } catch(e) {}
+    }
+  });
 
   closeGallery();
   toast(`"${board.name}" loaded`);
@@ -2128,6 +2264,31 @@ document.getElementById('m-gallery').addEventListener('click', () => { closeMenu
 
 function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'), 1800); }
 function hideHint() { if (!hintVisible) return; hintVisible = false; const h = document.getElementById('hint'); h.style.opacity = '0'; setTimeout(()=>h.style.display='none', 800); }
+
+// Idle chip: surfaces gallery as an option after 10s of stillness on fresh state.
+// Not onboarding chrome — just a quiet suggestion. Teach by exemplar.
+let idleChipShown = false;
+let idleChipArmed = false;
+function startIdleChip() {
+  idleChipArmed = true;
+  const chip = document.getElementById('idle-chip');
+  if (!chip) return;
+  chip.onclick = () => { hideIdleChip(); openGallery(); };
+  setTimeout(() => {
+    if (!idleChipArmed) return;
+    // Only show if user still on the bible demo (bible has 19 nodes)
+    if (state.thoughts.length > 19) return;
+    chip.classList.add('show');
+    idleChipShown = true;
+  }, 10000);
+}
+function hideIdleChip() {
+  idleChipArmed = false;
+  if (!idleChipShown) return;
+  const chip = document.getElementById('idle-chip');
+  if (chip) chip.classList.remove('show');
+  idleChipShown = false;
+}
 
 // ═══════════════════════════════════════════
 // ANIMATION
@@ -2168,6 +2329,20 @@ function animate() {
     const co = mesh.material.opacity;
     mesh.material.opacity += (ud.targetOpacity-co)*0.08;
 
+    // Joy layer 1: damped bounce on creation. 1.0 → 1.15 → 1.0 over ~300ms.
+    if (ud.bounceStart) {
+      const elapsed = now - ud.bounceStart;
+      if (elapsed >= 300) {
+        ud.bounceStart = 0;
+        mesh.scale.setScalar(ud.baseSize || 1.0);
+      } else {
+        const t = elapsed / 300;
+        const mult = 1 + 0.15 * Math.sin(Math.PI * t);
+        mesh.scale.setScalar((ud.baseSize || 1.0) * mult);
+        hasAnim = true;
+      }
+    }
+
     const label = mesh.getObjectByName('label');
     if (label) {
       const inView = frustum.containsPoint(mesh.position);
@@ -2201,28 +2376,30 @@ window.addEventListener('resize', () => {
   animate();
 
   if (state.thoughts.length === 0) {
-    // Fresh state: show gallery so they pick a starting point
-    // Bible demo is now board #0 — "the claim"
+    // Fresh state: inject Atem Bible demo so the screen is never empty.
+    // Bug 9: z-axis must be used. The claim is the front centroid (z=0 for focus);
+    // primitives cluster is pulled forward (z>0), cognitive-science group pushed back (z<0),
+    // hypotheses/stages fan high and slightly back — 3D is the point.
     const BIBLE = [
       {id:'claim',text:'The claim',position:[0,0,0],color:'#b8a9f5',size:1.4},
-      {id:'soul',text:'The soul',position:[-2,1.5,0],color:'#b8a9f5',size:1.1},
-      {id:'medium',text:'Medium, not tool',position:[-4,0.5,0],color:'#b8a9f5',size:1.0},
-      {id:'joy',text:'Joyful',position:[4,0.5,0],color:'#b8a9f5',size:0.9},
-      {id:'cheap',text:'Cheap',position:[4,-1,0],color:'#b8a9f5',size:0.8},
-      {id:'fundamental',text:'Fundamental',position:[-4,-1,0],color:'#b8a9f5',size:0.9},
-      {id:'sensitive',text:'Sensitive',position:[0,-2.5,0],color:'#b8a9f5',size:0.8},
-      {id:'space',text:'1. Space',position:[-8,-4,0],color:'#7ed4a4',size:1.3},
-      {id:'thought2',text:'2. Thought',position:[-8,-1,0],color:'#7ed4a4',size:1.3},
-      {id:'conn3',text:'3. Connection',position:[-8,2.5,0],color:'#7ed4a4',size:1.3},
-      {id:'density',text:'Density',position:[-10,4,0],color:'#7ed4a4',size:1.0},
-      {id:'empty',text:'Empty screen',position:[-11,-5.5,0],color:'#7ed4a4',size:0.9},
-      {id:'complete',text:'Three is complete',position:[-5,-2.5,0],color:'#7ed4a4',size:0.85},
-      {id:'spatial',text:'Spatial cognition',position:[8,-5.5,0],color:'#7ab8f5',size:1.0},
-      {id:'external',text:'Extended cognition',position:[11,-4,0],color:'#7ab8f5',size:0.9},
-      {id:'flow',text:'Flow conditions',position:[8,-2.5,0],color:'#7ab8f5',size:1.0},
-      {id:'s1',text:'Stage 1: Presets',position:[-2.5,7,0],color:'#f5c97a',size:1.2},
-      {id:'s2',text:'Stage 2: Prompting',position:[1.5,8,0],color:'#f5c97a',size:1.05},
-      {id:'s3',text:'Stage 3: Code',position:[5.5,7,0],color:'#f5c97a',size:1.05},
+      {id:'soul',text:'The soul',position:[-2,1.5,1.5],color:'#b8a9f5',size:1.1},
+      {id:'medium',text:'Medium, not tool',position:[-4,0.5,2],color:'#b8a9f5',size:1.0},
+      {id:'joy',text:'Joyful',position:[4,0.5,2],color:'#b8a9f5',size:0.9},
+      {id:'cheap',text:'Cheap',position:[4,-1,1.5],color:'#b8a9f5',size:0.8},
+      {id:'fundamental',text:'Fundamental',position:[-4,-1,1.5],color:'#b8a9f5',size:0.9},
+      {id:'sensitive',text:'Sensitive',position:[0,-2.5,2],color:'#b8a9f5',size:0.8},
+      {id:'space',text:'1. Space',position:[-8,-4,3],color:'#7ed4a4',size:1.3},
+      {id:'thought2',text:'2. Thought',position:[-8,-1,3],color:'#7ed4a4',size:1.3},
+      {id:'conn3',text:'3. Connection',position:[-8,2.5,3],color:'#7ed4a4',size:1.3},
+      {id:'density',text:'Density',position:[-10,4,2.5],color:'#7ed4a4',size:1.0},
+      {id:'empty',text:'Empty screen',position:[-11,-5.5,2],color:'#7ed4a4',size:0.9},
+      {id:'complete',text:'Three is complete',position:[-5,-2.5,2.5],color:'#7ed4a4',size:0.85},
+      {id:'spatial',text:'Spatial cognition',position:[8,-5.5,-3],color:'#7ab8f5',size:1.0},
+      {id:'external',text:'Extended cognition',position:[11,-4,-3],color:'#7ab8f5',size:0.9},
+      {id:'flow',text:'Flow conditions',position:[8,-2.5,-2.5],color:'#7ab8f5',size:1.0},
+      {id:'s1',text:'Stage 1: Presets',position:[-2.5,7,-2],color:'#f5c97a',size:1.2},
+      {id:'s2',text:'Stage 2: Prompting',position:[1.5,8,-2.5],color:'#f5c97a',size:1.05},
+      {id:'s3',text:'Stage 3: Code',position:[5.5,7,-2],color:'#f5c97a',size:1.05},
     ];
     const BCONNS = [
       ['claim','soul','why it matters'],['claim','medium','what it is'],['claim','fundamental','how'],
@@ -2247,16 +2424,17 @@ window.addEventListener('resize', () => {
     rebuildConnections();
     await save();
     hideHint();
+    // Bug 10 rationale applied here too — the bible spreads to ±11
     camera.position.set(0, 0, 24);
     controls.target.set(0, 0, 0);
-    // Open gallery after a beat so they see what atem looks like first
-    setTimeout(() => openGallery(), 1200);
+    // Gallery polish: DO NOT force-open. Instead, surface a subtle chip after 10s of idle.
+    startIdleChip();
   }
 })();
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v18 — boards + rich notes + directed connections');
+console.log('atem v20 — unified labels, joy layer, debounced sync, fixed arrows');
 </script>
 </body>
 </html>
