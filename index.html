@@ -11,447 +11,504 @@
 <title>atem</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
+:root{
+  /* ── ink scale (monochromatic, warm-shifted) ──────────────────────── */
+  --void:#0a0908;                     /* canvas */
+  --panel:#141210;                    /* surface (editor, drawer, overlays) */
+  --hairline:rgba(232,230,225,0.06);
+  --hairline-strong:rgba(232,230,225,0.14);
+  --ink:#e8e6e1;                      /* primary text */
+  --ink-soft:rgba(232,230,225,0.62);
+  --ink-faint:rgba(232,230,225,0.34);
+  --ink-ghost:rgba(232,230,225,0.18);
+  --ink-trace:rgba(232,230,225,0.08);
+  /* ── single accent — used only for the focused/active element ─────── */
+  --accent:#d8a35a;                   /* warm amber, attention only */
+  --accent-soft:rgba(216,163,90,0.16);
+  /* ── danger (destructive only) ────────────────────────────────────── */
+  --danger:rgba(196,90,82,0.90);
+  /* ── type ─────────────────────────────────────────────────────────── */
+  --sans:'Inter','-apple-system','BlinkMacSystemFont','Segoe UI',sans-serif;
+  /* ── motion ───────────────────────────────────────────────────────── */
+  --t:220ms;
+  --e:cubic-bezier(0.32,0.72,0,1);
+}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:#fff}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:var(--void);
+  font-family:var(--sans);color:var(--ink);
+  font-feature-settings:'cv11','ss01','ss03';
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 
-/* ─── Editor ─── */
+/* ─── Editor — one field, blur saves ──────────────────────────────── */
 #editor{
   position:fixed;display:none;z-index:100;
-  left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(340px,88vw);
+  left:50%;top:50%;transform:translate(-50%,-50%) scale(0.985);
+  width:min(380px,86vw);
   max-height:calc(100vh - 80px);
   max-height:calc(100dvh - 80px);
   overflow-y:auto;-webkit-overflow-scrolling:touch;
-  background:rgba(10,10,15,0.95);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:16px;padding:16px;
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  background:var(--panel);
+  border:1px solid var(--hairline);
+  border-radius:6px;padding:18px 18px 12px;
+  box-shadow:0 24px 60px -24px rgba(0,0,0,0.65);
+  opacity:0;
+  transition:opacity var(--t) var(--e), transform var(--t) var(--e);
 }
-#editor.open{display:block}
+#editor.open{display:block;opacity:1;transform:translate(-50%,-50%) scale(1)}
 #editor textarea{
   -webkit-user-select:text;user-select:text;
-  width:100%;min-height:80px;max-height:200px;
+  width:100%;min-height:96px;max-height:240px;
   background:transparent;border:none;outline:none;
-  color:#fff;font-size:16px;line-height:1.5;
-  font-family:inherit;resize:none;
+  color:var(--ink);font-size:15px;line-height:1.55;
+  font-family:var(--sans);font-weight:400;resize:none;
+  letter-spacing:-0.005em;
 }
-#editor textarea::placeholder{color:rgba(255,255,255,0.25)}#ed-color-btn{
-  width:20px;height:20px;border-radius:50%;
-  border:1.5px solid rgba(255,255,255,0.2);
-  cursor:pointer;position:absolute;top:16px;right:16px;
-  transition:transform 0.15s;z-index:5;
+#editor textarea::placeholder{color:var(--ink-ghost);font-style:normal}
+#ed-color-btn{
+  width:8px;height:8px;border-radius:50%;
+  border:none;
+  cursor:pointer;position:absolute;top:24px;right:18px;
+  transition:transform var(--t) var(--e);z-index:5;
+  box-shadow:0 0 0 1px var(--hairline-strong);
 }
+#ed-color-btn:hover{transform:scale(1.4)}
 #ed-color-btn:active{transform:scale(0.9)}
 #ed-color-palette{
-  position:absolute;top:42px;right:16px;
-  background:rgba(15,15,20,0.98);border:1px solid rgba(255,255,255,0.1);
-  border-radius:12px;padding:8px;display:none;gap:6px;
-  backdrop-filter:blur(20px);z-index:10;
+  position:absolute;top:38px;right:18px;
+  background:var(--panel);border:1px solid var(--hairline);
+  border-radius:5px;padding:8px;display:none;gap:6px;
+  z-index:10;
+  box-shadow:0 10px 30px -10px rgba(0,0,0,0.7);
 }
-#ed-color-palette.open{display:flex}
+#ed-color-palette.open{display:flex;flex-wrap:wrap;width:148px}
 .ed-color-swatch{
-  width:28px;height:28px;border-radius:50%;cursor:pointer;
-  border:2px solid rgba(255,255,255,0.15);transition:transform 0.1s;
+  width:18px;height:18px;border-radius:50%;cursor:pointer;
+  border:none;transition:transform var(--t) var(--e);
+  box-shadow:0 0 0 1px var(--hairline);
 }
-.ed-color-swatch:active{transform:scale(0.85)}
+.ed-color-swatch:hover{transform:scale(1.15)}
 #editor-actions{
-  display:flex;justify-content:flex-end;gap:8px;
-  margin-top:12px;padding-top:12px;
-  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex;justify-content:flex-end;gap:0;
+  margin-top:10px;padding-top:8px;
+  border-top:1px solid var(--hairline);
 }
 #editor-actions button{
-  background:rgba(255,255,255,0.08);border:none;
-  color:rgba(255,255,255,0.7);font-size:13px;
-  padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit;
+  background:transparent;border:none;
+  color:var(--ink-faint);font-size:12px;
+  padding:6px 10px;border-radius:3px;cursor:pointer;
+  font-family:var(--sans);font-weight:400;
+  letter-spacing:0;
+  transition:color var(--t) var(--e);
 }
-#editor-actions button:active{background:rgba(255,255,255,0.15)}
-#editor-actions .save{color:#fff;background:rgba(255,255,255,0.15)}
-#del-btn{color:rgba(255,100,100,0.8)}
+#editor-actions button:hover{color:var(--ink)}
+#editor-actions .save{color:var(--accent)}
+#editor-actions .save:hover{color:var(--accent)}
+#del-btn{color:var(--danger)!important;margin-right:auto}
+#del-btn:hover{opacity:0.8}
 
-/* ─── Connection editor ─── */
+/* ─── Connection editor ──────────────────────────────────────────── */
 #conn-editor{
   position:fixed;display:none;z-index:120;
-  left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(320px,88vw);
-  background:rgba(10,10,15,0.96);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:16px;padding:14px;
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  left:50%;top:50%;transform:translate(-50%,-50%) scale(0.985);
+  width:min(360px,86vw);
+  background:var(--panel);
+  border:1px solid var(--hairline);
+  border-radius:6px;padding:16px 18px 12px;
+  box-shadow:0 24px 60px -24px rgba(0,0,0,0.65);
+  opacity:0;
+  transition:opacity var(--t) var(--e), transform var(--t) var(--e);
 }
-#conn-editor.open{display:block}
-#conn-editor-title{font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:10px;letter-spacing:0.05em}
-#conn-preset-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+#conn-editor.open{display:block;opacity:1;transform:translate(-50%,-50%) scale(1)}
+#conn-editor-title{font-family:var(--sans);font-size:11px;color:var(--ink-faint);margin-bottom:10px;letter-spacing:0;font-weight:500}
+#conn-preset-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
 .conn-preset{
-  padding:5px 10px;border-radius:14px;font-size:11px;
-  border:1px solid rgba(255,255,255,0.1);cursor:pointer;
-  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);
-  transition:all 0.12s;white-space:nowrap;font-family:inherit;
+  padding:4px 9px;border-radius:3px;font-size:12px;
+  border:1px solid var(--hairline);cursor:pointer;
+  background:transparent;color:var(--ink-soft);
+  transition:color var(--t) var(--e), border-color var(--t) var(--e);
+  white-space:nowrap;
+  font-family:var(--sans);font-weight:400;letter-spacing:0;
 }
-.conn-preset:active{transform:scale(0.95)}
-.conn-preset.active{border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.08)}
+.conn-preset:hover{color:var(--ink);border-color:var(--hairline-strong)}
+.conn-preset.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 #conn-custom-input{
   width:100%;background:transparent;border:none;
-  border-bottom:1px solid rgba(255,255,255,0.1);
-  color:#fff;font-size:13px;padding:6px 0;outline:none;
-  font-family:inherit;margin-bottom:10px;
+  border-bottom:1px solid var(--hairline);
+  color:var(--ink);font-size:14px;padding:6px 0;outline:none;
+  font-family:var(--sans);font-weight:400;margin-bottom:12px;
   -webkit-user-select:text;user-select:text;
 }
-#conn-custom-input::placeholder{color:rgba(255,255,255,0.2)}
-#conn-color-row{display:flex;gap:6px;margin-bottom:12px;align-items:center}
+#conn-custom-input::placeholder{color:var(--ink-ghost)}
+#conn-color-row{display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
 #conn-color-row .conn-cswatch{
-  width:22px;height:22px;border-radius:50%;cursor:pointer;
-  border:2px solid rgba(255,255,255,0.1);transition:transform 0.1s;
+  width:14px;height:14px;border-radius:50%;cursor:pointer;
+  border:none;
+  transition:transform var(--t) var(--e);
+  box-shadow:0 0 0 1px var(--hairline);
 }
-#conn-color-row .conn-cswatch:active{transform:scale(0.85)}
-#conn-color-row .conn-cswatch.active{border-color:rgba(255,255,255,0.5)}
-#conn-editor-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)}
+#conn-color-row .conn-cswatch:hover{transform:scale(1.2)}
+#conn-color-row .conn-cswatch.active{box-shadow:0 0 0 1px var(--ink),0 0 0 3px var(--panel)}
+#conn-editor-actions{display:flex;justify-content:flex-end;gap:0;padding-top:8px;border-top:1px solid var(--hairline)}
 #conn-editor-actions button{
-  background:rgba(255,255,255,0.08);border:none;
-  color:rgba(255,255,255,0.7);font-size:13px;
-  padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit;
+  background:transparent;border:none;
+  color:var(--ink-faint);font-size:12px;
+  padding:6px 10px;border-radius:3px;cursor:pointer;
+  font-family:var(--sans);letter-spacing:0;
+  transition:color var(--t) var(--e);
 }
-#conn-editor-actions button:active{background:rgba(255,255,255,0.15)}
-#conn-editor-actions .conn-del-btn{color:rgba(255,100,100,0.8)}
-#conn-editor-actions .conn-done-btn{color:#fff;background:rgba(255,255,255,0.15)}
+#conn-editor-actions button:hover{color:var(--ink)}
+#conn-editor-actions .conn-del-btn{color:var(--danger)!important;margin-right:auto}
+#conn-editor-actions .conn-del-btn:hover{opacity:0.8}
+#conn-editor-actions .conn-done-btn{color:var(--accent)}
 
-/* ─── Menu button (bottom-center) ─── */
+/* ─── Menu trigger — minimal dot, no brand wordmark ─────────────── */
 #menu-btn{
   position:fixed;
-  bottom:max(24px,env(safe-area-inset-bottom,0px));
+  bottom:max(20px,env(safe-area-inset-bottom,0px));
   left:50%;transform:translateX(-50%);
-  width:48px;height:48px;border-radius:50%;
-  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  width:36px;height:36px;border-radius:50%;
+  background:transparent;border:none;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;z-index:90;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-size:0;color:transparent;
+  transition:transform var(--t) var(--e);
 }
-#menu-btn:active{background:rgba(255,255,255,0.15)}
-#menu-btn svg{width:16px;height:16px;opacity:0.6;pointer-events:none}
+#menu-btn::before{
+  content:'';
+  width:6px;height:6px;border-radius:50%;
+  background:var(--ink-faint);
+  transition:background var(--t) var(--e), transform var(--t) var(--e);
+}
+#menu-btn:hover::before{background:var(--ink-soft);transform:scale(1.4)}
+#menu-btn:active::before{background:var(--ink)}
 
-/* ─── Menu drawer ─── */
-#menu-scrim{position:fixed;inset:0;z-index:9989;display:none;background:rgba(0,0,0,0.4)}
-#menu-scrim.open{display:block}
+/* ─── Menu drawer ──────────────────────────────────────────────── */
+#menu-scrim{position:fixed;inset:0;z-index:9989;display:none;background:rgba(0,0,0,0.45);opacity:0;transition:opacity var(--t) var(--e)}
+#menu-scrim.open{display:block;opacity:1}
 #menu-drawer{
   position:fixed;top:0;left:0;bottom:0;
-  width:min(260px,80vw);
-  background:rgba(10,10,15,0.97);
-  border-right:1px solid rgba(255,255,255,0.08);
+  width:min(280px,82vw);
+  background:var(--panel);
+  border-right:1px solid var(--hairline);
   z-index:9990;
   transform:translateX(-100%);
-  transition:transform 0.25s cubic-bezier(0.32,0.72,0,1);
+  transition:transform var(--t) var(--e);
   display:flex;flex-direction:column;
-  padding:max(16px,env(safe-area-inset-top,0px)) 0 max(16px,env(safe-area-inset-bottom,0px));
+  padding:max(20px,env(safe-area-inset-top,0px)) 0 max(16px,env(safe-area-inset-bottom,0px));
   overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 #menu-drawer.open{transform:translateX(0)}
 #menu-drawer .menu-header{
-  padding:4px 16px 14px;margin-bottom:4px;
-  border-bottom:1px solid rgba(255,255,255,0.05);
-}
-#menu-drawer .menu-header .mh-label{
-  font-size:9px;color:rgba(255,255,255,0.25);
-  letter-spacing:0.14em;text-transform:uppercase;
-  margin-bottom:4px;
+  padding:4px 18px 16px;margin-bottom:6px;
+  border-bottom:1px solid var(--hairline);
 }
 #menu-drawer .menu-header .mh-name{
-  font-size:15px;color:rgba(255,255,255,0.85);
-  font-weight:500;letter-spacing:0.01em;
+  font-family:var(--sans);font-weight:500;
+  font-size:15px;color:var(--ink);
+  letter-spacing:-0.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 #menu-drawer .menu-header .mh-count{
-  font-size:11px;color:rgba(255,255,255,0.35);
-  margin-top:2px;font-variant-numeric:tabular-nums;
+  font-size:11px;color:var(--ink-faint);
+  margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:0;
+  font-weight:400;
 }
+#menu-drawer .menu-header .mh-label{display:none}
 #menu-drawer .sep{
-  margin:6px 16px;font-size:10px;color:rgba(255,255,255,0.15);
-  letter-spacing:0.12em;text-transform:uppercase;padding-top:8px;
+  height:1px;background:var(--hairline);
+  margin:6px 18px;
 }
 #menu-drawer button{
   display:flex;align-items:center;
   width:100%;text-align:left;background:none;border:none;
-  color:rgba(255,255,255,0.55);font-size:13px;
-  padding:11px 16px;cursor:pointer;font-family:inherit;
+  color:var(--ink-soft);font-size:13px;
+  padding:9px 18px;cursor:pointer;
+  font-family:var(--sans);font-weight:400;
+  letter-spacing:-0.005em;
+  transition:color var(--t) var(--e), background var(--t) var(--e);
 }
-#menu-drawer button:active{background:rgba(255,255,255,0.05)}
-#menu-drawer .danger{color:rgba(255,100,100,0.55)}
-/* iOS-style pill toggle (replaces old 7px dot) */
+#menu-drawer button:hover{color:var(--ink);background:var(--ink-trace)}
+#menu-drawer .danger{color:var(--danger)}
+#menu-drawer .danger:hover{color:var(--danger);opacity:0.85}
+/* iOS-style pill toggle */
 #menu-drawer .pill{
-  width:30px;height:18px;border-radius:999px;
-  background:rgba(255,255,255,0.12);margin-left:auto;flex-shrink:0;
-  position:relative;transition:background 0.18s ease;
+  width:28px;height:16px;border-radius:999px;
+  background:var(--hairline-strong);
+  margin-left:auto;flex-shrink:0;
+  position:relative;transition:background var(--t) var(--e);
 }
 #menu-drawer .pill::after{
   content:'';position:absolute;top:2px;left:2px;
-  width:14px;height:14px;border-radius:50%;
-  background:rgba(255,255,255,0.92);
-  transition:transform 0.18s cubic-bezier(0.32,0.72,0,1);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--ink-soft);
+  transition:transform var(--t) var(--e), background var(--t) var(--e);
 }
-#menu-drawer .pill.on{background:rgba(110,168,254,0.9)}
-#menu-drawer .pill.on::after{transform:translateX(12px)}
+#menu-drawer .pill.on{background:var(--accent)}
+#menu-drawer .pill.on::after{transform:translateX(12px);background:var(--ink)}
 
-/* ─── Lasso ─── */
-#lasso-rect{position:fixed;display:none;z-index:70;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.03);pointer-events:none;border-radius:2px}
+/* ─── Lasso ────────────────────────────────────────────────────── */
+#lasso-rect{position:fixed;display:none;z-index:70;border:1px solid var(--ink-faint);background:rgba(232,230,225,0.04);pointer-events:none;border-radius:2px}
 #lasso-bar{
   position:fixed;display:none;z-index:110;
-  bottom:max(84px,calc(env(safe-area-inset-bottom,0px)+76px));
+  bottom:max(72px,calc(env(safe-area-inset-bottom,0px)+64px));
   left:50%;transform:translateX(-50%);
-  background:rgba(10,10,15,0.95);border:1px solid rgba(255,255,255,0.1);
-  border-radius:12px;padding:6px;
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);gap:4px;
+  background:var(--panel);border:1px solid var(--hairline);
+  border-radius:5px;padding:4px;gap:0;
+  box-shadow:0 10px 30px -10px rgba(0,0,0,0.7);
 }
 #lasso-bar.open{display:flex}
 #lasso-bar button{
-  background:rgba(255,255,255,0.06);border:none;color:rgba(255,255,255,0.7);
-  font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;
+  background:transparent;border:none;color:var(--ink-soft);
+  font-size:13px;padding:6px 12px;border-radius:3px;cursor:pointer;
+  font-family:var(--sans);font-weight:400;letter-spacing:-0.005em;white-space:nowrap;
+  transition:color var(--t) var(--e);
 }
-#lasso-bar button:active{background:rgba(255,255,255,0.12)}
+#lasso-bar button:hover{color:var(--ink)}
 
-/* ─── Starter Gallery ─── */
+/* ─── Starter Gallery ──────────────────────────────────────────── */
 #gallery-overlay{
   position:fixed;inset:0;z-index:9995;display:none;
-  background:rgba(0,0,0,0.92);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background:rgba(10,9,8,0.97);
   flex-direction:column;
-  padding:max(20px,env(safe-area-inset-top,0px)) 0 max(20px,env(safe-area-inset-bottom,0px));
+  padding:max(28px,env(safe-area-inset-top,0px)) 0 max(20px,env(safe-area-inset-bottom,0px));
+  opacity:0;transition:opacity var(--t) var(--e);
 }
-#gallery-overlay.open{display:flex}
+#gallery-overlay.open{display:flex;opacity:1}
 #gallery-header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:4px 24px 20px;flex-shrink:0;
+  padding:0 28px 24px;flex-shrink:0;
 }
-#gallery-title{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase}
+#gallery-title{font-family:var(--sans);font-size:14px;color:var(--ink);font-weight:500;letter-spacing:-0.01em}
 #gallery-close{
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-  color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;
-  padding:6px 14px;border-radius:8px;font-family:inherit;
+  background:transparent;border:none;
+  color:var(--ink-faint);font-size:13px;cursor:pointer;
+  padding:6px 10px;border-radius:3px;font-family:var(--sans);
+  transition:color var(--t) var(--e);
 }
-#gallery-close:active{background:rgba(255,255,255,0.12);color:#fff}
+#gallery-close:hover{color:var(--ink)}
 #gallery-grid{
   overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:0 20px 20px;
+  padding:0 28px 28px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));
+  grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));
   gap:12px;
   align-content:start;
 }
 .gcard{
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:16px;padding:20px;
-  cursor:pointer;transition:all 0.15s;
+  background:transparent;
+  border:1px solid var(--hairline);
+  border-radius:6px;padding:18px 20px 16px;
+  cursor:pointer;
+  transition:border-color var(--t) var(--e), background var(--t) var(--e);
   position:relative;overflow:hidden;
 }
-.gcard::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--accent);opacity:0.7;
-  border-radius:16px 16px 0 0;
-}
-.gcard:active{transform:scale(0.97);background:rgba(255,255,255,0.06)}
+.gcard:hover{border-color:var(--hairline-strong);background:var(--ink-trace)}
 .gcard-name{
-  font-size:15px;color:rgba(255,255,255,0.9);
-  margin-bottom:8px;line-height:1.3;font-weight:400;
+  font-family:var(--sans);font-weight:500;
+  font-size:15px;color:var(--ink);
+  margin-bottom:6px;line-height:1.3;
+  letter-spacing:-0.01em;
 }
-.gcard-desc{font-size:12px;color:rgba(255,255,255,0.35);line-height:1.6}
+.gcard-desc{font-family:var(--sans);font-size:13px;color:var(--ink-faint);line-height:1.5;letter-spacing:-0.005em}
 .gcard-meta{
-  display:flex;gap:6px;margin-top:14px;align-items:center;
+  display:flex;gap:8px;margin-top:14px;align-items:center;
 }
 .gcard-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--accent);opacity:0.6;flex-shrink:0;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);opacity:0.7;flex-shrink:0;
 }
-.gcard-nodes{font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:0.05em}
+.gcard-nodes{font-family:var(--sans);font-size:11px;color:var(--ink-ghost);letter-spacing:0;font-weight:400}
 
-/* ─── Board Slots ─── */
+/* ─── Board Slots ──────────────────────────────────────────────── */
 #boards-overlay{
   position:fixed;inset:0;z-index:9993;display:none;
-  background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background:rgba(10,9,8,0.97);
   flex-direction:column;
-  padding:max(20px,env(safe-area-inset-top,0px)) 0 max(20px,env(safe-area-inset-bottom,0px));
+  padding:max(28px,env(safe-area-inset-top,0px)) 0 max(20px,env(safe-area-inset-bottom,0px));
+  opacity:0;transition:opacity var(--t) var(--e);
 }
-#boards-overlay.open{display:flex}
+#boards-overlay.open{display:flex;opacity:1}
 #boards-header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:4px 24px 20px;flex-shrink:0;
+  padding:0 28px 24px;flex-shrink:0;
 }
-#boards-heading{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase}
+#boards-heading{font-family:var(--sans);font-size:14px;color:var(--ink);font-weight:500;letter-spacing:-0.01em}
 #boards-close{
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-  color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;
-  padding:6px 14px;border-radius:8px;font-family:inherit;
+  background:transparent;border:none;
+  color:var(--ink-faint);font-size:13px;cursor:pointer;
+  padding:6px 10px;border-radius:3px;font-family:var(--sans);
+  transition:color var(--t) var(--e);
 }
-#boards-close:active{background:rgba(255,255,255,0.12)}
+#boards-close:hover{color:var(--ink)}
 #boards-grid{
   overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:0 20px 20px;
+  padding:0 28px 28px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(min(180px,45vw),1fr));
+  grid-template-columns:repeat(auto-fill,minmax(min(220px,46vw),1fr));
   gap:12px;align-content:start;
 }
 .bcard{
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px;overflow:hidden;cursor:pointer;
-  transition:all 0.15s;
+  background:transparent;
+  border:1px solid var(--hairline);
+  border-radius:6px;overflow:hidden;cursor:pointer;
+  transition:border-color var(--t) var(--e);
 }
-.bcard.active{border-color:rgba(110,168,254,0.5)}
-.bcard:active{transform:scale(0.97)}
+.bcard.active{border-color:var(--accent)}
+.bcard:hover{border-color:var(--hairline-strong)}
+.bcard.active:hover{border-color:var(--accent)}
 .bcard-thumb{
   width:100%;aspect-ratio:16/10;
-  background:#050508;
+  background:var(--void);
   position:relative;overflow:hidden;
+  border-bottom:1px solid var(--hairline);
 }
 .bcard-thumb canvas{width:100%!important;height:100%!important;object-fit:cover}
 .bcard-thumb-empty{
   width:100%;height:100%;
   display:flex;align-items:center;justify-content:center;
-  color:rgba(255,255,255,0.08);font-size:11px;letter-spacing:0.08em;
+  color:var(--ink-ghost);font-family:var(--sans);font-size:12px;letter-spacing:0;
 }
 .bcard-info{padding:10px 12px 12px}
 .bcard-name{
-  font-size:13px;color:rgba(255,255,255,0.8);
+  font-family:var(--sans);font-weight:500;
+  font-size:13px;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  margin-bottom:3px;
+  margin-bottom:2px;letter-spacing:-0.005em;
 }
-.bcard.active .bcard-name{color:#6ea8fe}
-.bcard-count{font-size:11px;color:rgba(255,255,255,0.22)}
+.bcard.active .bcard-name{color:var(--accent)}
+.bcard-count{font-family:var(--sans);font-size:11px;color:var(--ink-ghost);font-weight:400}
 .bcard-rename{
   display:block;width:100%;text-align:left;
-  background:none;border:none;border-top:1px solid rgba(255,255,255,0.05);
-  color:rgba(255,255,255,0.2);font-size:11px;
-  cursor:pointer;padding:7px 12px;font-family:inherit;
-  transition:color 0.1s;
+  background:none;border:none;border-top:1px solid var(--hairline);
+  color:var(--ink-ghost);font-size:11px;
+  cursor:pointer;padding:7px 12px;font-family:var(--sans);letter-spacing:0;
+  transition:color var(--t) var(--e);
 }
-.bcard-rename:active{color:rgba(255,255,255,0.6)}
+.bcard-rename:hover{color:var(--ink-soft)}
 
-/* ─── Rich Editor (title-above-body, always on) ─── */
+/* ─── Rich Editor (single field, first line is title) ────────────── */
 #ed-body{
   -webkit-user-select:text;user-select:text;
-  width:100%;min-height:72px;max-height:200px;
+  width:100%;min-height:96px;max-height:240px;
   background:transparent;border:none;outline:none;
-  color:#fff;font-size:16px;line-height:1.6;
-  font-family:inherit;resize:none;
-  padding-top:10px;
+  color:var(--ink);font-size:15px;line-height:1.55;
+  font-family:var(--sans);font-weight:400;resize:none;
+  padding-top:0;letter-spacing:-0.005em;
 }
-#ed-body::placeholder{color:rgba(255,255,255,0.22)}
-#ed-title-row{
-  padding-bottom:8px;
-  border-bottom:1px solid rgba(255,255,255,0.07);
-}
-#ed-title{
-  -webkit-user-select:text;user-select:text;
-  width:100%;background:transparent;border:none;outline:none;
-  color:rgba(255,255,255,0.72);font-size:13px;
-  font-family:inherit;padding:0 40px 0 0;letter-spacing:0.02em;
-  font-weight:500;
-}
-#ed-title::placeholder{color:rgba(255,255,255,0.2);font-weight:400}
+#ed-body::placeholder{color:var(--ink-ghost)}
+/* Title row hidden — we infer title from first line of body */
+#ed-title-row{display:none}
+#ed-title{display:none}
 #fps{
-  position:fixed;top:max(16px,env(safe-area-inset-top,0px));right:16px;
-  font-size:10px;color:rgba(255,255,255,0.2);
+  position:fixed;top:max(14px,env(safe-area-inset-top,0px));right:14px;
+  font-family:'SF Mono','Menlo',monospace;font-size:10px;color:var(--ink-ghost);
+  letter-spacing:0;
   font-variant-numeric:tabular-nums;pointer-events:none;display:none;z-index:85;
 }
 #fps.on{display:block}
 
-/* ─── Hint ─── */
-#hint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,0.08);font-size:14px;pointer-events:none;transition:opacity 0.8s ease}
+/* ─── Hint ──────────────────────────────────────────────────────── */
+#hint{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  color:var(--ink-ghost);font-size:13px;
+  font-family:var(--sans);font-weight:400;
+  pointer-events:none;transition:opacity 0.6s ease;
+  letter-spacing:-0.005em;
+}
 
-/* ─── Toast ─── */
+/* ─── Toast ─────────────────────────────────────────────────────── */
 #toast{
-  position:fixed;top:max(16px,env(safe-area-inset-top,0px));
-  left:50%;transform:translateX(-50%) translateY(-40px);
-  background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.1);
-  border-radius:10px;padding:8px 16px;color:rgba(255,255,255,0.7);font-size:13px;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  opacity:0;transition:all 0.3s ease;z-index:200;pointer-events:none;
+  position:fixed;top:max(20px,env(safe-area-inset-top,0px));
+  left:50%;transform:translateX(-50%) translateY(-12px);
+  background:transparent;border:none;
+  padding:0;color:var(--ink-soft);
+  font-family:var(--sans);font-size:13px;letter-spacing:-0.005em;font-weight:400;
+  opacity:0;transition:opacity var(--t) var(--e), transform var(--t) var(--e);
+  z-index:200;pointer-events:none;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ─── Idle chip: surfaces gallery without forcing it ─── */
+/* ─── Idle chip ─────────────────────────────────────────────────── */
 #idle-chip{
-  position:fixed;left:50%;bottom:max(28px,env(safe-area-inset-bottom,0px));
-  transform:translateX(-50%) translateY(8px);
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-  border-radius:999px;padding:9px 16px;color:rgba(255,255,255,0.55);font-size:12px;
-  letter-spacing:0.02em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  opacity:0;transition:opacity 0.6s ease, transform 0.6s ease;
+  position:fixed;left:50%;bottom:max(68px,calc(env(safe-area-inset-bottom,0px)+60px));
+  transform:translateX(-50%) translateY(4px);
+  background:transparent;border:none;
+  padding:4px 0;color:var(--ink-faint);font-size:13px;
+  font-family:var(--sans);letter-spacing:-0.005em;font-weight:400;
+  opacity:0;transition:opacity 0.6s ease, transform 0.6s ease, color var(--t) var(--e);
   z-index:90;pointer-events:none;cursor:pointer;
 }
 #idle-chip.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-#idle-chip:active{background:rgba(255,255,255,0.1)}
+#idle-chip:hover{color:var(--ink)}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="hint">tap anywhere</div>
-<div id="idle-chip">start from a template →</div>
+<div id="hint">Tap to begin</div>
+<div id="idle-chip">Browse boards</div>
 
 <!-- Editor -->
 <div id="editor">
-  <!-- Title: always visible, small, optional. No more mode toggle. -->
+  <!-- Title row hidden — first line of body becomes title -->
   <div id="ed-title-row">
-    <input id="ed-title" type="text" placeholder="title (optional)" autocomplete="off" autocorrect="on" spellcheck="true">
+    <input id="ed-title" type="text" placeholder="" autocomplete="off" autocorrect="on" spellcheck="true">
   </div>
-  <!-- Body: the thing you actually type into -->
-  <textarea id="ed-body" placeholder="think..." autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
-  <button id="ed-color-btn" title="change color"></button>
+  <textarea id="ed-body" placeholder="What's on your mind?" autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
+  <button id="ed-color-btn" title="Color"></button>
   <div id="ed-color-palette"></div>
   <div id="editor-actions">
-    <button id="del-btn">delete</button>
-    <button id="collapse-btn">↓ collapse</button>
-    <button id="cancel-btn">cancel</button>
-    <button class="save" id="save-btn">done</button>
+    <button id="del-btn">Delete</button>
+    <button id="collapse-btn">Collapse</button>
+    <button id="cancel-btn">Cancel</button>
+    <button class="save" id="save-btn">Done</button>
   </div>
 </div>
 
 <!-- Connection editor -->
 <div id="conn-editor">
-  <div id="conn-editor-title">connection</div>
+  <div id="conn-editor-title">Connection</div>
   <div id="conn-preset-row"></div>
-  <input id="conn-custom-input" type="text" placeholder="or type your own..." autocomplete="off">
+  <input id="conn-custom-input" type="text" placeholder="Or describe it" autocomplete="off">
   <div id="conn-color-row"></div>
   <div id="conn-editor-actions">
-    <button class="conn-del-btn" id="conn-del-btn">remove</button>
-    <button id="conn-dir-btn" style="color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);border:none;font-size:13px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit">→ directed</button>
-    <button class="conn-done-btn" id="conn-done-btn">done</button>
+    <button class="conn-del-btn" id="conn-del-btn">Remove</button>
+    <button id="conn-dir-btn">Undirected</button>
+    <button class="conn-done-btn" id="conn-done-btn">Done</button>
   </div>
 </div>
 
-<!-- Menu -->
-<button id="menu-btn" aria-label="menu">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-    <line x1="4" y1="8" x2="20" y2="8"/>
-    <line x1="4" y1="12" x2="20" y2="12"/>
-    <line x1="4" y1="16" x2="20" y2="16"/>
-  </svg>
-</button>
+<!-- Menu trigger -->
+<button id="menu-btn" aria-label="Menu"></button>
 <div id="menu-scrim"></div>
 <div id="menu-drawer">
   <div class="menu-header">
-    <div class="mh-label">current board</div>
     <div class="mh-name" id="m-header-name">Board 1</div>
     <div class="mh-count" id="m-header-count">0 thoughts</div>
   </div>
-  <div class="sep">boards</div>
-  <button id="m-boards">switch board</button>
-  <div class="sep">start</div>
-  <button id="m-gallery">start from a board</button>
-  <div class="sep">data</div>
-  <button id="m-export">export</button>
-  <button id="m-import">import</button>
-  <div class="sep">view</div>
-  <button id="m-reset-view">reset camera</button>
-  <button id="m-zgrid">z-planes <span class="pill" id="m-zgrid-dot"></span></button>
-  <button id="m-toggle-fps">fps <span class="pill" id="m-fps-dot"></span></button>
-  <button id="m-open-capture">open to capture <span class="pill" id="m-capture-dot"></span></button>
-  <div class="sep">dev</div>
-  <button id="m-dump">dump state</button>
-  <button id="m-orphans">highlight orphans</button>
+  <button id="m-boards">Switch board</button>
+  <button id="m-gallery">Browse boards</button>
+  <div class="sep"></div>
+  <button id="m-export">Export</button>
+  <button id="m-import">Import</button>
+  <div class="sep"></div>
+  <button id="m-reset-view">Reset camera</button>
+  <button id="m-zgrid">Z-planes <span class="pill" id="m-zgrid-dot"></span></button>
+  <button id="m-toggle-fps">FPS <span class="pill" id="m-fps-dot"></span></button>
+  <button id="m-open-capture">Open to capture <span class="pill" id="m-capture-dot"></span></button>
+  <div class="sep"></div>
+  <button id="m-dump">Dump state</button>
+  <button id="m-orphans">Highlight orphans</button>
   <button id="m-bulk">+ 100 test</button>
   <div class="sep"></div>
-  <button id="m-clear" class="danger">clear all</button>
-  <div style="font-size:9px;color:rgba(255,255,255,0.15);padding:12px 16px 0;margin-top:auto">atem v22</div>
+  <button id="m-clear" class="danger">Clear all</button>
+  <div style="font-family:var(--sans);font-size:11px;color:var(--ink-ghost);padding:14px 18px 0;margin-top:auto;letter-spacing:0">atem · v24</div>
 </div>
 
 <!-- Starter Gallery (full-screen) -->
@@ -498,7 +555,7 @@ import { get, set, del } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 22,
+  version: 25,
   thoughts: [],
   connections: [],
   camera: null,
@@ -513,7 +570,7 @@ let editingId = null, editingColor = null;
 let editingConnId = null;
 let connectSource = null, holdTimer = null, collapseHoldTimer = null;
 let blockNextPointerUp = false;
-let editorClosedAt = 0; // timestamp of last editor close — used to swallow stray pointer events
+let editorClosedAt = 0;
 let multiTouchActive = false;
 let isDragging = false, draggedMesh = null;
 let dragOffset = new THREE.Vector3();
@@ -530,21 +587,69 @@ raycaster.params.Line = { threshold: 0.4 };
 const pointer = new THREE.Vector2();
 const plane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
 const intersectPt = new THREE.Vector3();
-const COLORS = ['#6ea8fe','#a78bfa','#f472b6','#34d399','#fbbf24','#fb923c','#f87171','#67e8f9'];
 
+// ── Tonal scale (v24) ─────────────────────────────────────────────────
+// Thoughts are monochromatic by default. The optional color picker offers
+// 6 warmth-shifted tones — they all read as ink, just at different
+// temperatures. Color is a quiet semantic dimension, not decoration.
+// ──────────────────────────────────────────────────────────────────────
+const TONES = {
+  ink:    '#e8e6e1',  // default — neutral warm white
+  bone:   '#d8cfba',  // cooler, slightly chalk
+  amber:  '#d8a35a',  // warm — same as accent, attention
+  ember:  '#c47a4d',  // deeper warmth
+  moss:   '#8a9c80',  // cool green — quiet
+  slate:  '#7e8590',  // cool blue-grey — distance
+};
+const COLORS = [TONES.ink, TONES.bone, TONES.amber, TONES.ember, TONES.moss, TONES.slate];
+
+// Migrate any legacy hex from older versions into the new tonal scale
+const COLOR_MAP = {
+  // v22 Tailwind defaults
+  '#6ea8fe': TONES.slate,
+  '#a78bfa': TONES.slate,
+  '#f472b6': TONES.ember,
+  '#34d399': TONES.moss,
+  '#fbbf24': TONES.amber,
+  '#fb923c': TONES.ember,
+  '#f87171': TONES.ember,
+  '#67e8f9': TONES.bone,
+  '#7ed4a4': TONES.moss,
+  '#f5c97a': TONES.amber,
+  '#b8a9f5': TONES.slate,
+  '#7ab8f5': TONES.slate,
+  // v23 paint palette
+  '#e8dec9': TONES.bone,
+  '#c8632d': TONES.ember,
+  '#7a2e2e': TONES.ember,
+  '#6f9090': TONES.slate,
+  '#a87d3f': TONES.amber,
+  '#6e5e9c': TONES.slate,
+  '#4a8a73': TONES.moss,
+  '#b8645c': TONES.ember,
+};
+function migrateColor(c) {
+  if (!c) return TONES.ink;
+  const lower = String(c).toLowerCase();
+  return COLOR_MAP[lower] || c;
+}
+
+// Connection presets — labels only, no per-preset color.
+// Connections share one muted color across the board (scaffolding, not subject).
 const CONN_PRESETS = [
-  { label:'causes', color:'#fb923c' },
-  { label:'contradicts', color:'#f87171' },
-  { label:'supports', color:'#34d399' },
-  { label:'depends on', color:'#fbbf24' },
-  { label:'relates to', color:'#6ea8fe' },
-  { label:'reminds me of', color:'#a78bfa' },
-  { label:'same as', color:'#67e8f9' },
-  { label:'part of', color:'#f472b6' },
-  { label:'leads to', color:'#fb923c' },
-  { label:'follows from', color:'#fbbf24' },
+  { label:'Causes' },
+  { label:'Contradicts' },
+  { label:'Supports' },
+  { label:'Depends on' },
+  { label:'Relates to' },
+  { label:'Reminds me of' },
+  { label:'Same as' },
+  { label:'Part of' },
+  { label:'Leads to' },
+  { label:'Follows from' },
 ];
-const CONN_COLORS = ['#6ea8fe','#fb923c','#f87171','#34d399','#fbbf24','#a78bfa','#f472b6','#67e8f9'];
+// One muted ink color for connection accent overrides (rarely needed).
+const CONN_COLORS = COLORS.slice();
 
 // ═══════════════════════════════════════════
 // SCENE
@@ -554,10 +659,10 @@ const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000);
+renderer.setClearColor(0x0a0908); // warm void
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x000000, 0.022);
+scene.fog = new THREE.FogExp2(0x0a0908, 0.020);
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 200);
 camera.position.set(0, 0, 18);
@@ -569,15 +674,11 @@ controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
 controls.minDistance = 0.5; controls.maxDistance = 200;
 controls.addEventListener('change', () => { needsRender = true; });
 
-scene.add(new THREE.AmbientLight(0x404060, 0.6));
-const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5,8,10); scene.add(dl);
-const bl = new THREE.DirectionalLight(0x4466aa, 0.3); bl.position.set(-5,-3,-8); scene.add(bl);
-
-// Starfield (decorative, not a primitive)
-const sg = new THREE.BufferGeometry(); const sv = [];
-for (let i=0;i<400;i++) sv.push((Math.random()-.5)*100,(Math.random()-.5)*100,(Math.random()-.5)*100);
-sg.setAttribute('position', new THREE.Float32BufferAttribute(sv,3));
-scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xffffff,size:0.08,transparent:true,opacity:0.3})));
+// Warm, soft lighting — no character on the spheres themselves,
+// the character is in the spatial arrangement.
+scene.add(new THREE.AmbientLight(0x3a3530, 0.62));
+const dl = new THREE.DirectionalLight(0xfff4e0, 0.65); dl.position.set(5,8,10); scene.add(dl);
+const bl = new THREE.DirectionalLight(0x504a55, 0.22); bl.position.set(-5,-3,-8); scene.add(bl);
 
 const thoughtGroup = new THREE.Group(); scene.add(thoughtGroup);
 const lineGroup = new THREE.Group(); scene.add(lineGroup);
@@ -599,19 +700,122 @@ function rebuildMaps() {
 
 const sphereGeo = new THREE.SphereGeometry(SPHERE_RADIUS, 24, 18);
 
+// ═══════════════════════════════════════════════════════════════════
+// SHAPE LIBRARY (v25 branch — experimental)
+// ═══════════════════════════════════════════════════════════════════
+// Atem turns thought into matter. Different thoughts have different
+// physical kinds. Shape is not decoration — shape is the epistemic
+// register of the thought. A list-thought is literally stacked. A
+// felt-thought is literally soft-edged. A framed-thought has sharp
+// rectangular containment. The shape carries meaning the way a
+// paragraph break carries meaning in prose.
+//
+// Each shape entry returns { geometry, materialOverrides, scaleOverride }
+// so the rest of the rendering pipeline doesn't need to know about
+// shape variants. addThoughtMesh() reads t.shape and dispatches.
+// Default 'sphere' preserves all existing behavior.
+// ═══════════════════════════════════════════════════════════════════
+const SHAPES = {
+  // The default. A thought as a discrete idea, equally exposed in all directions.
+  sphere: () => ({
+    geometry: sphereGeo,
+  }),
+
+  // Soft, irregular, low-resolution sphere — feels organic, slightly wobbly.
+  // For thoughts that aren't yet sharp. Feelings, intuitions, half-ideas.
+  pebble: () => {
+    const g = new THREE.SphereGeometry(SPHERE_RADIUS * 1.05, 12, 8);
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const r = Math.sqrt(x*x+y*y+z*z);
+      const wobble = 1 + (Math.sin(x*7)*Math.cos(y*5)*Math.sin(z*6)) * 0.18;
+      pos.setXYZ(i, x*wobble/r * SPHERE_RADIUS*1.05, y*wobble/r * SPHERE_RADIUS*1.05, z*wobble/r * SPHERE_RADIUS*1.05);
+    }
+    g.computeVertexNormals();
+    return { geometry: g, materialOverrides: { roughness: 0.85, metalness: 0.0 } };
+  },
+
+  // A flat tile. Card. For framed thoughts — claims, definitions, structured items.
+  // Faces the user (camera-facing handled in addThoughtMesh).
+  card: () => {
+    const g = new THREE.BoxGeometry(SPHERE_RADIUS*2.6, SPHERE_RADIUS*1.6, SPHERE_RADIUS*0.18);
+    return { geometry: g, materialOverrides: { roughness: 0.55, metalness: 0.04 } };
+  },
+
+  // Tall narrow rectangle — a list item, a step in a sequence, a verse.
+  // Stacks visually well when arranged vertically.
+  bar: () => {
+    const g = new THREE.BoxGeometry(SPHERE_RADIUS*3.2, SPHERE_RADIUS*0.5, SPHERE_RADIUS*0.18);
+    return { geometry: g, materialOverrides: { roughness: 0.55, metalness: 0.04 } };
+  },
+
+  // Cube — a unit, a brick, an object of fixed size. For inventory-type thoughts.
+  cube: () => {
+    const g = new THREE.BoxGeometry(SPHERE_RADIUS*1.4, SPHERE_RADIUS*1.4, SPHERE_RADIUS*1.4);
+    return { geometry: g, materialOverrides: { roughness: 0.45, metalness: 0.08 } };
+  },
+
+  // Long vertical pillar — a chapter, a phase, a sustained note.
+  // Reads as duration when placed along Z.
+  column: () => {
+    const g = new THREE.CylinderGeometry(SPHERE_RADIUS*0.55, SPHERE_RADIUS*0.55, SPHERE_RADIUS*4.0, 16);
+    return { geometry: g, materialOverrides: { roughness: 0.55, metalness: 0.05 } };
+  },
+
+  // Disc — a moment, a decision point, a hinge.
+  // Wide and flat, the opposite of column.
+  disc: () => {
+    const g = new THREE.CylinderGeometry(SPHERE_RADIUS*1.3, SPHERE_RADIUS*1.3, SPHERE_RADIUS*0.3, 32);
+    return { geometry: g, materialOverrides: { roughness: 0.5, metalness: 0.05 } };
+  },
+
+  // A small dot — for thoughts that are points in a constellation,
+  // where the meaning is in the arrangement, not the individual item.
+  dot: () => {
+    const g = new THREE.SphereGeometry(SPHERE_RADIUS * 0.35, 12, 8);
+    return {
+      geometry: g,
+      materialOverrides: { roughness: 0.2, metalness: 0.0, emissiveIntensity: 0.6 },
+    };
+  },
+
+  // A faceted gem — for thoughts that have multiple angles, ambiguity, depth.
+  // Reflects light differently as you orbit.
+  gem: () => {
+    const g = new THREE.OctahedronGeometry(SPHERE_RADIUS*1.1, 0);
+    return { geometry: g, materialOverrides: { roughness: 0.25, metalness: 0.4 } };
+  },
+
+  // Torus — for recursive thoughts, loops, things that come back around.
+  ring: () => {
+    const g = new THREE.TorusGeometry(SPHERE_RADIUS*0.9, SPHERE_RADIUS*0.22, 12, 32);
+    return { geometry: g, materialOverrides: { roughness: 0.45, metalness: 0.1 } };
+  },
+
+  // Cone — for thoughts that taper, narrow toward a point, conclusions.
+  cone: () => {
+    const g = new THREE.ConeGeometry(SPHERE_RADIUS*0.9, SPHERE_RADIUS*2.0, 16);
+    return { geometry: g, materialOverrides: { roughness: 0.55, metalness: 0.05 } };
+  },
+};
+
+function getShapeData(shapeName) {
+  const fn = SHAPES[shapeName] || SHAPES.sphere;
+  return fn();
+}
+
 function makeThoughtMaterial(color) {
   return new THREE.MeshStandardMaterial({
-    color: new THREE.Color(color||'#6ea8fe'),
-    emissive: new THREE.Color(color||'#6ea8fe'),
-    emissiveIntensity:0.15, roughness:0.4, metalness:0.1,
-    transparent:true, opacity:0.9,
+    color: new THREE.Color(color || TONES.ink),
+    emissive: new THREE.Color(color || TONES.ink),
+    emissiveIntensity:0.10, roughness:0.62, metalness:0.0,
+    transparent:true, opacity:0.94,
   });
 }
 
-// Unified label — one primary line (title if set, else first line of body).
-// Label: title in white + first sentence of body as subtitle in dimmer smaller text.
-// One sprite, two visual tiers. Scales gracefully at zoom — title reads first,
-// subtitle only visible when close. Canvas is 2x retina.
+// Label — Inter only. Title (medium 14px) + optional subtitle (regular 12px).
+// One typeface, two weights. Ink-on-void. No decoration.
 function createLabel(text, bodyText) {
   const title = (text || '').trim();
   const body = (bodyText || '').trim();
@@ -622,32 +826,37 @@ function createLabel(text, bodyText) {
   if (title) {
     primary = title;
     if (body) {
-      // First sentence of body, truncated to ~60 chars
-      const firstSentence = body.split(/[.!?]/)[0].trim();
-      subtitle = firstSentence.length > 60
-        ? firstSentence.slice(0, 58) + '…'
-        : firstSentence;
+      const firstLine = body.split('\n')[0].trim();
+      subtitle = firstLine.length > 56 ? firstLine.slice(0, 54) + '…' : firstLine;
     }
   } else if (body) {
-    primary = body.split('\n')[0];
+    // No title — promote first line to title, second line (if any) to subtitle
+    const lines = body.split('\n');
+    primary = lines[0];
+    if (lines[1]) {
+      const second = lines[1].trim();
+      subtitle = second.length > 56 ? second.slice(0, 54) + '…' : second;
+    }
   } else {
     return null;
   }
 
   const W = 512, SCALE = 2;
-  const titleFontSize = 24;
-  const subFontSize = 16;
-  const lineH = 32;
-  const subLineH = 22;
-  const gap = 8; // gap between title block and subtitle
+  const titleFontSize = 28;
+  const subFontSize = 14;
+  const lineH = 34;
+  const subLineH = 19;
+  const gap = 8;
+
+  const TITLE_FONT = '500 ' + titleFontSize + 'px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
+  const SUB_FONT   = '400 ' + subFontSize + 'px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
 
   const c = document.createElement('canvas');
   c.width = W * SCALE;
   const ctx = c.getContext('2d');
   ctx.scale(SCALE, SCALE);
 
-  // Measure title lines
-  ctx.font = '400 ' + titleFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.font = TITLE_FONT;
   let titleLines = [], tLine = '';
   const titleDisplay = primary.length > 60 ? primary.slice(0, 58) + '…' : primary;
   for (const w of titleDisplay.split(' ')) {
@@ -658,10 +867,9 @@ function createLabel(text, bodyText) {
   if (tLine) titleLines.push(tLine);
   if (titleLines.length > 2) titleLines = titleLines.slice(0, 2);
 
-  // Measure subtitle lines
   let subLines = [];
   if (subtitle) {
-    ctx.font = '300 ' + subFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.font = SUB_FONT;
     let sLine = '';
     for (const w of subtitle.split(' ')) {
       const test = sLine ? sLine + ' ' + w : w;
@@ -669,28 +877,28 @@ function createLabel(text, bodyText) {
       else sLine = test;
     }
     if (sLine) subLines.push(sLine);
-    if (subLines.length > 2) subLines = subLines.slice(0, 2);
+    if (subLines.length > 1) subLines = subLines.slice(0, 1);
   }
 
   const titleH = titleLines.length * lineH;
   const subH = subLines.length > 0 ? gap + subLines.length * subLineH : 0;
-  const totalH = titleH + subH + 16; // 8px padding top+bottom
+  const totalH = titleH + subH + 16;
 
   c.height = totalH * SCALE;
-  ctx.scale(SCALE, SCALE); // re-apply after height set
+  ctx.scale(SCALE, SCALE);
   ctx.clearRect(0, 0, W, totalH);
 
-  // Draw title
-  ctx.fillStyle = 'rgba(255,255,255,0.90)';
-  ctx.font = '400 ' + titleFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+  // Title — primary ink
+  ctx.fillStyle = 'rgba(232,230,225,0.94)';
+  ctx.font = TITLE_FONT;
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   const titleY = 8;
   titleLines.forEach((l, i) => ctx.fillText(l, W / 2, titleY + i * lineH));
 
-  // Draw subtitle
+  // Subtitle — faded ink, same typeface, lighter weight
   if (subLines.length > 0) {
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.font = '300 ' + subFontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillStyle = 'rgba(232,230,225,0.42)';
+    ctx.font = SUB_FONT;
     const subY = titleY + titleH + gap;
     subLines.forEach((l, i) => ctx.fillText(l, W / 2, subY + i * subLineH));
   }
@@ -699,24 +907,66 @@ function createLabel(text, bodyText) {
   const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.88, depthTest: false });
   const sprite = new THREE.Sprite(mat);
 
-  // Width fixed at 3 world units; height proportional to canvas aspect
-  const worldW = 3;
+  const worldW = 3.2;
   const worldH = worldW * (c.height / c.width);
   sprite.scale.set(worldW, worldH, 1);
-  sprite.position.y = -SPHERE_RADIUS - 0.3 - worldH / 2;
+  sprite.position.y = -SPHERE_RADIUS - 0.32 - worldH / 2;
   return sprite;
 }
 
 function addThoughtMesh(t) {
+  if (t.color) t.color = migrateColor(t.color);
+  const shapeName = t.shape || 'sphere';
+  const shapeData = getShapeData(shapeName);
   const mat = makeThoughtMaterial(t.color);
-  const mesh = new THREE.Mesh(sphereGeo, mat);
+  // Apply per-shape material overrides (roughness, metalness, etc.)
+  if (shapeData.materialOverrides) {
+    for (const k in shapeData.materialOverrides) {
+      mat[k] = shapeData.materialOverrides[k];
+    }
+  }
+  const mesh = new THREE.Mesh(shapeData.geometry, mat);
   mesh.position.set(t.position[0], t.position[1], t.position[2]);
   const size = t.size || 1.0;
-  const _initOp = t.collapsedUnder ? 0 : 0.9;
-  mesh.userData = { id:t.id, targetEmissive:0.15, targetOpacity:_initOp, targetLabelOpacity:_initOp > 0.5 ? 0.88 : 0, breath:Math.random()*Math.PI*2, baseSize:size, bounceStart:0, collapsedCount:0 };
+  const _initOp = t.collapsedUnder ? 0 : 0.94;
+  // Card and bar shapes billboard to camera so they read as flat surfaces.
+  // Other shapes have intrinsic 3D character and rotate freely with the world.
+  const billboards = (shapeName === 'card' || shapeName === 'bar');
+  // Apply per-thought rotation if specified (e.g. for fixed-orientation columns)
+  if (t.rotation) {
+    mesh.rotation.set(t.rotation[0]||0, t.rotation[1]||0, t.rotation[2]||0);
+  }
+  mesh.userData = {
+    id:t.id,
+    shape: shapeName,
+    billboards,
+    targetEmissive:0.10,
+    targetOpacity:_initOp,
+    targetLabelOpacity:_initOp > 0.5 ? 0.88 : 0,
+    breath:Math.random()*Math.PI*2,
+    baseSize:size,
+    bounceStart:performance.now(),
+    collapsedCount:0,
+    initialRotation: t.rotation ? [t.rotation[0]||0, t.rotation[1]||0, t.rotation[2]||0] : null,
+  };
   mesh.scale.setScalar(size);
+
   const l = createLabel(t.text || '', t.body || '');
-  if (l) { l.name = 'label'; mesh.add(l); }
+  if (l) {
+    l.name = 'label';
+    // Cards/bars: label centered ON the surface, not floating below.
+    if (shapeName === 'card') {
+      l.position.set(0, 0, SPHERE_RADIUS*0.12);
+      l.position.y = 0;
+    } else if (shapeName === 'bar') {
+      l.position.set(0, 0, SPHERE_RADIUS*0.12);
+      l.position.y = 0;
+    } else if (shapeName === 'dot') {
+      // Dots have labels well below; constellation feel
+      l.position.y = -SPHERE_RADIUS - 0.5;
+    }
+    mesh.add(l);
+  }
   thoughtGroup.add(mesh);
   meshMap.set(t.id, mesh);
   return mesh;
@@ -741,18 +991,21 @@ function createConnLabel(text, color) {
   const ctx = c.getContext('2d');
   ctx.scale(2, 2);
   ctx.clearRect(0, 0, 256, 64);
-  ctx.fillStyle = color || 'rgba(255,255,255,0.55)';
-  ctx.font = '500 16px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.fillStyle = color || 'rgba(232,230,225,0.50)';
+  ctx.font = '400 12px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   let display = text || '';
-  if (display.length > 24) display = display.slice(0, 22) + '…';
+  if (display.length > 28) display = display.slice(0, 26) + '…';
   ctx.fillText(display, 128, 32);
   const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
-  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0.7, depthTest:false });
+  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0.6, depthTest:false });
   const sprite = new THREE.Sprite(mat);
   sprite.scale.set(2.0, 0.5, 1);
   return sprite;
 }
+
+// Single muted ink color for ALL connections — they're scaffolding, not subject.
+const CONN_INK = new THREE.Color('#e8e6e1');
 
 function rebuildConnections() {
   while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
@@ -767,30 +1020,32 @@ function rebuildConnections() {
     const tA = thoughtMap.get(c.from), tB = thoughtMap.get(c.to);
     if ((tA && tA.collapsedUnder) || (tB && tB.collapsedUnder)) continue;
     const density = pairs[key]||1;
-    const connColor = c.color || '#6ea8fe';
-    const baseOpacity = Math.min(0.35 + density*0.1, 0.75);
+    if (c.color) c.color = migrateColor(c.color);
+
+    // All connections share one muted color. Density modulates opacity.
+    // Optional per-conn color override exists but is rarely used.
+    const lineColor = c.color ? new THREE.Color(c.color) : CONN_INK;
+    const baseOpacity = Math.min(0.22 + density*0.06, 0.42);
+
     const geo = new THREE.BufferGeometry().setFromPoints([mA.position.clone(), mB.position.clone()]);
-    const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(connColor), transparent:true, opacity:baseOpacity });
+    const mat = new THREE.LineBasicMaterial({ color: lineColor, transparent:true, opacity:baseOpacity });
     const line = new THREE.Line(geo, mat);
     const firstConn = state.connections.find(x => [x.from, x.to].sort().join('|') === key);
     line.userData = { from:c.from, to:c.to, density, connKey:key, connId:firstConn?.id, baseOpacity };
     lineGroup.add(line);
 
-    // Directional arrow — two short angled lines forming a fork at target
+    // Directional arrow — small fork at target, same muted color
     if (c.directed) {
       const dir = new THREE.Vector3().subVectors(mB.position, mA.position);
       const len = dir.length();
       if (len > 0.1) {
         const norm = dir.clone().normalize();
-
-        // Bug 3: scale arm length with connection length (short connections don't get giant arrows)
-        const armLen = Math.min(Math.max(len * 0.12, 0.25), 0.6);
-        const spread = armLen * 0.55;
+        const armLen = Math.min(Math.max(len * 0.10, 0.22), 0.45);
+        const spread = armLen * 0.5;
 
         const arrowTip = mB.position.clone().sub(norm.clone().multiplyScalar(SPHERE_RADIUS + 0.08));
         const arrowBase = arrowTip.clone().sub(norm.clone().multiplyScalar(armLen));
 
-        // Bug 3: camera-right basis so near-vertical arrows don't collapse
         const camDir = camera.getWorldDirection(new THREE.Vector3());
         let perp = new THREE.Vector3().crossVectors(camDir, norm).normalize();
         if (perp.length() < 0.1) perp = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), norm).normalize();
@@ -799,13 +1054,12 @@ function rebuildConnections() {
         const forkL = arrowBase.clone().add(perp.clone().multiplyScalar(spread));
         const forkR = arrowBase.clone().sub(perp.clone().multiplyScalar(spread));
 
-        const arrowColor = new THREE.Color(connColor);
-        const arrowOpacity = Math.min(baseOpacity + 0.25, 0.95);
+        const arrowOpacity = Math.min(baseOpacity + 0.3, 0.7);
 
         for (const forkPt of [forkL, forkR]) {
-          const geo = new THREE.BufferGeometry().setFromPoints([arrowTip.clone(), forkPt]);
-          const mat = new THREE.LineBasicMaterial({ color: arrowColor, transparent: true, opacity: arrowOpacity });
-          const fork = new THREE.Line(geo, mat);
+          const ageo = new THREE.BufferGeometry().setFromPoints([arrowTip.clone(), forkPt]);
+          const amat = new THREE.LineBasicMaterial({ color: lineColor, transparent: true, opacity: arrowOpacity });
+          const fork = new THREE.Line(ageo, amat);
           fork.userData = { isArrow: true, from: c.from, to: c.to, connKey: key, isLeft: forkPt === forkL };
           lineGroup.add(fork);
         }
@@ -815,10 +1069,10 @@ function rebuildConnections() {
     const label = c.label || (density > 1 ? `×${density}` : null);
     if (label) {
       const mid = new THREE.Vector3().addVectors(mA.position, mB.position).multiplyScalar(0.5);
-      const sprite = createConnLabel(label, connColor);
+      const sprite = createConnLabel(label);
       sprite.position.copy(mid);
-      sprite.position.y += 0.25;
-      sprite.userData = { isConnLabel: true, connKey: key };
+      sprite.position.y += 0.28;
+      sprite.userData = { isConnLabel: true, connKey: key, from: c.from, to: c.to };
       lineGroup.add(sprite);
     }
   }
@@ -896,7 +1150,7 @@ function updateConnectionPositions() {
 
 pendingLineMesh = (() => {
   const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-  const mat = new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:0.3 });
+  const mat = new THREE.LineBasicMaterial({ color:0xe8e6e1, transparent:true, opacity:0.35 });
   const line = new THREE.Line(geo, mat); line.visible = false; scene.add(line); return line;
 })();
 
@@ -1035,6 +1289,8 @@ async function loadBoard(boardId) {
     state.thoughts = s.thoughts || [];
     state.connections = s.connections || [];
     state.boardName = s.boardName || boardId;
+    state.boardDefaultShape = s.boardDefaultShape || 'sphere';
+    state.boardDefaultColor = s.boardDefaultColor || null;
     if (s.camera) {
       camera.position.set(s.camera.px,s.camera.py,s.camera.pz);
       controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz);
@@ -1093,6 +1349,8 @@ async function load() {
     state.openToCapture = s.openToCapture || false;
     state.richMode = s.richMode || false;
     state.boardName = s.boardName || 'Board 1';
+    state.boardDefaultShape = s.boardDefaultShape || 'sphere';
+    state.boardDefaultColor = s.boardDefaultColor || null;
 
     if (s.camera) {
       camera.position.set(s.camera.px,s.camera.py,s.camera.pz);
@@ -1170,11 +1428,16 @@ function isCollapsed(id) {
 }
 
 function createThought(x, y, z, text, color, body) {
+  // Inherit the board's shape vocabulary if this is a shape-themed board.
+  // Set on board load via loadBoard / state.boardDefaultShape.
+  const inheritedShape = state.boardDefaultShape || 'sphere';
+  const inheritedColor = color || state.boardDefaultColor || TONES.ink;
   const t = {
     id:uid(), text:text||'',
     body: body||'',
     position:[x,y,z],
-    color: color || COLORS[0],
+    color: inheritedColor,
+    shape: inheritedShape,
     created:Date.now(), touched:Date.now(),
     size: 1.0,
     props: {}
@@ -1183,10 +1446,14 @@ function createThought(x, y, z, text, color, body) {
   thoughtMap.set(t.id, t);
   state.isStarterBoard = false;
   addThoughtMesh(t); save(); hideHint(); hideIdleChip();
-  // Joy layer 1: bounce on create — damped oscillation 1.0 → 1.15 → 1.0 over ~300ms
+  // Confident pop-in: 0.88 → 1.0 over 220ms, ease-out cubic. No overshoot.
   const mesh = getMesh(t.id);
-  if (mesh) { mesh.userData.bounceStart = performance.now(); mesh.userData.baseSize = t.size; }
-  // Live-update menu header if open
+  if (mesh) {
+    mesh.userData.bounceStart = performance.now();
+    mesh.userData.bounceDuration = 220;
+    mesh.userData.bounceFromZero = true;
+    mesh.userData.baseSize = t.size;
+  }
   const menu = document.getElementById('menu-drawer');
   if (menu && menu.classList.contains('open')) updateMenuHeader();
   if (zGridVisible) buildZGrid();
@@ -1199,12 +1466,15 @@ function updateThought(id, text, color, size, body) {
   if (!t) return;
   t.text = text; t.touched = Date.now();
   if (body !== undefined) t.body = body;
-  if (color !== undefined) t.color = color;
+  if (color !== undefined) t.color = migrateColor(color);
   if (size !== undefined) t.size = size;
   const mesh = getMesh(id);
   if (mesh) {
     updateLabel(mesh, t.text, t.body);
-    if (color) { mesh.material.color.set(color); mesh.material.emissive.set(color); }
+    if (color) {
+      const mc = migrateColor(color);
+      mesh.material.color.set(mc); mesh.material.emissive.set(mc);
+    }
     if (size !== undefined) { mesh.scale.setScalar(size); mesh.userData.baseSize = size; }
   }
   save(); needsRender = true;
@@ -1231,28 +1501,29 @@ function moveThought(id, x, y, z) {
 
 function addConnection(fromId, toId, label, color, directed) {
   if (fromId === toId) return;
-  const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: color||(state.boardAccent||'#6ea8fe'), directed: directed||false };
+  const conn = { id:uid(), from:fromId, to:toId, created:Date.now(), label: label||null, color: null, directed: directed||false };
   state.connections.push(conn);
   rebuildConnections(); save();
-  // Joy layer 2: soft glow pulse on the target when a connection lands.
-  // Ramps emissive up through animate() damping, then back down.
+  // Quiet inhale on target — scale 1.0 → 1.04 → 1.0 over 220ms.
+  // Confident motion is small motion.
   const targetMesh = getMesh(toId);
   if (targetMesh) {
-    targetMesh.userData.targetEmissive = 0.7;
+    targetMesh.userData.targetEmissive = 0.32;
+    targetMesh.userData.inhaleStart = performance.now();
     setTimeout(() => {
-      if (targetMesh.userData) targetMesh.userData.targetEmissive = 0.15;
+      if (targetMesh.userData) targetMesh.userData.targetEmissive = 0.10;
       needsRender = true;
-    }, 450);
+    }, 280);
   }
   needsRender = true;
   if (label === null) return;
   if (!label) openConnEditor(conn.id);
-  else toast('connected');
+  else toast('Connected');
 }
 
 function deleteConnection(connKey) {
   state.connections = state.connections.filter(c => [c.from,c.to].sort().join('|') !== connKey);
-  rebuildConnections(); save(); toast('disconnected');
+  rebuildConnections(); save(); toast('Disconnected');
   needsRender = true;
 }
 
@@ -1783,12 +2054,12 @@ window.addEventListener('mousemove', (e) => {
   if (isDragging || holdTriggered || connectSource || isOverlayOpen()) {
     if (!connectSource) {
       for (const child of thoughtGroup.children) {
-        child.userData.targetEmissive = 0.15;
+        child.userData.targetEmissive = 0.10;
         child.userData.targetLabelOpacity = 0.88;
       }
       for (const child of lineGroup.children) {
-        if (child.userData.isConnLabel) { child.material.opacity = 0.7; continue; }
-        child.material.opacity = child.userData.baseOpacity || 0.35;
+        if (child.userData.isConnLabel) { child.material.opacity = 0.6; continue; }
+        child.material.opacity = child.userData.baseOpacity || 0.22;
       }
     }
     return;
@@ -1797,34 +2068,33 @@ window.addEventListener('mousemove', (e) => {
   for (const child of thoughtGroup.children) {
     const tId = child.userData.id;
     if (!hit) {
-      child.userData.targetEmissive = 0.15;
+      child.userData.targetEmissive = 0.10;
       child.userData.targetLabelOpacity = 0.88;
     } else if (tId === hit.userData.id) {
-      child.userData.targetEmissive = 0.75;
+      child.userData.targetEmissive = 0.42;
       child.userData.targetLabelOpacity = 1.0;
     } else {
       const isConnected = state.connections.some(c =>
         (c.from === hit.userData.id && c.to === tId) || (c.to === hit.userData.id && c.from === tId)
       );
-      child.userData.targetEmissive = isConnected ? 0.5 : 0.05;
-      child.userData.targetLabelOpacity = isConnected ? 0.88 : 0.08;
+      child.userData.targetEmissive = isConnected ? 0.25 : 0.04;
+      child.userData.targetLabelOpacity = isConnected ? 0.88 : 0.10;
     }
   }
   for (const child of lineGroup.children) {
-    const base = child.userData.baseOpacity || 0.35;
+    const base = child.userData.baseOpacity || 0.22;
     if (child.userData.isConnLabel) {
-      // dim connection labels with their parent line
-      if (!hit) child.material.opacity = 0.7;
+      if (!hit) child.material.opacity = 0.6;
       else {
         const isRelated = child.userData.from === hit.userData.id || child.userData.to === hit.userData.id;
-        child.material.opacity = isRelated ? 0.95 : 0.02;
+        child.material.opacity = isRelated ? 0.85 : 0.04;
       }
       continue;
     }
     if (!hit) child.material.opacity = base;
     else {
       const isRelated = child.userData.from === hit.userData.id || child.userData.to === hit.userData.id;
-      child.material.opacity = isRelated ? 0.9 : 0.04;
+      child.material.opacity = isRelated ? 0.7 : 0.05;
     }
   }
   needsRender = true;
@@ -1859,7 +2129,7 @@ document.getElementById('m-export').addEventListener('click', () => {
   const a = document.createElement('a');
   a.href = url; a.download = `atem-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(url);
-  closeMenu(); toast('exported');
+  closeMenu(); toast('Exported');
 });
 
 document.getElementById('m-import').addEventListener('click', () => {
@@ -1881,10 +2151,10 @@ document.getElementById('m-import').addEventListener('click', () => {
           for (const t of state.thoughts) addThoughtMesh(t);
           rebuildMaps();
           rebuildConnections(); save();
-          toast('imported ' + state.thoughts.length + ' thoughts');
+          toast('Imported ' + state.thoughts.length + ' thoughts');
           if (state.thoughts.length > 0) hideHint();
         }
-      } catch (err) { toast('import failed'); }
+      } catch (err) { toast('Import failed'); }
     };
     reader.readAsText(file);
   };
@@ -1902,7 +2172,7 @@ function updateCaptureToggle() {
 }
 document.getElementById('m-open-capture').addEventListener('click', () => {
   state.openToCapture = !state.openToCapture; updateCaptureToggle(); save();
-  toast(state.openToCapture ? 'will open to capture' : 'will open to space');
+  toast(state.openToCapture ? 'Will open to capture' : 'Will open to space');
   closeMenu();
 });
 
@@ -1915,7 +2185,7 @@ document.getElementById('m-toggle-fps').addEventListener('click', () => {
 
 document.getElementById('m-dump').addEventListener('click', () => {
   console.log(JSON.stringify(state, null, 2));
-  closeMenu(); toast('state → console');
+  closeMenu(); toast('State → console');
 });
 
 document.getElementById('m-orphans').addEventListener('click', () => {
@@ -1954,7 +2224,7 @@ document.getElementById('m-clear').addEventListener('click', async () => {
   // Bug 7: also purge thumbnail so cleared board doesn't show ghost preview
   try { await del('atem-thumb-' + state.boardId); } catch(e) {}
   try { localStorage.removeItem('atem-thumb-' + state.boardId); } catch(e) {}
-  save(); closeMenu(); toast('cleared');
+  save(); closeMenu(); toast('Cleared');
 });
 
 // ═══════════════════════════════════════════
@@ -1991,9 +2261,9 @@ document.body.addEventListener('drop', (e) => {
       for (const t of state.thoughts) addThoughtMesh(t);
       rebuildMaps();
       rebuildConnections(); save();
-      toast(`imported ${state.thoughts.length} thoughts`);
+      toast(`Imported ${state.thoughts.length} thoughts`);
       if (state.thoughts.length > 0) hideHint();
-    } catch (err) { toast('import failed'); }
+    } catch (err) { toast('Import failed'); }
   };
   reader.readAsText(file);
 });
@@ -2003,6 +2273,269 @@ document.body.addEventListener('drop', (e) => {
 // ═══════════════════════════════════════════
 
 const STARTER_BOARDS = [
+  // ═══════════════════════════════════════════════════════════════════
+  // v25 EXPERIMENTAL — boards as worlds with their own physics
+  // Each board demonstrates a different way thinking takes shape.
+  // The form is the content. New thoughts inherit the board's vocabulary.
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── Reading list ─────────────────────────────────────────────────
+  // Thinking as a queue. Items stacked vertically, each on its own row.
+  // Adding a new thought drops another bar onto the stack.
+  {
+    id: 'reading-list',
+    name: 'Reading list',
+    desc: 'Thinking as a queue. New thoughts stack on top.',
+    accent: '#d8a35a',
+    tags: ['list', 'sequence'],
+    defaultShape: 'bar',
+    defaultColor: '#e8e6e1',
+    thoughts: [
+      {id:'r1', text:'Wittgenstein, Tractatus',                        position:[0, 4.5, 0], color:'#e8e6e1', shape:'bar'},
+      {id:'r2', text:'Bachelard, The Poetics of Space',                position:[0, 3.0, 0], color:'#e8e6e1', shape:'bar'},
+      {id:'r3', text:'Ursula K. Le Guin, The Carrier Bag of Fiction',  position:[0, 1.5, 0], color:'#d8a35a', shape:'bar'},
+      {id:'r4', text:'Simone Weil, Gravity and Grace',                 position:[0, 0.0, 0], color:'#e8e6e1', shape:'bar'},
+      {id:'r5', text:'Borges, Labyrinths',                             position:[0,-1.5, 0], color:'#e8e6e1', shape:'bar'},
+      {id:'r6', text:'Anne Carson, Autobiography of Red',              position:[0,-3.0, 0], color:'#d8a35a', shape:'bar'},
+      {id:'r7', text:'Italo Calvino, Invisible Cities',                position:[0,-4.5, 0], color:'#e8e6e1', shape:'bar'},
+    ],
+    connections: [
+      // No connections — list is its own structure. Order is the only relation.
+    ]
+  },
+
+  // ── This week ─────────────────────────────────────────────────
+  // Thinking as scheduled blocks. Cards on a 7-day grid (Mon..Sun left→right).
+  // Bigger card = more weight in your week. New thoughts arrive as cards.
+  {
+    id: 'this-week',
+    name: 'This week',
+    desc: 'Thinking as scheduled blocks. Mon → Sun, left to right.',
+    accent: '#d8a35a',
+    tags: ['time', 'plan'],
+    defaultShape: 'card',
+    defaultColor: '#e8e6e1',
+    thoughts: [
+      // Day labels — small flat discs along the top, labelling each column.
+      {id:'wm', text:'Mon', position:[-9, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
+      {id:'wt', text:'Tue', position:[-6, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
+      {id:'ww', text:'Wed', position:[-3, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
+      {id:'wh', text:'Thu', position:[ 0, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
+      {id:'wf', text:'Fri', position:[ 3, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
+      {id:'ws', text:'Sat', position:[ 6, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
+      {id:'wu', text:'Sun', position:[ 9, 4.5, 0], color:'#d8a35a', shape:'disc',  size:0.5},
+
+      // Mon
+      {id:'tw1', text:'Ship v25 branch',          position:[-9, 2.0, 0], color:'#d8a35a', shape:'card', size:1.1},
+      {id:'tw2', text:'1:1 with Fiddy',           position:[-9, 0.0, 0], color:'#e8e6e1', shape:'card'},
+      // Tue
+      {id:'tw3', text:'DIME TV brief',            position:[-6, 2.0, 0], color:'#e8e6e1', shape:'card'},
+      {id:'tw4', text:'Trade journal',            position:[-6, 0.0, 0], color:'#e8e6e1', shape:'card', size:0.85},
+      // Wed
+      {id:'tw5', text:'Money Badger pipeline',    position:[-3, 2.0, 0], color:'#e8e6e1', shape:'card', size:1.1},
+      // Thu
+      {id:'tw6', text:'Long writing block',       position:[ 0, 2.0, 0], color:'#d8a35a', shape:'card', size:1.4},
+      // Fri
+      {id:'tw7', text:'Paradex weekly recap',     position:[ 3, 2.0, 0], color:'#e8e6e1', shape:'card'},
+      {id:'tw8', text:'Review week, plan next',   position:[ 3, 0.0, 0], color:'#e8e6e1', shape:'card', size:0.9},
+      // Sat
+      {id:'tw9', text:'Off',                      position:[ 6, 2.0, 0], color:'#7e8590', shape:'card', size:0.85},
+      // Sun
+      {id:'tw10', text:'Long walk',               position:[ 9, 2.0, 0], color:'#d8a35a', shape:'card', size:0.9},
+    ],
+    connections: [
+      // Time runs left to right. The arrow says "this then that."
+      ['tw1','tw3', null, true,  '#7e8590'],
+      ['tw3','tw5', null, true,  '#7e8590'],
+      ['tw5','tw6', null, true,  '#7e8590'],
+      ['tw6','tw7', null, true,  '#7e8590'],
+    ]
+  },
+
+  // ── What I'm carrying ─────────────────────────────────────────────
+  // Thinking as feelings. Soft pebbles, irregular, no neat structure.
+  // Some are heavy (large), some light. None of them have edges yet.
+  // Connections are where two feelings touch — usually you don't know why.
+  {
+    id: 'carrying',
+    name: 'What I\'m carrying',
+    desc: 'Soft, unfinished thoughts. Feelings before they\'re words.',
+    accent: '#c47a4d',
+    tags: ['private', 'inward'],
+    defaultShape: 'pebble',
+    defaultColor: '#d8cfba',
+    thoughts: [
+      {id:'c1', text:'A thing my dad said',                position:[-2.5, 1.5, 0.5], color:'#d8cfba', shape:'pebble', size:1.3},
+      {id:'c2', text:'The conversation I keep avoiding',   position:[ 2.0, 2.5,-0.5], color:'#c47a4d', shape:'pebble', size:1.5},
+      {id:'c3', text:'A song from when I was 16',          position:[-3.0,-1.0, 1.0], color:'#d8cfba', shape:'pebble', size:0.9},
+      {id:'c4', text:'The shape of last Tuesday',          position:[ 0.5,-2.0, 0.0], color:'#d8cfba', shape:'pebble', size:1.1},
+      {id:'c5', text:'Restless without reason',            position:[ 3.5,-0.5, 0.8], color:'#c47a4d', shape:'pebble', size:1.0},
+      {id:'c6', text:'Something I don\'t want to forget',  position:[-1.0, 3.0,-1.2], color:'#d8a35a', shape:'pebble', size:1.2},
+      {id:'c7', text:'A small mercy',                      position:[ 1.5, 0.0, 1.5], color:'#8a9c80', shape:'pebble', size:0.85},
+      {id:'c8', text:'Tired in a way sleep won\'t fix',    position:[-2.0,-3.5,-0.5], color:'#c47a4d', shape:'pebble', size:1.2},
+      {id:'c9', text:'Someone I should call',              position:[ 4.0, 1.5,-0.8], color:'#d8cfba', shape:'pebble', size:1.0},
+    ],
+    connections: [
+      // Pebbles touching pebbles. Mostly undirected — these are resonances, not causes.
+      ['c1','c3', 'echoes',     false],
+      ['c2','c5', 'underneath', false],
+      ['c2','c8', 'why I\'m tired', false],
+      ['c4','c6', 'in there somewhere', false],
+      ['c7','c9', null,         false],
+    ]
+  },
+
+  // ── The argument ───────────────────────────────────────────────────
+  // Thinking as a rhetorical structure. Different shapes carry different
+  // moves: the claim is a hinge (disc), supports rise up (columns rising),
+  // contradictions descend (columns falling), the conclusion is a gem.
+  {
+    id: 'the-argument',
+    name: 'The argument',
+    desc: 'A claim, what holds it up, what pulls it down, what comes out.',
+    accent: '#8a9c80',
+    tags: ['reasoning', 'structure'],
+    defaultShape: 'sphere',
+    thoughts: [
+      // The claim — a hinge that everything turns on
+      {id:'a1', text:'The claim',
+       body:'AI tools should remain general-purpose, not narrow-purpose.',
+       position:[0, 0, 2], color:'#d8a35a', shape:'disc', size:1.6},
+
+      // Supports rise up (positive Y, columns standing tall)
+      {id:'a2', text:'Generality compounds',
+       body:'A general tool used by many people in many ways accumulates more learnings than any narrow one.',
+       position:[-4, 3.5, 0], color:'#8a9c80', shape:'column', size:1.0},
+      {id:'a3', text:'User intent is fluid',
+       body:'People don\'t know what they want until they\'re using it. Narrow tools assume the answer.',
+       position:[-1.3, 3.5, 0], color:'#8a9c80', shape:'column', size:1.0},
+      {id:'a4', text:'History favors generality',
+       body:'Spreadsheets, browsers, language itself — the most generative tools are the most flexible.',
+       position:[1.3, 3.5, 0], color:'#8a9c80', shape:'column', size:1.0},
+
+      // Contradictions hang down (negative Y, columns rotated upside down or just below)
+      {id:'a5', text:'Generality is shallower',
+       body:'Specialised tools beat general ones at any specific job. A surgeon doesn\'t use a Swiss Army knife.',
+       position:[-3, -3.5, 0], color:'#c47a4d', shape:'column', size:1.0},
+      {id:'a6', text:'Users want defaults',
+       body:'Most people don\'t want power. They want a path. Narrow tools tell them what to do.',
+       position:[ 0, -3.5, 0], color:'#c47a4d', shape:'column', size:1.0},
+      {id:'a7', text:'General tools rot in the middle',
+       body:'Without a clear use case, a tool drifts toward serving no one well.',
+       position:[ 3, -3.5, 0], color:'#c47a4d', shape:'column', size:1.0},
+
+      // Conclusion — a gem, multifaceted, the synthesis
+      {id:'a8', text:'What I think after',
+       body:'Generality is right when the user is sophisticated and the medium is new. Narrow when the user is novice and the medium is mature.',
+       position:[5.5, 0, 1], color:'#d8a35a', shape:'gem', size:1.4},
+    ],
+    connections: [
+      // Supports rise into the claim
+      ['a2','a1', 'supports', true, '#8a9c80'],
+      ['a3','a1', 'supports', true, '#8a9c80'],
+      ['a4','a1', 'supports', true, '#8a9c80'],
+      // Contradictions pull at the claim
+      ['a5','a1', 'against',  true, '#c47a4d'],
+      ['a6','a1', 'against',  true, '#c47a4d'],
+      ['a7','a1', 'against',  true, '#c47a4d'],
+      // The claim leads to the conclusion
+      ['a1','a8', 'after weighing', true, '#d8a35a'],
+    ]
+  },
+
+  // ── Constellation ──────────────────────────────────────────────────
+  // Thinking as pattern-recognition. Many tiny dots arranged in a shape.
+  // Individual dots don't carry meaning — the arrangement is the insight.
+  // A few labelled "anchor" thoughts call out the figures.
+  {
+    id: 'constellation',
+    name: 'Constellation',
+    desc: 'Meaning emerges from arrangement, not from any single point.',
+    accent: '#7e8590',
+    tags: ['pattern', 'spatial'],
+    defaultShape: 'dot',
+    defaultColor: '#e8e6e1',
+    thoughts: (() => {
+      // Generate Orion-like constellation procedurally, then label key stars.
+      // All dots are unlabeled except a few "anchors" that name what you're seeing.
+      const arr = [];
+      // Orion main figure (rough star positions, scaled)
+      const stars = [
+        // Shoulders + head
+        ['k1', -3.0,  3.5, 0],   // Bellatrix (right shoulder)
+        ['k2',  2.5,  3.0, 0],   // Betelgeuse (left shoulder, slightly emphasized)
+        ['k3', -0.3,  4.5, 0],   // Meissa (head)
+        // Belt — three stars in a line, the signature
+        ['k4', -1.5,  0.0, 0],   // Mintaka
+        ['k5',  0.0,  0.0, 0],   // Alnilam
+        ['k6',  1.5, -0.3, 0],   // Alnitak
+        // Sword (hangs down from belt)
+        ['k7',  0.0, -1.6, 0],
+        ['k8',  0.1, -2.4, 0],
+        ['k9',  0.0, -3.2, 0],
+        // Feet
+        ['k10', -3.5, -3.5, 0],  // Saiph (right foot)
+        ['k11',  3.5, -3.0, 0],  // Rigel (left foot, brightest)
+      ];
+      for (const [id, x, y, z] of stars) {
+        const isBright = (id === 'k2' || id === 'k11');
+        arr.push({
+          id, text:'', position:[x, y, z],
+          color: isBright ? '#d8a35a' : '#e8e6e1',
+          shape: 'dot',
+          size: isBright ? 1.4 : 1.0,
+        });
+      }
+      // Background scatter — distant unrelated stars, same shape, smaller
+      const seed = 12345;
+      let s = seed;
+      const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+      for (let i = 0; i < 38; i++) {
+        const x = (rand() - 0.5) * 18;
+        const y = (rand() - 0.5) * 12;
+        const z = (rand() - 0.5) * 4 - 1.5;
+        // Don't put background stars too close to the figure
+        const dx = x, dy = y;
+        if (Math.hypot(dx, dy) < 5.5) continue;
+        arr.push({
+          id: 'bg' + i, text:'', position:[x, y, z],
+          color:'#e8e6e1', shape:'dot', size: 0.4 + rand() * 0.4,
+        });
+      }
+      // Anchor labels — large invisible-ish "thoughts" that name the patterns.
+      // These ARE labelled, so they read as the meaning of the arrangement.
+      arr.push({id:'anc1', text:'The belt', body:'The three stars in a line. The pattern you see first.',
+                position:[ 0, -0.9, 0.5], color:'#7e8590', shape:'sphere', size:0.6});
+      arr.push({id:'anc2', text:'Orion', body:'The hunter. A figure assembled from points that mean nothing alone.',
+                position:[-5, 0.5, 0.5], color:'#d8a35a', shape:'sphere', size:0.7});
+      return arr;
+    })(),
+    connections: [
+      // Belt — the signature line
+      ['k4','k5', null, false, '#e8e6e1'],
+      ['k5','k6', null, false, '#e8e6e1'],
+      // Shoulders to belt
+      ['k1','k4', null, false, '#7e8590'],
+      ['k2','k6', null, false, '#7e8590'],
+      // Head
+      ['k3','k1', null, false, '#7e8590'],
+      ['k3','k2', null, false, '#7e8590'],
+      // Belt to feet
+      ['k4','k10', null, false, '#7e8590'],
+      ['k6','k11', null, false, '#7e8590'],
+      // Sword from belt
+      ['k5','k7', null, false, '#7e8590'],
+      ['k7','k8', null, false, '#7e8590'],
+      ['k8','k9', null, false, '#7e8590'],
+      // Anchor labels point to the patterns they name
+      ['anc1','k5', 'see', true, '#7e8590'],
+      ['anc2','k3', 'is',  true, '#d8a35a'],
+    ]
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Original boards (preserved for comparison)
+  // ═══════════════════════════════════════════════════════════════════
   {
     id: 'decision',
     name: 'The decision you keep avoiding',
@@ -2243,8 +2776,8 @@ const STARTER_BOARDS = [
     thoughts: [
 
       // ── CORE — z=3, front ─────────────────────────────────────────────────
-      {id:'an1',  text:'atem v22',
-       body:'This board is a self-portrait of the tool. Read it zoomed out for shape, zoomed in for detail. Green nodes are shipped features. Amber is speculative. Red is known bugs. Every session this board updates.',
+      {id:'an1',  text:'atem v25 (branch)',
+       body:'This is the experimental shape branch. Thoughts can have different physical kinds — bars, cards, pebbles, columns, dots. New starter boards demonstrate how form carries meaning. The form is the content.',
        position:[0,0,3], color:'#7ed4a4', size:1.6},
 
       // ── THREE PRIMITIVES — z=2 ────────────────────────────────────────────
@@ -2671,16 +3204,20 @@ function closeGallery() {
 
 function renderGalleryCards() {
   const grid = document.getElementById('gallery-grid');
-  grid.innerHTML = STARTER_BOARDS.map(b => `
+  grid.innerHTML = STARTER_BOARDS.map(b => {
+    const shapeBadge = b.defaultShape && b.defaultShape !== 'sphere'
+      ? `<span style="font-size:10px;color:var(--ink-ghost);letter-spacing:0;margin-left:8px;font-style:normal">· ${b.defaultShape}</span>`
+      : '';
+    return `
     <div class="gcard" data-board-id="${b.id}" style="--accent:${b.accent}">
-      <div class="gcard-name">${b.name}</div>
+      <div class="gcard-name">${b.name}${shapeBadge}</div>
       <div class="gcard-desc">${b.desc}</div>
       <div class="gcard-meta">
         <div class="gcard-dot"></div>
         <span class="gcard-nodes">${b.thoughts.length} nodes · ${b.tags.join(', ')}</span>
       </div>
     </div>
-  `).join('');
+  `}).join('');
   grid.querySelectorAll('.gcard').forEach(card => {
     card.addEventListener('click', () => {
       const board = STARTER_BOARDS.find(b => b.id === card.dataset.boardId);
@@ -2744,6 +3281,8 @@ function loadStarterBoard(board) {
   // Bug 8: update board slot registry (name, count, updated) — persist metadata
   state.boardName = board.name;
   state.boardAccent = board.accent || '#6ea8fe';
+  state.boardDefaultShape = board.defaultShape || 'sphere';
+  state.boardDefaultColor = board.defaultColor || null;
   state.isStarterBoard = true;
   save();
   getBoardRegistry().then(async reg => {
@@ -2757,7 +3296,7 @@ function loadStarterBoard(board) {
   });
 
   closeGallery();
-  toast(`"${board.name}" loaded`);
+  toast(`Loaded ${board.name}`);
 }
 
 document.getElementById('gallery-close').addEventListener('click', closeGallery);
@@ -2824,27 +3363,57 @@ function animate() {
 
   let hasAnim = false;
   for (const mesh of thoughtGroup.children) {
-    const ud = mesh.userData; ud.breath += dt*0.8;
+    const ud = mesh.userData; ud.breath += dt*0.7;
+    // Imperceptible drift — board breathes, you feel it not see it
     if (!isDragging || mesh !== draggedMesh) {
-      mesh.position.y += Math.sin(ud.breath)*0.0003;
-      mesh.position.x += Math.cos(ud.breath*0.7)*0.0002;
+      mesh.position.y += Math.sin(ud.breath)*0.00018;
+      mesh.position.x += Math.cos(ud.breath*0.7)*0.00012;
+    }
+    // Billboarded shapes (card, bar) face the camera — they're surfaces, not volumes
+    if (ud.billboards) {
+      mesh.quaternion.copy(camera.quaternion);
     }
     const ce = mesh.material.emissiveIntensity;
-    const te = ud.targetEmissive + Math.sin(ud.breath)*0.03;
-    mesh.material.emissiveIntensity += (te-ce)*(0.07 + (ud.breath % 0.06));
+    const te = ud.targetEmissive + Math.sin(ud.breath)*0.02;
+    mesh.material.emissiveIntensity += (te-ce)*0.08;
     const co = mesh.material.opacity;
     mesh.material.opacity += (ud.targetOpacity-co)*0.08;
 
-    // Joy layer 1: damped bounce on creation. 1.0 → 1.15 → 1.0 over ~300ms.
+    // Confident pop-in: 0.88 → 1.0 ease-out cubic over 220ms. No overshoot.
     if (ud.bounceStart) {
+      const dur = ud.bounceDuration || 220;
       const elapsed = now - ud.bounceStart;
-      if (elapsed >= 300) {
+      if (elapsed >= dur) {
         ud.bounceStart = 0;
+        ud.bounceFromZero = false;
         mesh.scale.setScalar(ud.baseSize || 1.0);
       } else {
-        const t = elapsed / 300;
-        const mult = 1 + 0.15 * Math.sin(Math.PI * t);
+        const t = elapsed / dur;
+        let mult;
+        if (ud.bounceFromZero) {
+          // ease-out cubic: 0.88 → 1.0
+          const u = 1 - Math.pow(1 - t, 3);
+          mult = 0.88 + 0.12 * u;
+        } else {
+          // soft return bounce
+          mult = 1 + 0.04 * Math.sin(Math.PI * t);
+        }
         mesh.scale.setScalar((ud.baseSize || 1.0) * mult);
+        hasAnim = true;
+      }
+    }
+
+    // Inhale on connection-land: 1.0 → 1.04 → 1.0 over 220ms
+    if (ud.inhaleStart) {
+      const dur = 220;
+      const elapsed = now - ud.inhaleStart;
+      if (elapsed >= dur) {
+        ud.inhaleStart = 0;
+        if (!ud.bounceStart) mesh.scale.setScalar(ud.baseSize || 1.0);
+      } else {
+        const t = elapsed / dur;
+        const mult = 1 + 0.04 * Math.sin(Math.PI * t);
+        if (!ud.bounceStart) mesh.scale.setScalar((ud.baseSize || 1.0) * mult);
         hasAnim = true;
       }
     }
@@ -2852,10 +3421,8 @@ function animate() {
     const label = mesh.getObjectByName('label');
     if (label) {
       const inView = frustum.containsPoint(mesh.position);
-      // Min screen-size fade: project thought to screen, hide label if too small
-      const _sp = mesh.position.clone().project(camera);
       const _screenR = (mesh.scale.x / mesh.position.distanceTo(camera.position)) * window.innerHeight * 0.5;
-      const _sizeOk = _screenR > 8; // pixels — below this the label is unreadable
+      const _sizeOk = _screenR > 8;
       const _targetLO = (inView && ud.targetOpacity > 0.5 && _sizeOk) ? ud.targetLabelOpacity : 0;
       const _curLO = label.material.opacity;
       label.material.opacity += (_targetLO - _curLO) * 0.12;
@@ -2865,7 +3432,7 @@ function animate() {
 
     if (Math.abs(ce-te) > 0.01 || Math.abs(co-ud.targetOpacity) > 0.01) hasAnim = true;
 
-    // Collapse badge — small ↓N sprite above the sphere when it has hidden children
+    // Collapse badge — small ↓N indicator above the sphere
     const count = ud.collapsedCount || 0;
     let badge = mesh.getObjectByName('collapse-badge');
     if (count > 0) {
@@ -2873,15 +3440,21 @@ function animate() {
         if (badge) mesh.remove(badge);
         const bc = document.createElement('canvas'); bc.width = 128; bc.height = 64;
         const bctx = bc.getContext('2d');
-        bctx.fillStyle = 'rgba(0,0,0,0.75)'; bctx.roundRect(4,4,120,56,12); bctx.fill();
-        bctx.fillStyle = '#fff'; bctx.font = 'bold 32px system-ui'; bctx.textAlign = 'center'; bctx.textBaseline = 'middle';
-        bctx.fillText('↓' + count, 64, 34);
+        bctx.fillStyle = 'rgba(20,18,16,0.88)';
+        bctx.beginPath();
+        if (bctx.roundRect) bctx.roundRect(4,4,120,56,4); else bctx.rect(4,4,120,56);
+        bctx.fill();
+        bctx.strokeStyle = 'rgba(232,230,225,0.18)'; bctx.lineWidth = 1; bctx.stroke();
+        bctx.fillStyle = '#e8e6e1';
+        bctx.font = '500 22px "Inter", sans-serif';
+        bctx.textAlign = 'center'; bctx.textBaseline = 'middle';
+        bctx.fillText('+' + count, 64, 34);
         const bt = new THREE.CanvasTexture(bc);
-        const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.9, depthTest:false });
+        const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.92, depthTest:false });
         badge = new THREE.Sprite(bm);
         badge.name = 'collapse-badge';
         badge.userData.forCount = count;
-        badge.scale.set(1.2, 0.6, 1);
+        badge.scale.set(1.0, 0.5, 1);
         badge.position.set(0, (mesh.scale.x || 1) + 0.5, 0);
         mesh.add(badge);
       }
@@ -2949,12 +3522,25 @@ function buildZGrid() {
     const mat = new THREE.LineBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.22,
       depthTest: true
     });
     const segs = new THREE.LineSegments(geo, mat);
     segs.renderOrder = -1;
     gridGroup.add(segs);
+
+    // Solid border rectangle — makes each plane's extent unambiguous
+    const borderPts = [
+      new THREE.Vector3(minX, minY, z), new THREE.Vector3(maxX, minY, z),
+      new THREE.Vector3(maxX, minY, z), new THREE.Vector3(maxX, maxY, z),
+      new THREE.Vector3(maxX, maxY, z), new THREE.Vector3(minX, maxY, z),
+      new THREE.Vector3(minX, maxY, z), new THREE.Vector3(minX, minY, z),
+    ];
+    const borderGeo = new THREE.BufferGeometry().setFromPoints(borderPts);
+    const borderMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 });
+    const border = new THREE.LineSegments(borderGeo, borderMat);
+    border.renderOrder = -1;
+    gridGroup.add(border);
 
     // Minimal z-tag: just a tiny text sprite at the left edge, mid-height
     const cy = (minY + maxY) / 2;
@@ -2964,7 +3550,7 @@ function buildZGrid() {
     bctx.font = 'bold 20px system-ui'; bctx.textAlign = 'left'; bctx.textBaseline = 'middle';
     bctx.fillText('z' + (z >= 0 ? '+' : '') + z.toFixed(0) + ' ·' + count, 4, 18);
     const bt = new THREE.CanvasTexture(bc);
-    const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.75, depthTest:false });
+    const bm = new THREE.SpriteMaterial({ map:bt, transparent:true, opacity:0.9, depthTest:false });
     const tag = new THREE.Sprite(bm);
     tag.scale.set(2.5, 0.75, 1);
     tag.position.set(minX - 0.5, cy, z);
@@ -3075,7 +3661,7 @@ function toggleZGrid() {
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v22 — dt clamp, pending line render fix, 3-state direction, isStarterBoard, atem-now board + ATEM_HISTORY');
+console.log('atem v25 (branch) — thought is matter: 11 shapes, 5 new starter boards demonstrate form carrying meaning. Reading list, This week, What I\'m carrying, The argument, Constellation.');
 </script>
 </body>
 </html>
