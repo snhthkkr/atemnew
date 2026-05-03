@@ -16,20 +16,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* ── ink scale (monochromatic, warm-shifted) ──────────────────────── */
-  --void:#0a0908;                     /* canvas */
-  --panel:#141210;                    /* surface (editor, drawer, overlays) */
-  --hairline:rgba(232,230,225,0.06);
-  --hairline-strong:rgba(232,230,225,0.14);
-  --ink:#e8e6e1;                      /* primary text */
-  --ink-soft:rgba(232,230,225,0.62);
-  --ink-faint:rgba(232,230,225,0.34);
-  --ink-ghost:rgba(232,230,225,0.18);
-  --ink-trace:rgba(232,230,225,0.08);
-  /* ── single accent — used only for the focused/active element ─────── */
-  --accent:#d8a35a;                   /* warm amber, attention only */
-  --accent-soft:rgba(216,163,90,0.16);
-  /* ── danger (destructive only) ────────────────────────────────────── */
+  /* ── ink scale (warm-shifted, paint-derived for v26) ─────────────── */
+  --void:#0a0908;
+  --panel:#141210;
+  --hairline:rgba(232,222,201,0.07);
+  --hairline-strong:rgba(232,222,201,0.16);
+  --ink:#e8dec9;                      /* bone — primary text */
+  --ink-soft:rgba(232,222,201,0.62);
+  --ink-faint:rgba(232,222,201,0.34);
+  --ink-ghost:rgba(232,222,201,0.18);
+  --ink-trace:rgba(232,222,201,0.08);
+  /* ── accent (ember — warm, attention) ─────────────────────────────── */
+  --accent:#c8632d;
+  --accent-soft:rgba(200,99,45,0.18);
+  /* ── danger ───────────────────────────────────────────────────────── */
   --danger:rgba(196,90,82,0.90);
   /* ── type ─────────────────────────────────────────────────────────── */
   --sans:'Inter','-apple-system','BlinkMacSystemFont','Segoe UI',sans-serif;
@@ -435,7 +435,89 @@ html,body{
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ─── Idle chip ─────────────────────────────────────────────────── */
+/* ─── Meanings panel (v26) ────────────────────────────────────────
+   The user's grammar for this board. Lists each active slot (color,
+   shape, size) and the values currently used. Inline text field
+   beside each value lets the user write what it means TO THEM.
+   ────────────────────────────────────────────────────────────────── */
+#meanings-panel{
+  position:fixed;display:none;z-index:115;
+  right:max(20px,env(safe-area-inset-right,0px));
+  top:50%;transform:translateY(-50%) translateX(8px);
+  width:min(300px,86vw);
+  max-height:calc(100vh - 60px);max-height:calc(100dvh - 60px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:var(--panel);
+  border:1px solid var(--hairline);
+  border-radius:6px;padding:14px 16px 12px;
+  box-shadow:0 24px 60px -24px rgba(0,0,0,0.65);
+  opacity:0;
+  transition:opacity var(--t) var(--e), transform var(--t) var(--e);
+}
+#meanings-panel.open{display:block;opacity:1;transform:translateY(-50%) translateX(0)}
+#meanings-header{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-bottom:10px;margin-bottom:8px;
+  border-bottom:1px solid var(--hairline);
+}
+#meanings-title{
+  font-family:var(--sans);font-size:11px;color:var(--ink-faint);
+  font-weight:500;letter-spacing:0;
+}
+#meanings-close{
+  background:transparent;border:none;
+  color:var(--ink-faint);font-size:13px;cursor:pointer;
+  padding:0;font-family:var(--sans);
+  transition:color var(--t) var(--e);
+}
+#meanings-close:hover{color:var(--ink)}
+#meanings-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--hairline);padding-bottom:8px}
+.meanings-tab{
+  background:transparent;border:none;
+  color:var(--ink-faint);font-size:12px;
+  padding:4px 10px 4px 0;cursor:pointer;
+  font-family:var(--sans);font-weight:400;
+  transition:color var(--t) var(--e);
+}
+.meanings-tab:hover{color:var(--ink-soft)}
+.meanings-tab.active{color:var(--accent)}
+#meanings-body{padding-top:2px}
+.meaning-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--hairline);
+}
+.meaning-row:last-child{border-bottom:none}
+.meaning-glyph{
+  flex-shrink:0;width:18px;height:18px;
+  display:flex;align-items:center;justify-content:center;
+}
+.meaning-glyph.color-glyph{border-radius:50%;box-shadow:0 0 0 1px var(--hairline)}
+.meaning-glyph.shape-glyph{
+  font-family:var(--sans);font-size:10px;
+  color:var(--ink-soft);width:auto;letter-spacing:0;
+}
+.meaning-glyph.size-glyph{
+  border-radius:50%;background:var(--ink-soft);box-shadow:0 0 0 1px var(--hairline);
+}
+.meaning-input{
+  -webkit-user-select:text;user-select:text;
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--ink);font-size:13px;font-family:var(--sans);
+  border-bottom:1px dotted transparent;
+  padding:2px 0;letter-spacing:-0.005em;
+  transition:border-bottom-color var(--t) var(--e);
+}
+.meaning-input::placeholder{color:var(--ink-ghost);font-style:italic}
+.meaning-input:focus{border-bottom-color:var(--accent)}
+.meaning-count{
+  flex-shrink:0;font-family:var(--sans);font-size:10px;
+  color:var(--ink-ghost);letter-spacing:0;
+  font-variant-numeric:tabular-nums;min-width:18px;text-align:right;
+}
+.meaning-empty{
+  padding:14px 4px;color:var(--ink-faint);font-size:12px;
+  font-family:var(--sans);line-height:1.5;letter-spacing:-0.005em;
+}
 #idle-chip{
   position:fixed;left:50%;bottom:max(68px,calc(env(safe-area-inset-bottom,0px)+60px));
   transform:translateX(-50%) translateY(4px);
@@ -484,6 +566,20 @@ html,body{
   </div>
 </div>
 
+<!-- Meanings panel — the user's grammar for this board (v26) -->
+<div id="meanings-panel">
+  <div id="meanings-header">
+    <span id="meanings-title">What things mean here</span>
+    <button id="meanings-close">close</button>
+  </div>
+  <div id="meanings-tabs">
+    <button class="meanings-tab active" data-slot="color">Color</button>
+    <button class="meanings-tab" data-slot="shape">Shape</button>
+    <button class="meanings-tab" data-slot="size">Size</button>
+  </div>
+  <div id="meanings-body"></div>
+</div>
+
 <!-- Menu trigger -->
 <button id="menu-btn" aria-label="Menu"></button>
 <div id="menu-scrim"></div>
@@ -494,6 +590,7 @@ html,body{
   </div>
   <button id="m-boards">Switch board</button>
   <button id="m-gallery">Browse boards</button>
+  <button id="m-meanings">What things mean here</button>
   <div class="sep"></div>
   <button id="m-export">Export</button>
   <button id="m-import">Import</button>
@@ -555,7 +652,7 @@ import { get, set, del } from 'idb-keyval';
 // ═══════════════════════════════════════════
 
 let state = {
-  version: 25,
+  version: 26,
   thoughts: [],
   connections: [],
   camera: null,
@@ -564,6 +661,21 @@ let state = {
   boardId: 'board-1',
   boardName: 'Board 1',
   isStarterBoard: false,
+  // ── v26: schema system ─────────────────────────────────────────────
+  // The user's emerging grammar for this board. Each slot is a property
+  // of a thought (color, shape, size). The user assigns meanings to the
+  // *values* that slot can take. atem ships defaults; the user fills in
+  // what they mean to THEM — that's the customization.
+  //
+  // schema = which slots are active in this board's grammar
+  // meanings = { slotName: { value: 'user-defined meaning' } }
+  // ────────────────────────────────────────────────────────────────────
+  schema: ['color', 'shape', 'size'],
+  meanings: {
+    color: {},   // { '#c8632d': 'urgent', '#6e5e9c': 'unfinished', ... }
+    shape: {},   // { 'sphere': 'idea', 'card': 'fact', ... }
+    size: {},    // { '1.4': 'major', '0.8': 'aside' }
+  },
 };
 
 let editingId = null, editingColor = null;
@@ -588,54 +700,56 @@ const pointer = new THREE.Vector2();
 const plane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
 const intersectPt = new THREE.Vector3();
 
-// ── Tonal scale (v24) ─────────────────────────────────────────────────
-// Thoughts are monochromatic by default. The optional color picker offers
-// 6 warmth-shifted tones — they all read as ink, just at different
-// temperatures. Color is a quiet semantic dimension, not decoration.
+// ── Tonal palette (v26) ───────────────────────────────────────────────
+// Returning to the v23 paint palette — you said v25 was too dull. The
+// hand-mixed colors carry mood, not just hex. Each is named so the user
+// can later assign meaning to "ember" (their own meaning, not ours).
 // ──────────────────────────────────────────────────────────────────────
 const TONES = {
-  ink:    '#e8e6e1',  // default — neutral warm white
-  bone:   '#d8cfba',  // cooler, slightly chalk
-  amber:  '#d8a35a',  // warm — same as accent, attention
-  ember:  '#c47a4d',  // deeper warmth
-  moss:   '#8a9c80',  // cool green — quiet
-  slate:  '#7e8590',  // cool blue-grey — distance
+  bone:      '#e8dec9', // chalk, central, default
+  ember:     '#c8632d', // generative spark
+  oxblood:   '#7a2e2e', // contradiction, weight
+  duckegg:   '#6f9090', // resonance, association
+  tobacco:   '#a87d3f', // footnote, aside
+  iris:      '#6e5e9c', // depth, the unsaid
+  verdigris: '#4a8a73', // confirmation
+  rose:      '#b8645c', // soft emotion
+  ink:       '#e8dec9', // alias for bone — used as the "default" when no color set
 };
-const COLORS = [TONES.ink, TONES.bone, TONES.amber, TONES.ember, TONES.moss, TONES.slate];
+const COLORS = [TONES.bone, TONES.ember, TONES.oxblood, TONES.duckegg, TONES.tobacco, TONES.iris, TONES.verdigris, TONES.rose];
 
-// Migrate any legacy hex from older versions into the new tonal scale
+// Migrate any legacy hex from older versions into the palette
 const COLOR_MAP = {
   // v22 Tailwind defaults
-  '#6ea8fe': TONES.slate,
-  '#a78bfa': TONES.slate,
-  '#f472b6': TONES.ember,
-  '#34d399': TONES.moss,
-  '#fbbf24': TONES.amber,
+  '#6ea8fe': TONES.duckegg,
+  '#a78bfa': TONES.iris,
+  '#f472b6': TONES.rose,
+  '#34d399': TONES.verdigris,
+  '#fbbf24': TONES.tobacco,
   '#fb923c': TONES.ember,
-  '#f87171': TONES.ember,
+  '#f87171': TONES.oxblood,
   '#67e8f9': TONES.bone,
-  '#7ed4a4': TONES.moss,
-  '#f5c97a': TONES.amber,
-  '#b8a9f5': TONES.slate,
-  '#7ab8f5': TONES.slate,
-  // v23 paint palette
-  '#e8dec9': TONES.bone,
-  '#c8632d': TONES.ember,
-  '#7a2e2e': TONES.ember,
-  '#6f9090': TONES.slate,
-  '#a87d3f': TONES.amber,
-  '#6e5e9c': TONES.slate,
-  '#4a8a73': TONES.moss,
-  '#b8645c': TONES.ember,
+  '#7ed4a4': TONES.verdigris,
+  '#f5c97a': TONES.tobacco,
+  '#b8a9f5': TONES.iris,
+  '#7ab8f5': TONES.duckegg,
+  // v24 muted neutrals
+  '#e8e6e1': TONES.bone,
+  '#d8cfba': TONES.bone,
+  '#d8a35a': TONES.tobacco,
+  '#c47a4d': TONES.ember,
+  '#8a9c80': TONES.verdigris,
+  '#7e8590': TONES.duckegg,
 };
 function migrateColor(c) {
-  if (!c) return TONES.ink;
+  if (!c) return TONES.bone;
   const lower = String(c).toLowerCase();
   return COLOR_MAP[lower] || c;
 }
 
-// Connection presets — labels only, no per-preset color.
-// Connections share one muted color across the board (scaffolding, not subject).
+// Connection presets — labels only. Connections share one muted color
+// (rebuildConnections handles color logic). Labels are claims the user
+// chooses. Labels themselves are part of the user's emerging grammar.
 const CONN_PRESETS = [
   { label:'Causes' },
   { label:'Contradicts' },
@@ -648,7 +762,6 @@ const CONN_PRESETS = [
   { label:'Leads to' },
   { label:'Follows from' },
 ];
-// One muted ink color for connection accent overrides (rarely needed).
 const CONN_COLORS = COLORS.slice();
 
 // ═══════════════════════════════════════════
@@ -1291,6 +1404,11 @@ async function loadBoard(boardId) {
     state.boardName = s.boardName || boardId;
     state.boardDefaultShape = s.boardDefaultShape || 'sphere';
     state.boardDefaultColor = s.boardDefaultColor || null;
+    state.schema = (s.schema && s.schema.length) ? s.schema : ['color', 'shape', 'size'];
+    state.meanings = s.meanings || { color:{}, shape:{}, size:{} };
+    if (!state.meanings.color) state.meanings.color = {};
+    if (!state.meanings.shape) state.meanings.shape = {};
+    if (!state.meanings.size) state.meanings.size = {};
     if (s.camera) {
       camera.position.set(s.camera.px,s.camera.py,s.camera.pz);
       controls.target.set(s.camera.tx,s.camera.ty,s.camera.tz);
@@ -1351,6 +1469,11 @@ async function load() {
     state.boardName = s.boardName || 'Board 1';
     state.boardDefaultShape = s.boardDefaultShape || 'sphere';
     state.boardDefaultColor = s.boardDefaultColor || null;
+    state.schema = (s.schema && s.schema.length) ? s.schema : ['color', 'shape', 'size'];
+    state.meanings = s.meanings || { color:{}, shape:{}, size:{} };
+    if (!state.meanings.color) state.meanings.color = {};
+    if (!state.meanings.shape) state.meanings.shape = {};
+    if (!state.meanings.size) state.meanings.size = {};
 
     if (s.camera) {
       camera.position.set(s.camera.px,s.camera.py,s.camera.pz);
@@ -1457,6 +1580,11 @@ function createThought(x, y, z, text, color, body) {
   const menu = document.getElementById('menu-drawer');
   if (menu && menu.classList.contains('open')) updateMenuHeader();
   if (zGridVisible) buildZGrid();
+  // Refresh meanings panel if open — new thought may add a new value-row
+  const panel = document.getElementById('meanings-panel');
+  if (panel && panel.classList.contains('open')) renderMeaningsPanel();
+  // Lenient nudge — after 3 thoughts with 2+ distinct colors
+  maybeNudgeMeanings();
   needsRender = true;
   return t;
 }
@@ -1477,7 +1605,11 @@ function updateThought(id, text, color, size, body) {
     }
     if (size !== undefined) { mesh.scale.setScalar(size); mesh.userData.baseSize = size; }
   }
-  save(); needsRender = true;
+  save();
+  // Refresh meanings panel if open — color/size change may surface new values
+  const panel = document.getElementById('meanings-panel');
+  if (panel && panel.classList.contains('open')) renderMeaningsPanel();
+  needsRender = true;
 }
 
 function deleteThought(id) {
@@ -2233,7 +2365,9 @@ document.getElementById('m-clear').addEventListener('click', async () => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (boardsOverlay.classList.contains('open')) { closeBoards(); e.preventDefault(); }
+    const meaningsP = document.getElementById('meanings-panel');
+    if (meaningsP && meaningsP.classList.contains('open')) { closeMeanings(); e.preventDefault(); }
+    else if (boardsOverlay.classList.contains('open')) { closeBoards(); e.preventDefault(); }
     else if (galleryOverlay.classList.contains('open')) { closeGallery(); e.preventDefault(); }
     else if (connEditorEl.classList.contains('open')) { closeConnEditor(); e.preventDefault(); }
     else if (menuDrawer.classList.contains('open')) { closeMenu(); e.preventDefault(); }
@@ -2281,102 +2415,135 @@ const STARTER_BOARDS = [
 
   // ── Reading list ─────────────────────────────────────────────────
   // Thinking as a queue. Items stacked vertically, each on its own row.
-  // Adding a new thought drops another bar onto the stack.
+  // Pre-filled grammar: color carries reading-state, size carries length.
   {
     id: 'reading-list',
     name: 'Reading list',
-    desc: 'Thinking as a queue. New thoughts stack on top.',
-    accent: '#d8a35a',
+    desc: 'Thinking as a queue. Color = where it is in your stack.',
+    accent: '#c8632d',
     tags: ['list', 'sequence'],
     defaultShape: 'bar',
-    defaultColor: '#e8e6e1',
+    defaultColor: '#e8dec9',
+    schema: ['color', 'size'],
+    meanings: {
+      color: {
+        '#e8dec9': 'in the queue',
+        '#c8632d': 'currently reading',
+        '#6f9090': 'finished, want to revisit',
+      },
+      shape: {},
+      size: {
+        'large': 'a long, slow read',
+        'default': 'normal',
+        'small': 'a short essay or pamphlet',
+      }
+    },
     thoughts: [
-      {id:'r1', text:'Wittgenstein, Tractatus',                        position:[0, 4.5, 0], color:'#e8e6e1', shape:'bar'},
-      {id:'r2', text:'Bachelard, The Poetics of Space',                position:[0, 3.0, 0], color:'#e8e6e1', shape:'bar'},
-      {id:'r3', text:'Ursula K. Le Guin, The Carrier Bag of Fiction',  position:[0, 1.5, 0], color:'#d8a35a', shape:'bar'},
-      {id:'r4', text:'Simone Weil, Gravity and Grace',                 position:[0, 0.0, 0], color:'#e8e6e1', shape:'bar'},
-      {id:'r5', text:'Borges, Labyrinths',                             position:[0,-1.5, 0], color:'#e8e6e1', shape:'bar'},
-      {id:'r6', text:'Anne Carson, Autobiography of Red',              position:[0,-3.0, 0], color:'#d8a35a', shape:'bar'},
-      {id:'r7', text:'Italo Calvino, Invisible Cities',                position:[0,-4.5, 0], color:'#e8e6e1', shape:'bar'},
+      {id:'r1', text:'Wittgenstein, Tractatus',                        position:[0, 4.5, 0], color:'#e8dec9', shape:'bar'},
+      {id:'r2', text:'Bachelard, The Poetics of Space',                position:[0, 3.0, 0], color:'#e8dec9', shape:'bar'},
+      {id:'r3', text:'Le Guin, The Carrier Bag of Fiction',            position:[0, 1.5, 0], color:'#c8632d', shape:'bar', size:0.85},
+      {id:'r4', text:'Simone Weil, Gravity and Grace',                 position:[0, 0.0, 0], color:'#e8dec9', shape:'bar'},
+      {id:'r5', text:'Borges, Labyrinths',                             position:[0,-1.5, 0], color:'#6f9090', shape:'bar', size:0.85},
+      {id:'r6', text:'Anne Carson, Autobiography of Red',              position:[0,-3.0, 0], color:'#6f9090', shape:'bar', size:1.4},
+      {id:'r7', text:'Italo Calvino, Invisible Cities',                position:[0,-4.5, 0], color:'#e8dec9', shape:'bar', size:1.4},
     ],
-    connections: [
-      // No connections — list is its own structure. Order is the only relation.
-    ]
+    connections: []
   },
 
   // ── This week ─────────────────────────────────────────────────
-  // Thinking as scheduled blocks. Cards on a 7-day grid (Mon..Sun left→right).
-  // Bigger card = more weight in your week. New thoughts arrive as cards.
+  // Pre-filled grammar: color = energy required for the task, size = weight.
   {
     id: 'this-week',
     name: 'This week',
-    desc: 'Thinking as scheduled blocks. Mon → Sun, left to right.',
-    accent: '#d8a35a',
+    desc: 'Color carries energy. Size carries weight. Mon → Sun.',
+    accent: '#c8632d',
     tags: ['time', 'plan'],
     defaultShape: 'card',
-    defaultColor: '#e8e6e1',
+    defaultColor: '#e8dec9',
+    schema: ['color', 'size'],
+    meanings: {
+      color: {
+        '#e8dec9': 'normal day-work',
+        '#c8632d': 'high-energy, deep focus',
+        '#6f9090': 'recovery, off',
+        '#a87d3f': 'admin, low-stakes',
+      },
+      shape: {},
+      size: {
+        'large': 'owns most of the day',
+        'medium-large': 'half the day',
+        'default': 'a few hours',
+        'small': 'quick, an hour',
+      }
+    },
     thoughts: [
-      // Day labels — small flat discs along the top, labelling each column.
-      {id:'wm', text:'Mon', position:[-9, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
-      {id:'wt', text:'Tue', position:[-6, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
-      {id:'ww', text:'Wed', position:[-3, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
-      {id:'wh', text:'Thu', position:[ 0, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
-      {id:'wf', text:'Fri', position:[ 3, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
-      {id:'ws', text:'Sat', position:[ 6, 4.5, 0], color:'#7e8590', shape:'disc',  size:0.5},
-      {id:'wu', text:'Sun', position:[ 9, 4.5, 0], color:'#d8a35a', shape:'disc',  size:0.5},
+      // Day labels — small flat discs along the top
+      {id:'wm', text:'Mon', position:[-9, 4.5, 0], color:'#a87d3f', shape:'disc',  size:0.5},
+      {id:'wt', text:'Tue', position:[-6, 4.5, 0], color:'#a87d3f', shape:'disc',  size:0.5},
+      {id:'ww', text:'Wed', position:[-3, 4.5, 0], color:'#a87d3f', shape:'disc',  size:0.5},
+      {id:'wh', text:'Thu', position:[ 0, 4.5, 0], color:'#a87d3f', shape:'disc',  size:0.5},
+      {id:'wf', text:'Fri', position:[ 3, 4.5, 0], color:'#a87d3f', shape:'disc',  size:0.5},
+      {id:'ws', text:'Sat', position:[ 6, 4.5, 0], color:'#6f9090', shape:'disc',  size:0.5},
+      {id:'wu', text:'Sun', position:[ 9, 4.5, 0], color:'#6f9090', shape:'disc',  size:0.5},
 
-      // Mon
-      {id:'tw1', text:'Ship v25 branch',          position:[-9, 2.0, 0], color:'#d8a35a', shape:'card', size:1.1},
-      {id:'tw2', text:'1:1 with Fiddy',           position:[-9, 0.0, 0], color:'#e8e6e1', shape:'card'},
-      // Tue
-      {id:'tw3', text:'DIME TV brief',            position:[-6, 2.0, 0], color:'#e8e6e1', shape:'card'},
-      {id:'tw4', text:'Trade journal',            position:[-6, 0.0, 0], color:'#e8e6e1', shape:'card', size:0.85},
-      // Wed
-      {id:'tw5', text:'Money Badger pipeline',    position:[-3, 2.0, 0], color:'#e8e6e1', shape:'card', size:1.1},
-      // Thu
-      {id:'tw6', text:'Long writing block',       position:[ 0, 2.0, 0], color:'#d8a35a', shape:'card', size:1.4},
-      // Fri
-      {id:'tw7', text:'Paradex weekly recap',     position:[ 3, 2.0, 0], color:'#e8e6e1', shape:'card'},
-      {id:'tw8', text:'Review week, plan next',   position:[ 3, 0.0, 0], color:'#e8e6e1', shape:'card', size:0.9},
-      // Sat
-      {id:'tw9', text:'Off',                      position:[ 6, 2.0, 0], color:'#7e8590', shape:'card', size:0.85},
-      // Sun
-      {id:'tw10', text:'Long walk',               position:[ 9, 2.0, 0], color:'#d8a35a', shape:'card', size:0.9},
+      {id:'tw1', text:'Ship v26',                  position:[-9, 2.0, 0], color:'#c8632d', shape:'card', size:1.4},
+      {id:'tw2', text:'1:1 with Fiddy',             position:[-9, 0.0, 0], color:'#e8dec9', shape:'card'},
+      {id:'tw3', text:'DIME TV brief',              position:[-6, 2.0, 0], color:'#e8dec9', shape:'card'},
+      {id:'tw4', text:'Trade journal',              position:[-6, 0.0, 0], color:'#a87d3f', shape:'card', size:0.85},
+      {id:'tw5', text:'Money Badger pipeline',      position:[-3, 2.0, 0], color:'#c8632d', shape:'card', size:1.1},
+      {id:'tw6', text:'Long writing block',         position:[ 0, 2.0, 0], color:'#c8632d', shape:'card', size:1.6},
+      {id:'tw7', text:'Paradex weekly recap',       position:[ 3, 2.0, 0], color:'#e8dec9', shape:'card'},
+      {id:'tw8', text:'Review week, plan next',     position:[ 3, 0.0, 0], color:'#a87d3f', shape:'card', size:0.9},
+      {id:'tw9', text:'Off',                        position:[ 6, 2.0, 0], color:'#6f9090', shape:'card', size:0.85},
+      {id:'tw10', text:'Long walk',                 position:[ 9, 2.0, 0], color:'#6f9090', shape:'card', size:0.9},
     ],
     connections: [
-      // Time runs left to right. The arrow says "this then that."
-      ['tw1','tw3', null, true,  '#7e8590'],
-      ['tw3','tw5', null, true,  '#7e8590'],
-      ['tw5','tw6', null, true,  '#7e8590'],
-      ['tw6','tw7', null, true,  '#7e8590'],
+      ['tw1','tw3', null, true,  '#a87d3f'],
+      ['tw3','tw5', null, true,  '#a87d3f'],
+      ['tw5','tw6', null, true,  '#a87d3f'],
+      ['tw6','tw7', null, true,  '#a87d3f'],
     ]
   },
 
   // ── What I'm carrying ─────────────────────────────────────────────
-  // Thinking as feelings. Soft pebbles, irregular, no neat structure.
-  // Some are heavy (large), some light. None of them have edges yet.
-  // Connections are where two feelings touch — usually you don't know why.
+  // Pre-filled grammar: color = emotional temperature, size = weight.
   {
     id: 'carrying',
     name: 'What I\'m carrying',
-    desc: 'Soft, unfinished thoughts. Feelings before they\'re words.',
-    accent: '#c47a4d',
+    desc: 'Color carries feeling. Size carries weight. Soft, unfinished thoughts.',
+    accent: '#c8632d',
     tags: ['private', 'inward'],
     defaultShape: 'pebble',
-    defaultColor: '#d8cfba',
+    defaultColor: '#e8dec9',
+    schema: ['color', 'size'],
+    meanings: {
+      color: {
+        '#e8dec9': 'neutral, just present',
+        '#c8632d': 'aches, unresolved',
+        '#7a2e2e': 'heavy, won\'t let go',
+        '#4a8a73': 'a small mercy',
+        '#a87d3f': 'tender, fond',
+      },
+      shape: {},
+      size: {
+        'large': 'a lot of weight',
+        'medium-large': 'considerable',
+        'default': 'normal',
+        'small': 'small but present',
+      }
+    },
     thoughts: [
-      {id:'c1', text:'A thing my dad said',                position:[-2.5, 1.5, 0.5], color:'#d8cfba', shape:'pebble', size:1.3},
-      {id:'c2', text:'The conversation I keep avoiding',   position:[ 2.0, 2.5,-0.5], color:'#c47a4d', shape:'pebble', size:1.5},
-      {id:'c3', text:'A song from when I was 16',          position:[-3.0,-1.0, 1.0], color:'#d8cfba', shape:'pebble', size:0.9},
-      {id:'c4', text:'The shape of last Tuesday',          position:[ 0.5,-2.0, 0.0], color:'#d8cfba', shape:'pebble', size:1.1},
-      {id:'c5', text:'Restless without reason',            position:[ 3.5,-0.5, 0.8], color:'#c47a4d', shape:'pebble', size:1.0},
-      {id:'c6', text:'Something I don\'t want to forget',  position:[-1.0, 3.0,-1.2], color:'#d8a35a', shape:'pebble', size:1.2},
-      {id:'c7', text:'A small mercy',                      position:[ 1.5, 0.0, 1.5], color:'#8a9c80', shape:'pebble', size:0.85},
-      {id:'c8', text:'Tired in a way sleep won\'t fix',    position:[-2.0,-3.5,-0.5], color:'#c47a4d', shape:'pebble', size:1.2},
-      {id:'c9', text:'Someone I should call',              position:[ 4.0, 1.5,-0.8], color:'#d8cfba', shape:'pebble', size:1.0},
+      {id:'c1', text:'A thing my dad said',                position:[-2.5, 1.5, 0.5], color:'#a87d3f', shape:'pebble', size:1.3},
+      {id:'c2', text:'The conversation I keep avoiding',   position:[ 2.0, 2.5,-0.5], color:'#7a2e2e', shape:'pebble', size:1.5},
+      {id:'c3', text:'A song from when I was 16',          position:[-3.0,-1.0, 1.0], color:'#a87d3f', shape:'pebble', size:0.9},
+      {id:'c4', text:'The shape of last Tuesday',          position:[ 0.5,-2.0, 0.0], color:'#e8dec9', shape:'pebble', size:1.0},
+      {id:'c5', text:'Restless without reason',            position:[ 3.5,-0.5, 0.8], color:'#c8632d', shape:'pebble', size:1.0},
+      {id:'c6', text:'Something I don\'t want to forget',  position:[-1.0, 3.0,-1.2], color:'#a87d3f', shape:'pebble', size:1.2},
+      {id:'c7', text:'A small mercy',                      position:[ 1.5, 0.0, 1.5], color:'#4a8a73', shape:'pebble', size:0.85},
+      {id:'c8', text:'Tired in a way sleep won\'t fix',    position:[-2.0,-3.5,-0.5], color:'#c8632d', shape:'pebble', size:1.2},
+      {id:'c9', text:'Someone I should call',              position:[ 4.0, 1.5,-0.8], color:'#e8dec9', shape:'pebble', size:1.0},
     ],
     connections: [
-      // Pebbles touching pebbles. Mostly undirected — these are resonances, not causes.
       ['c1','c3', 'echoes',     false],
       ['c2','c5', 'underneath', false],
       ['c2','c8', 'why I\'m tired', false],
@@ -2386,150 +2553,149 @@ const STARTER_BOARDS = [
   },
 
   // ── The argument ───────────────────────────────────────────────────
-  // Thinking as a rhetorical structure. Different shapes carry different
-  // moves: the claim is a hinge (disc), supports rise up (columns rising),
-  // contradictions descend (columns falling), the conclusion is a gem.
+  // Pre-filled grammar: shape carries rhetorical role.
   {
     id: 'the-argument',
     name: 'The argument',
-    desc: 'A claim, what holds it up, what pulls it down, what comes out.',
-    accent: '#8a9c80',
+    desc: 'Shape carries the rhetorical role. Color carries valence.',
+    accent: '#4a8a73',
     tags: ['reasoning', 'structure'],
     defaultShape: 'sphere',
+    schema: ['shape', 'color'],
+    meanings: {
+      shape: {
+        'disc':   'the central claim',
+        'column': 'a reason — supporting or against',
+        'gem':    'the synthesis after weighing',
+        'sphere': 'a thought I haven\'t classified yet',
+      },
+      color: {
+        '#c8632d': 'central, the thing being argued',
+        '#4a8a73': 'evidence FOR',
+        '#7a2e2e': 'evidence AGAINST',
+        '#e8dec9': 'neutral, observation',
+      },
+      size: {}
+    },
     thoughts: [
-      // The claim — a hinge that everything turns on
       {id:'a1', text:'The claim',
        body:'AI tools should remain general-purpose, not narrow-purpose.',
-       position:[0, 0, 2], color:'#d8a35a', shape:'disc', size:1.6},
+       position:[0, 0, 2], color:'#c8632d', shape:'disc', size:1.6},
 
-      // Supports rise up (positive Y, columns standing tall)
       {id:'a2', text:'Generality compounds',
        body:'A general tool used by many people in many ways accumulates more learnings than any narrow one.',
-       position:[-4, 3.5, 0], color:'#8a9c80', shape:'column', size:1.0},
+       position:[-4, 3.5, 0], color:'#4a8a73', shape:'column', size:1.0},
       {id:'a3', text:'User intent is fluid',
        body:'People don\'t know what they want until they\'re using it. Narrow tools assume the answer.',
-       position:[-1.3, 3.5, 0], color:'#8a9c80', shape:'column', size:1.0},
+       position:[-1.3, 3.5, 0], color:'#4a8a73', shape:'column', size:1.0},
       {id:'a4', text:'History favors generality',
        body:'Spreadsheets, browsers, language itself — the most generative tools are the most flexible.',
-       position:[1.3, 3.5, 0], color:'#8a9c80', shape:'column', size:1.0},
+       position:[1.3, 3.5, 0], color:'#4a8a73', shape:'column', size:1.0},
 
-      // Contradictions hang down (negative Y, columns rotated upside down or just below)
       {id:'a5', text:'Generality is shallower',
        body:'Specialised tools beat general ones at any specific job. A surgeon doesn\'t use a Swiss Army knife.',
-       position:[-3, -3.5, 0], color:'#c47a4d', shape:'column', size:1.0},
+       position:[-3, -3.5, 0], color:'#7a2e2e', shape:'column', size:1.0},
       {id:'a6', text:'Users want defaults',
        body:'Most people don\'t want power. They want a path. Narrow tools tell them what to do.',
-       position:[ 0, -3.5, 0], color:'#c47a4d', shape:'column', size:1.0},
+       position:[ 0, -3.5, 0], color:'#7a2e2e', shape:'column', size:1.0},
       {id:'a7', text:'General tools rot in the middle',
        body:'Without a clear use case, a tool drifts toward serving no one well.',
-       position:[ 3, -3.5, 0], color:'#c47a4d', shape:'column', size:1.0},
+       position:[ 3, -3.5, 0], color:'#7a2e2e', shape:'column', size:1.0},
 
-      // Conclusion — a gem, multifaceted, the synthesis
       {id:'a8', text:'What I think after',
        body:'Generality is right when the user is sophisticated and the medium is new. Narrow when the user is novice and the medium is mature.',
-       position:[5.5, 0, 1], color:'#d8a35a', shape:'gem', size:1.4},
+       position:[5.5, 0, 1], color:'#c8632d', shape:'gem', size:1.4},
     ],
     connections: [
-      // Supports rise into the claim
-      ['a2','a1', 'supports', true, '#8a9c80'],
-      ['a3','a1', 'supports', true, '#8a9c80'],
-      ['a4','a1', 'supports', true, '#8a9c80'],
-      // Contradictions pull at the claim
-      ['a5','a1', 'against',  true, '#c47a4d'],
-      ['a6','a1', 'against',  true, '#c47a4d'],
-      ['a7','a1', 'against',  true, '#c47a4d'],
-      // The claim leads to the conclusion
-      ['a1','a8', 'after weighing', true, '#d8a35a'],
+      ['a2','a1', 'supports', true, '#4a8a73'],
+      ['a3','a1', 'supports', true, '#4a8a73'],
+      ['a4','a1', 'supports', true, '#4a8a73'],
+      ['a5','a1', 'against',  true, '#7a2e2e'],
+      ['a6','a1', 'against',  true, '#7a2e2e'],
+      ['a7','a1', 'against',  true, '#7a2e2e'],
+      ['a1','a8', 'after weighing', true, '#c8632d'],
     ]
   },
 
   // ── Constellation ──────────────────────────────────────────────────
-  // Thinking as pattern-recognition. Many tiny dots arranged in a shape.
-  // Individual dots don't carry meaning — the arrangement is the insight.
-  // A few labelled "anchor" thoughts call out the figures.
+  // Pre-filled grammar: shape = anchor vs constellation point. Color = featured.
   {
     id: 'constellation',
     name: 'Constellation',
-    desc: 'Meaning emerges from arrangement, not from any single point.',
-    accent: '#7e8590',
+    desc: 'Meaning lives in arrangement. Shape says: a label, or a point.',
+    accent: '#6e5e9c',
     tags: ['pattern', 'spatial'],
     defaultShape: 'dot',
-    defaultColor: '#e8e6e1',
+    defaultColor: '#e8dec9',
+    schema: ['shape', 'color'],
+    meanings: {
+      shape: {
+        'dot':    'a point in the arrangement (no meaning alone)',
+        'sphere': 'an anchor — names what the points form',
+      },
+      color: {
+        '#e8dec9': 'a normal point in the figure',
+        '#c8632d': 'a featured / brightest point',
+        '#6e5e9c': 'an anchor label',
+      },
+      size: {}
+    },
     thoughts: (() => {
-      // Generate Orion-like constellation procedurally, then label key stars.
-      // All dots are unlabeled except a few "anchors" that name what you're seeing.
       const arr = [];
-      // Orion main figure (rough star positions, scaled)
       const stars = [
-        // Shoulders + head
-        ['k1', -3.0,  3.5, 0],   // Bellatrix (right shoulder)
-        ['k2',  2.5,  3.0, 0],   // Betelgeuse (left shoulder, slightly emphasized)
-        ['k3', -0.3,  4.5, 0],   // Meissa (head)
-        // Belt — three stars in a line, the signature
-        ['k4', -1.5,  0.0, 0],   // Mintaka
-        ['k5',  0.0,  0.0, 0],   // Alnilam
-        ['k6',  1.5, -0.3, 0],   // Alnitak
-        // Sword (hangs down from belt)
+        ['k1', -3.0,  3.5, 0],
+        ['k2',  2.5,  3.0, 0],
+        ['k3', -0.3,  4.5, 0],
+        ['k4', -1.5,  0.0, 0],
+        ['k5',  0.0,  0.0, 0],
+        ['k6',  1.5, -0.3, 0],
         ['k7',  0.0, -1.6, 0],
         ['k8',  0.1, -2.4, 0],
         ['k9',  0.0, -3.2, 0],
-        // Feet
-        ['k10', -3.5, -3.5, 0],  // Saiph (right foot)
-        ['k11',  3.5, -3.0, 0],  // Rigel (left foot, brightest)
+        ['k10', -3.5, -3.5, 0],
+        ['k11',  3.5, -3.0, 0],
       ];
       for (const [id, x, y, z] of stars) {
         const isBright = (id === 'k2' || id === 'k11');
         arr.push({
           id, text:'', position:[x, y, z],
-          color: isBright ? '#d8a35a' : '#e8e6e1',
+          color: isBright ? '#c8632d' : '#e8dec9',
           shape: 'dot',
           size: isBright ? 1.4 : 1.0,
         });
       }
-      // Background scatter — distant unrelated stars, same shape, smaller
-      const seed = 12345;
-      let s = seed;
+      let s = 12345;
       const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
       for (let i = 0; i < 38; i++) {
         const x = (rand() - 0.5) * 18;
         const y = (rand() - 0.5) * 12;
         const z = (rand() - 0.5) * 4 - 1.5;
-        // Don't put background stars too close to the figure
-        const dx = x, dy = y;
-        if (Math.hypot(dx, dy) < 5.5) continue;
+        if (Math.hypot(x, y) < 5.5) continue;
         arr.push({
           id: 'bg' + i, text:'', position:[x, y, z],
-          color:'#e8e6e1', shape:'dot', size: 0.4 + rand() * 0.4,
+          color:'#e8dec9', shape:'dot', size: 0.4 + rand() * 0.4,
         });
       }
-      // Anchor labels — large invisible-ish "thoughts" that name the patterns.
-      // These ARE labelled, so they read as the meaning of the arrangement.
       arr.push({id:'anc1', text:'The belt', body:'The three stars in a line. The pattern you see first.',
-                position:[ 0, -0.9, 0.5], color:'#7e8590', shape:'sphere', size:0.6});
+                position:[ 0, -0.9, 0.5], color:'#6e5e9c', shape:'sphere', size:0.6});
       arr.push({id:'anc2', text:'Orion', body:'The hunter. A figure assembled from points that mean nothing alone.',
-                position:[-5, 0.5, 0.5], color:'#d8a35a', shape:'sphere', size:0.7});
+                position:[-5, 0.5, 0.5], color:'#6e5e9c', shape:'sphere', size:0.7});
       return arr;
     })(),
     connections: [
-      // Belt — the signature line
-      ['k4','k5', null, false, '#e8e6e1'],
-      ['k5','k6', null, false, '#e8e6e1'],
-      // Shoulders to belt
-      ['k1','k4', null, false, '#7e8590'],
-      ['k2','k6', null, false, '#7e8590'],
-      // Head
-      ['k3','k1', null, false, '#7e8590'],
-      ['k3','k2', null, false, '#7e8590'],
-      // Belt to feet
-      ['k4','k10', null, false, '#7e8590'],
-      ['k6','k11', null, false, '#7e8590'],
-      // Sword from belt
-      ['k5','k7', null, false, '#7e8590'],
-      ['k7','k8', null, false, '#7e8590'],
-      ['k8','k9', null, false, '#7e8590'],
-      // Anchor labels point to the patterns they name
-      ['anc1','k5', 'see', true, '#7e8590'],
-      ['anc2','k3', 'is',  true, '#d8a35a'],
+      ['k4','k5', null, false, '#e8dec9'],
+      ['k5','k6', null, false, '#e8dec9'],
+      ['k1','k4', null, false, '#e8dec9'],
+      ['k2','k6', null, false, '#e8dec9'],
+      ['k3','k1', null, false, '#e8dec9'],
+      ['k3','k2', null, false, '#e8dec9'],
+      ['k4','k10', null, false, '#e8dec9'],
+      ['k6','k11', null, false, '#e8dec9'],
+      ['k5','k7', null, false, '#e8dec9'],
+      ['k7','k8', null, false, '#e8dec9'],
+      ['k8','k9', null, false, '#e8dec9'],
+      ['anc1','k5', 'see', true, '#6e5e9c'],
+      ['anc2','k3', 'is',  true, '#6e5e9c'],
     ]
   },
 
@@ -2776,8 +2942,8 @@ const STARTER_BOARDS = [
     thoughts: [
 
       // ── CORE — z=3, front ─────────────────────────────────────────────────
-      {id:'an1',  text:'atem v25 (branch)',
-       body:'This is the experimental shape branch. Thoughts can have different physical kinds — bars, cards, pebbles, columns, dots. New starter boards demonstrate how form carries meaning. The form is the content.',
+      {id:'an1',  text:'atem v26',
+       body:'Schema layer added — boards now ship a grammar (what colors mean, what shapes carry, what sizes signify). Each board is a semiotic universe. The Meanings panel lets you read or edit your own grammar. The starter boards are pre-filled, as test arenas.',
        position:[0,0,3], color:'#7ed4a4', size:1.6},
 
       // ── THREE PRIMITIVES — z=2 ────────────────────────────────────────────
@@ -3283,6 +3449,15 @@ function loadStarterBoard(board) {
   state.boardAccent = board.accent || '#6ea8fe';
   state.boardDefaultShape = board.defaultShape || 'sphere';
   state.boardDefaultColor = board.defaultColor || null;
+  // Boards are semiotic universes — they may ship a pre-filled grammar
+  // (schema + meanings). Users opening the board see what filled-in
+  // grammar looks like, then continue filling it themselves. Test arena.
+  state.schema = (board.schema && board.schema.length) ? [...board.schema] : ['color', 'shape', 'size'];
+  state.meanings = {
+    color: board.meanings?.color ? { ...board.meanings.color } : {},
+    shape: board.meanings?.shape ? { ...board.meanings.shape } : {},
+    size:  board.meanings?.size  ? { ...board.meanings.size  } : {},
+  };
   state.isStarterBoard = true;
   save();
   getBoardRegistry().then(async reg => {
@@ -3302,6 +3477,172 @@ function loadStarterBoard(board) {
 document.getElementById('gallery-close').addEventListener('click', closeGallery);
 galleryOverlay.addEventListener('click', (e) => { if (e.target === galleryOverlay) closeGallery(); });
 document.getElementById('m-gallery').addEventListener('click', () => { closeMenu(); openGallery(); });
+
+// ═══════════════════════════════════════════════════════════════════
+// MEANINGS PANEL — the user's grammar for this board (v26)
+// ═══════════════════════════════════════════════════════════════════
+// Atem ships defaults (color/shape/size as slots), the user fills in
+// what those values mean to THEM. Same hex on two different boards can
+// mean different things — boards are semiotic universes.
+//
+// Surfacing: lenient. After just 3 thoughts on a fresh board (or on
+// load of a starter that has pre-filled meanings), a single quiet
+// nudge appears once. Always accessible via menu after that.
+// ═══════════════════════════════════════════════════════════════════
+
+let meaningsActiveSlot = 'color';
+let meaningsNudgeShown = false;
+
+function meaningsLabelForColor(hex) {
+  const lower = hex && hex.toLowerCase();
+  for (const k in TONES) {
+    if (TONES[k].toLowerCase() === lower) return k;
+  }
+  return hex;
+}
+
+function getUsedValuesForSlot(slot) {
+  // Returns { value: count } for each unique value used on this slot
+  // across all thoughts on the current board. Sorted by count descending.
+  const used = {};
+  for (const t of state.thoughts) {
+    let v = null;
+    if (slot === 'color') v = t.color || TONES.bone;
+    else if (slot === 'shape') v = t.shape || 'sphere';
+    else if (slot === 'size') {
+      // Bucket sizes into rough tiers so the user isn't drowning in 1.043 vs 1.044
+      const s = t.size || 1.0;
+      if (s >= 1.5) v = 'large';
+      else if (s >= 1.15) v = 'medium-large';
+      else if (s >= 0.85) v = 'default';
+      else if (s >= 0.6) v = 'small';
+      else v = 'tiny';
+    }
+    if (v == null) continue;
+    used[v] = (used[v] || 0) + 1;
+  }
+  return Object.entries(used).sort((a, b) => b[1] - a[1]);
+}
+
+function renderMeaningsPanel() {
+  const body = document.getElementById('meanings-body');
+  if (!body) return;
+  body.innerHTML = '';
+
+  const slot = meaningsActiveSlot;
+  const used = getUsedValuesForSlot(slot);
+
+  if (used.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'meaning-empty';
+    empty.textContent = `No ${slot}s used yet on this board. Add a thought, then come back here to give it meaning.`;
+    body.appendChild(empty);
+    return;
+  }
+
+  if (!state.meanings) state.meanings = { color:{}, shape:{}, size:{} };
+  if (!state.meanings[slot]) state.meanings[slot] = {};
+
+  for (const [value, count] of used) {
+    const row = document.createElement('div');
+    row.className = 'meaning-row';
+
+    const glyph = document.createElement('div');
+    if (slot === 'color') {
+      glyph.className = 'meaning-glyph color-glyph';
+      glyph.style.background = value;
+    } else if (slot === 'shape') {
+      glyph.className = 'meaning-glyph shape-glyph';
+      glyph.textContent = value;
+    } else {
+      glyph.className = 'meaning-glyph size-glyph';
+      // Size dot scales with bucket
+      let s = 6;
+      if (value === 'tiny') s = 4;
+      else if (value === 'small') s = 7;
+      else if (value === 'default') s = 10;
+      else if (value === 'medium-large') s = 13;
+      else if (value === 'large') s = 16;
+      glyph.style.width = s + 'px';
+      glyph.style.height = s + 'px';
+    }
+    row.appendChild(glyph);
+
+    const input = document.createElement('input');
+    input.className = 'meaning-input';
+    input.type = 'text';
+    input.value = state.meanings[slot][value] || '';
+    // Placeholders: helpful hints, not prescriptions
+    if (slot === 'color') {
+      input.placeholder = `what does ${meaningsLabelForColor(value)} mean to you?`;
+    } else if (slot === 'shape') {
+      input.placeholder = `what does this shape carry?`;
+    } else {
+      input.placeholder = `what does '${value}' signify?`;
+    }
+    input.addEventListener('input', () => {
+      const v = input.value.trim();
+      if (v) state.meanings[slot][value] = v;
+      else delete state.meanings[slot][value];
+      save();
+    });
+    row.appendChild(input);
+
+    const c = document.createElement('span');
+    c.className = 'meaning-count';
+    c.textContent = '×' + count;
+    row.appendChild(c);
+
+    body.appendChild(row);
+  }
+}
+
+function openMeanings() {
+  const panel = document.getElementById('meanings-panel');
+  if (!panel) return;
+  // Refresh tabs to reflect schema (so unused slots could be hidden in the future)
+  document.querySelectorAll('.meanings-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.slot === meaningsActiveSlot);
+  });
+  renderMeaningsPanel();
+  panel.classList.add('open');
+}
+
+function closeMeanings() {
+  document.getElementById('meanings-panel').classList.remove('open');
+}
+
+document.getElementById('meanings-close').addEventListener('click', closeMeanings);
+document.getElementById('m-meanings').addEventListener('click', () => { closeMenu(); openMeanings(); });
+document.querySelectorAll('.meanings-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    meaningsActiveSlot = tab.dataset.slot;
+    document.querySelectorAll('.meanings-tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.slot === meaningsActiveSlot));
+    renderMeaningsPanel();
+  });
+});
+
+// Lenient nudge: after the user has made 3 thoughts on a fresh board (no
+// pre-filled meanings) AND used at least 2 distinct colors, surface the
+// meaning-affordance once via toast. They can ignore it. Available in
+// menu always.
+function maybeNudgeMeanings() {
+  if (meaningsNudgeShown) return;
+  if (state.thoughts.length < 3) return;
+  // Check distinct colors used (heuristic: only nudge if user is actually
+  // varying colors — otherwise the meaning panel has nothing useful)
+  const colors = new Set();
+  for (const t of state.thoughts) colors.add(t.color || TONES.bone);
+  if (colors.size < 2) return;
+  // Only nudge if the user hasn't filled in any meanings yet
+  if (state.meanings && state.meanings.color) {
+    const filled = Object.values(state.meanings.color).some(v => v && v.trim());
+    if (filled) { meaningsNudgeShown = true; return; }
+  }
+  meaningsNudgeShown = true;
+  toast('Tip: tell atem what your colors mean');
+}
 
 // ═══════════════════════════════════════════
 // TOAST / HINT
@@ -3661,7 +4002,7 @@ function toggleZGrid() {
 
 setInterval(save, 10000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-console.log('atem v25 (branch) — thought is matter: 11 shapes, 5 new starter boards demonstrate form carrying meaning. Reading list, This week, What I\'m carrying, The argument, Constellation.');
+console.log('atem v26 — schema: boards are semiotic universes. state.schema + state.meanings let you (or each board) define what color/shape/size mean here. Meanings panel surfaces this. Test arena: 5 starter boards ship pre-filled grammars.');
 </script>
 </body>
 </html>
