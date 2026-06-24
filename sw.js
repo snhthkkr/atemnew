@@ -1,8 +1,41 @@
-const CACHE = 'atem-v9';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))); self.clients.claim(); });
+// atem™ service worker — network-first for index.html, cache-first for assets
+// bump this version string to force a cache refresh on next deploy
+const CACHE = 'atem-v31';
+const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
 self.addEventListener('fetch', e => {
-  if (!e.request.url.startsWith(self.location.origin)) return;
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => caches.open(CACHE).then(c => { c.put(e.request, res.clone()); return res; }))).catch(() => caches.match('/index.html')));
+  const url = new URL(e.request.url);
+  const isHTML = e.request.destination === 'document' || url.pathname === '/' || url.pathname.endsWith('.html');
+
+  if (isHTML) {
+    // network-first for the app shell — always get the latest index.html
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+  } else {
+    // cache-first for everything else (icons, manifest)
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request))
+    );
+  }
 });
