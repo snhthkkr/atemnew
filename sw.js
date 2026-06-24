@@ -1,6 +1,6 @@
 // atem™ service worker — network-first for the app shell, cache-first for assets.
 // Bump CACHE on every deploy to guarantee the new build wins.
-const CACHE = 'atem-resonance-r1';
+const CACHE = 'atem-resonance-r12';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {
